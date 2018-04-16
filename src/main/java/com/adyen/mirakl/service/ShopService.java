@@ -2,6 +2,7 @@ package com.adyen.mirakl.service;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -18,6 +19,7 @@ import com.adyen.mirakl.domain.StreetDetails;
 import com.adyen.mirakl.service.util.IsoUtil;
 import com.adyen.mirakl.service.util.MiraklDataExtractionUtil;
 import com.adyen.model.Address;
+import com.adyen.model.Amount;
 import com.adyen.model.Name;
 import com.adyen.model.marketpay.AccountHolderDetails;
 import com.adyen.model.marketpay.BankAccountDetail;
@@ -35,6 +37,7 @@ import com.adyen.model.marketpay.PersonalData;
 import com.adyen.model.marketpay.ShareholderContact;
 import com.adyen.model.marketpay.UpdateAccountHolderRequest;
 import com.adyen.model.marketpay.UpdateAccountHolderResponse;
+import com.adyen.model.marketpay.notification.CompensateNegativeBalanceNotificationRecord;
 import com.adyen.service.Account;
 import com.adyen.service.exception.ApiException;
 import com.mirakl.client.mmp.domain.common.MiraklAdditionalFieldValue;
@@ -43,6 +46,10 @@ import com.mirakl.client.mmp.domain.shop.MiraklShop;
 import com.mirakl.client.mmp.domain.shop.MiraklShops;
 import com.mirakl.client.mmp.domain.shop.bank.MiraklIbanBankAccountInformation;
 import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
+import com.mirakl.client.mmp.operator.domain.invoice.MiraklCreateManualAccountingDocument;
+import com.mirakl.client.mmp.operator.domain.invoice.MiraklManualAccountingDocumentLine;
+import com.mirakl.client.mmp.operator.domain.invoice.MiraklManualAccountingDocumentType;
+import com.mirakl.client.mmp.operator.request.payment.invoice.MiraklCreateManualAccountingDocumentRequest;
 import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
 
 @Service
@@ -422,5 +429,59 @@ public class ShopService {
 
     public void setHouseNumberPatterns(final Map<String, Pattern> houseNumberPatterns) {
         this.houseNumberPatterns = houseNumberPatterns;
+    }
+
+    public void processCompensateNegativeBalance(CompensateNegativeBalanceNotificationRecord compensateNegativeBalanceNotificationRecord) {
+        final String accountCode = compensateNegativeBalanceNotificationRecord.getAccountCode();
+        Amount amount = compensateNegativeBalanceNotificationRecord.getAmount();
+        Date transferDate = compensateNegativeBalanceNotificationRecord.getTransferDate();
+        String shopId = retrieveShopIdFromAccountCode(accountCode);
+
+        /**
+         * IV03: Create a manual accounting document
+         */
+        MiraklCreateManualAccountingDocument miraklCreateManualAccountingDocument = new MiraklCreateManualAccountingDocument();
+        miraklCreateManualAccountingDocument.setEmissionDate(transferDate);
+        miraklCreateManualAccountingDocument.setIssued(true);
+
+        MiraklManualAccountingDocumentLine miraklManualAccountingDocumentLine = new MiraklManualAccountingDocumentLine();
+        miraklManualAccountingDocumentLine.setAmount(amount.getDecimalValue());
+        miraklManualAccountingDocumentLine.setDescription("Compensate Negative Balance: " + amount.getValue() + " " + amount.getCurrency() + " on: " + transferDate.toString());
+        List<MiraklManualAccountingDocumentLine> miraklManualAccountingDocumentLineList = new ArrayList<>();
+        miraklManualAccountingDocumentLineList.add(miraklManualAccountingDocumentLine);
+        miraklCreateManualAccountingDocument.setLines(miraklManualAccountingDocumentLineList);
+
+        miraklCreateManualAccountingDocument.setShopId(Long.valueOf(shopId));
+        miraklCreateManualAccountingDocument.setType(MiraklManualAccountingDocumentType.INVOICE);
+
+        List<MiraklCreateManualAccountingDocument> miraklCreateManualAccountingDocumentList = new ArrayList<>();
+        miraklCreateManualAccountingDocumentList.add(miraklCreateManualAccountingDocument);
+
+        MiraklCreateManualAccountingDocumentRequest request = new MiraklCreateManualAccountingDocumentRequest(miraklCreateManualAccountingDocumentList);
+
+        miraklMarketplacePlatformOperatorApiClient.createManualAccountingDocument(request);
+
+        /**
+         * Save to DB
+         */
+
+
+
+    }
+
+    private String retrieveShopIdFromAccountCode(String accountCode) {
+        GetAccountHolderRequest getAccountHolderRequest = new GetAccountHolderRequest();
+        getAccountHolderRequest.setAccountCode(accountCode);
+        try {
+            GetAccountHolderResponse getAccountHolderResponse = adyenAccountService.getAccountHolder(getAccountHolderRequest);
+            if (! getAccountHolderResponse.getAccountHolderCode().isEmpty()) {
+                return getAccountHolderResponse.getAccountHolderCode();
+            }
+        } catch (ApiException e) {
+            log.error("MarketPay Api Exception: {}, {}. For the AccountCode: {}", e.getError(), e, accountCode);
+        } catch (Exception e) {
+            log.error("Exception: {}, {}. For the AccountCode: {}", e.getMessage(), e, accountCode);
+        }
+        return null;
     }
 }

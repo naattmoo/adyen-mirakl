@@ -6,6 +6,7 @@ import com.adyen.mirakl.domain.AdyenNotification;
 import com.adyen.mirakl.events.AdyenNotifcationEvent;
 import com.adyen.mirakl.repository.AdyenNotificationRepository;
 import com.adyen.mirakl.service.RetryPayoutService;
+import com.adyen.mirakl.service.ShopService;
 import com.adyen.model.marketpay.GetAccountHolderRequest;
 import com.adyen.model.marketpay.GetAccountHolderResponse;
 import com.adyen.model.marketpay.ShareholderContact;
@@ -64,6 +65,8 @@ public class AdyenNotificationListenerTest {
     private RetryPayoutService retryPayoutService;
     @Mock
     private DocService docServiceMock;
+    @Mock
+    private ShopService shopServiceMock;
     @Captor
     private ArgumentCaptor<MiraklGetShopsRequest> miraklShopsRequestCaptor;
     @Captor
@@ -71,7 +74,7 @@ public class AdyenNotificationListenerTest {
 
     @Before
     public void setup(){
-        adyenNotificationListener = new AdyenNotificationListener(new NotificationHandler(), adyenNotificationRepositoryMock, mailTemplateServiceMock, miraklMarketplacePlatformOperatorApiClient, adyenAccountServiceMock, retryPayoutService, docServiceMock);
+        adyenNotificationListener = new AdyenNotificationListener(new NotificationHandler(), adyenNotificationRepositoryMock, mailTemplateServiceMock, miraklMarketplacePlatformOperatorApiClient, adyenAccountServiceMock, retryPayoutService, docServiceMock, shopServiceMock);
         when(eventMock.getDbId()).thenReturn(1L);
         when(adyenNotificationRepositoryMock.findOneById(1L)).thenReturn(adyenNotificationMock);
     }
