@@ -1,10 +1,37 @@
 package com.adyen.mirakl.service;
 
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import org.assertj.core.api.Assertions;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 import com.adyen.mirakl.MiraklShopFactory;
 import com.adyen.mirakl.startup.MiraklStartupValidator;
 import com.adyen.model.Address;
 import com.adyen.model.Name;
-import com.adyen.model.marketpay.*;
+import com.adyen.model.marketpay.AccountHolderDetails;
+import com.adyen.model.marketpay.BankAccountDetail;
+import com.adyen.model.marketpay.BusinessDetails;
+import com.adyen.model.marketpay.CreateAccountHolderRequest;
+import com.adyen.model.marketpay.CreateAccountHolderResponse;
+import com.adyen.model.marketpay.DeleteBankAccountRequest;
+import com.adyen.model.marketpay.DeleteBankAccountResponse;
+import com.adyen.model.marketpay.GetAccountHolderResponse;
+import com.adyen.model.marketpay.IndividualDetails;
+import com.adyen.model.marketpay.ShareholderContact;
+import com.adyen.model.marketpay.UpdateAccountHolderRequest;
+import com.adyen.model.marketpay.UpdateAccountHolderResponse;
 import com.adyen.service.Account;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -16,30 +43,16 @@ import com.mirakl.client.mmp.domain.shop.MiraklShops;
 import com.mirakl.client.mmp.domain.shop.bank.MiraklIbanBankAccountInformation;
 import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
 import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
-import org.assertj.core.api.Assertions;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
-
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-
 import static com.adyen.mirakl.MiraklShopFactory.UBO_FIELDS;
 import static com.adyen.mirakl.MiraklShopFactory.UBO_FIELDS_ENUMS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ShopServiceTest {
@@ -75,46 +88,23 @@ public class ShopServiceTest {
     @Captor
     private ArgumentCaptor<UpdateAccountHolderRequest> updateAccountHolderRequestCaptor;
     @Captor
+    private ArgumentCaptor<DeleteBankAccountRequest> deleteBankAccountRequestCaptor;
+    @Captor
     private ArgumentCaptor<MiraklGetShopsRequest> miraklGetShopsRequestCaptor;
 
     private MiraklShop shop;
 
     @Before
-    public void setup() {
+    public void setup() throws Exception {
         shopService.setHouseNumberPatterns(ImmutableMap.of("NL", Pattern.compile("\\s([a-zA-Z]*\\d+[a-zA-Z]*)$")));
-    }
 
-
-    @Test
-    public void testIsIbanChanged() {
-
-        MiraklShop shop = new MiraklShop();
-        shop.setId("id");
-        MiraklIbanBankAccountInformation miraklIbanBankAccountInformation = createMiraklIbanBankAccountInformation();
-        shop.setPaymentInformation(miraklIbanBankAccountInformation);
-
-        GetAccountHolderResponse getAccountHolderResponse = createGetAccountHolderResponse();
-
-        // update bankaccount match
-        assertEquals(false, shopService.isIbanChanged(getAccountHolderResponse, shop));
-
-        // update bankAccountDetails to not matching one
-        getAccountHolderResponse.getAccountHolderDetails().getBankAccountDetails().get(0).setIban("GBDifferentIBAN");
-        assertEquals(true, shopService.isIbanChanged(getAccountHolderResponse, shop));
+        shop = new MiraklShop();
+        when(adyenAccountServiceMock.deleteBankAccount(deleteBankAccountRequestCaptor.capture())).thenReturn(new DeleteBankAccountResponse());
     }
 
     @Test
-    public void testIsIbanIdentical() {
-        String iban = "GB00IBAN";
-        GetAccountHolderResponse getAccountHolderResponse = createGetAccountHolderResponse();
-        assertEquals(true, shopService.isIbanIdentical(iban, getAccountHolderResponse));
-
-        iban = "GB_IBAN_DOES_NOT_MATCH";
-        assertEquals(false, shopService.isIbanIdentical(iban, getAccountHolderResponse));
-    }
-
-    @Test
-    public void testDeleteBankAccountRequest() {
+    public void testDeleteBankAccountRequest() throws Exception {
+        shop = new MiraklShop();
         GetAccountHolderResponse getAccountHolderResponse = new GetAccountHolderResponse();
         AccountHolderDetails accountHolderDetails = new AccountHolderDetails();
         List<BankAccountDetail> bankAccountDetails = new ArrayList<>();
@@ -127,7 +117,10 @@ public class ShopServiceTest {
         accountHolderDetails.setBankAccountDetails(bankAccountDetails);
         getAccountHolderResponse.setAccountHolderDetails(accountHolderDetails);
 
-        DeleteBankAccountRequest request = shopService.deleteBankAccountRequest(getAccountHolderResponse);
+        boolean result = shopService.cleanUpBankAccounts(getAccountHolderResponse, shop);
+        assertTrue(result);
+
+        DeleteBankAccountRequest request = deleteBankAccountRequestCaptor.getValue();
         assertEquals("0000-1111-2222", request.getBankAccountUUIDs().get(0));
         assertEquals("1111-2222-3333", request.getBankAccountUUIDs().get(1));
     }
@@ -248,7 +241,6 @@ public class ShopServiceTest {
 
     @Test
     public void testUpdateAccountHolderRequest() {
-        MiraklShop shop = new MiraklShop();
         shop.setId("id");
         shop.setCurrencyIsoCode(MiraklIsoCurrencyCode.EUR);
 
@@ -281,12 +273,12 @@ public class ShopServiceTest {
         assertEquals("BIC", request.getAccountHolderDetails().getBankAccountDetails().get(0).getBankBicSwift());
         assertEquals("610b", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerHouseNumberOrName());
 
-        // Update with the same IBAN
+        // Update with the same BankAccountDetails
         GetAccountHolderResponse getAccountHolderResponse = createGetAccountHolderResponse();
+        getAccountHolderResponse.getAccountHolderDetails().setBankAccountDetails(request.getAccountHolderDetails().getBankAccountDetails());
 
         UpdateAccountHolderRequest requestWithoutIbanChange = shopService.updateAccountHolderRequestFromShop(shop, getAccountHolderResponse);
         Assertions.assertThat(requestWithoutIbanChange.getAccountHolderDetails().getBankAccountDetails()).isEmpty();
-
 
         // Update with a different IBAN
         getAccountHolderResponse.getAccountHolderDetails().getBankAccountDetails().get(0).setIban("GBDIFFERENTIBAN");
@@ -384,7 +376,6 @@ public class ShopServiceTest {
         miraklShops.setShops(shops);
         miraklShops.setTotalCount(1L);
 
-        shop = new MiraklShop();
         shops.add(shop);
 
         MiraklContactInformation contactInformation = new MiraklContactInformation();
