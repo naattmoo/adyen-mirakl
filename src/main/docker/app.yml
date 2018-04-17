@@ -1,0 +1,14 @@
+version: '2'
+services:
+    adyenmiraklconnector-app:
+        image: adyenmiraklconnector
+        environment:
+            - SPRING_PROFILES_ACTIVE=prod,swagger
+            - SPRING_DATASOURCE_URL=jdbc:mysql://adyenmiraklconnector-mysql:3306/adyenmiraklconnector?useUnicode=true&characterEncoding=utf8&useSSL=false
+            - JHIPSTER_SLEEP=10 # gives time for the database to boot before the application
+        ports:
+            - 8080:8080
+    adyenmiraklconnector-mysql:
+        extends:
+            file: mysql.yml
+            service: adyenmiraklconnector-mysql
