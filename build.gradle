@@ -151,13 +151,6 @@ repositories {
         }
         url "https://artifactory.mirakl.net/artifactory/mirakl-ext-repo/"
     }
-    maven {
-        url 'http://artifactory.aws.e2y.co.uk/artifactory/adyen-java-api-library-temp/'
-        credentials {
-            username = "adyen"
-            password = "adyen"
-        }
-    }
 }
 
 dependencies {
@@ -237,7 +230,7 @@ dependencies {
     }
     //jhipster-needle-gradle-dependency - JHipster will add additional dependencies here
 
-    compile "com.adyen:adyen-java-api-library:1.4.marketplace.beta.2"
+    compile "com.adyen:adyen-java-api-library:1.4.0"
     compile "com.mirakl:mmp-sdk-operator:3.25.23"
     testCompile "com.mirakl:mmp-sdk-front:3.25.23"
 }
