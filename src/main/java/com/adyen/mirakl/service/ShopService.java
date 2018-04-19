@@ -12,6 +12,7 @@ import javax.annotation.Resource;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -47,6 +48,8 @@ import com.mirakl.client.mmp.domain.shop.MiraklShops;
 import com.mirakl.client.mmp.domain.shop.bank.MiraklIbanBankAccountInformation;
 import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
 import com.mirakl.client.mmp.operator.domain.invoice.MiraklCreateManualAccountingDocument;
+import com.mirakl.client.mmp.operator.domain.invoice.MiraklCreatedManualAccountingDocumentReturn;
+import com.mirakl.client.mmp.operator.domain.invoice.MiraklCreatedManualAccountingDocuments;
 import com.mirakl.client.mmp.operator.domain.invoice.MiraklManualAccountingDocumentLine;
 import com.mirakl.client.mmp.operator.domain.invoice.MiraklManualAccountingDocumentType;
 import com.mirakl.client.mmp.operator.request.payment.invoice.MiraklCreateManualAccountingDocumentRequest;
@@ -82,6 +85,8 @@ public class ShopService {
     @Resource
     private DocService docService;
 
+    @Value("${payoutService.liableAccountCode}")
+    private String liableAccountCode;
 
     public void processUpdatedShops() {
         final ZonedDateTime beforeProcessing = ZonedDateTime.now();
@@ -431,7 +436,7 @@ public class ShopService {
         this.houseNumberPatterns = houseNumberPatterns;
     }
 
-    public void processCompensateNegativeBalance(CompensateNegativeBalanceNotificationRecord compensateNegativeBalanceNotificationRecord) {
+    public MiraklCreatedManualAccountingDocuments processCompensateNegativeBalance(CompensateNegativeBalanceNotificationRecord compensateNegativeBalanceNotificationRecord, String pspReference) {
         final String accountCode = compensateNegativeBalanceNotificationRecord.getAccountCode();
         Amount amount = compensateNegativeBalanceNotificationRecord.getAmount();
         Date transferDate = compensateNegativeBalanceNotificationRecord.getTransferDate();
@@ -445,31 +450,28 @@ public class ShopService {
         miraklCreateManualAccountingDocument.setIssued(true);
 
         MiraklManualAccountingDocumentLine miraklManualAccountingDocumentLine = new MiraklManualAccountingDocumentLine();
-        miraklManualAccountingDocumentLine.setAmount(amount.getDecimalValue());
-        miraklManualAccountingDocumentLine.setDescription("Compensate Negative Balance: " + amount.getValue() + " " + amount.getCurrency() + " on: " + transferDate.toString());
+        miraklManualAccountingDocumentLine.setAmount(amount.getDecimalValue().negate());
+        miraklManualAccountingDocumentLine.setDescription("Compensate negative balance from the account: " + liableAccountCode + " to the account: " + accountCode + " pspReference: " + pspReference);
+        miraklManualAccountingDocumentLine.setQuantity(1);
+        List<String> taxCodes = new ArrayList<>();
+        taxCodes.add("TAXZERO");
+        miraklManualAccountingDocumentLine.setTaxCodes(taxCodes);
         List<MiraklManualAccountingDocumentLine> miraklManualAccountingDocumentLineList = new ArrayList<>();
         miraklManualAccountingDocumentLineList.add(miraklManualAccountingDocumentLine);
         miraklCreateManualAccountingDocument.setLines(miraklManualAccountingDocumentLineList);
 
         miraklCreateManualAccountingDocument.setShopId(Long.valueOf(shopId));
-        miraklCreateManualAccountingDocument.setType(MiraklManualAccountingDocumentType.INVOICE);
+        miraklCreateManualAccountingDocument.setType(MiraklManualAccountingDocumentType.CREDIT);
 
         List<MiraklCreateManualAccountingDocument> miraklCreateManualAccountingDocumentList = new ArrayList<>();
         miraklCreateManualAccountingDocumentList.add(miraklCreateManualAccountingDocument);
 
         MiraklCreateManualAccountingDocumentRequest request = new MiraklCreateManualAccountingDocumentRequest(miraklCreateManualAccountingDocumentList);
 
-        miraklMarketplacePlatformOperatorApiClient.createManualAccountingDocument(request);
-
-        /**
-         * Save to DB
-         */
-
-
-
+        return miraklMarketplacePlatformOperatorApiClient.createManualAccountingDocument(request);
     }
 
-    private String retrieveShopIdFromAccountCode(String accountCode) {
+    protected String retrieveShopIdFromAccountCode(String accountCode) {
         GetAccountHolderRequest getAccountHolderRequest = new GetAccountHolderRequest();
         getAccountHolderRequest.setAccountCode(accountCode);
         try {

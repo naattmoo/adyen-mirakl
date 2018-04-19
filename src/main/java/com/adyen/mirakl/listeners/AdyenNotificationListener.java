@@ -24,6 +24,7 @@ import com.adyen.model.marketpay.notification.AccountHolderPayoutNotification;
 import com.adyen.model.marketpay.notification.AccountHolderStatusChangeNotification;
 import com.adyen.model.marketpay.notification.AccountHolderVerificationNotification;
 import com.adyen.model.marketpay.notification.CompensateNegativeBalanceNotification;
+import com.adyen.model.marketpay.notification.CompensateNegativeBalanceNotificationRecord;
 import com.adyen.model.marketpay.notification.CompensateNegativeBalanceNotificationRecordContainer;
 import com.adyen.model.marketpay.notification.GenericNotification;
 import com.adyen.model.marketpay.notification.TransferFundsNotification;
@@ -34,6 +35,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
 import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
+import com.mirakl.client.mmp.operator.domain.invoice.MiraklCreatedManualAccountingDocuments;
 import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
 import static com.adyen.mirakl.listeners.AdyenNotificationListener.TemplateAndSubjectKey.getSubject;
 import static com.adyen.mirakl.listeners.AdyenNotificationListener.TemplateAndSubjectKey.getTemplate;
@@ -140,10 +142,23 @@ public class AdyenNotificationListener {
 
     private void processCompensateNegativeBalanceNotification(final CompensateNegativeBalanceNotification compensateNegativeBalanceNotification) {
         final List<CompensateNegativeBalanceNotificationRecordContainer> compensateNegativeBalanceNotificationRecordContainerList = compensateNegativeBalanceNotification.getContent().getRecords();
+        final String pspReference = compensateNegativeBalanceNotification.getPspReference();
+        compensateNegativeBalanceNotificationRecordContainerList.forEach(compensateNegativeBalanceNotificationRecordContainer -> {
+            MiraklCreatedManualAccountingDocuments miraklCreatedManualAccountingDocuments = shopService.processCompensateNegativeBalance(compensateNegativeBalanceNotificationRecordContainer.getCompensateNegativeBalanceNotificationRecord(),
+                                                                                                                                         pspReference);
 
-        compensateNegativeBalanceNotificationRecordContainerList.forEach(compensateNegativeBalanceNotificationRecordContainer -> shopService.processCompensateNegativeBalance(
-            compensateNegativeBalanceNotificationRecordContainer.getCompensateNegativeBalanceNotificationRecord()));
-
+            if (miraklCreatedManualAccountingDocuments.getManualAccountingDocumentReturns().get(0).getManualAccountingDocumentError() != null
+                && ! miraklCreatedManualAccountingDocuments.getManualAccountingDocumentReturns().get(0).getManualAccountingDocumentError().getErrors().isEmpty()) {
+                CompensateNegativeBalanceNotificationRecord notificationRecord = compensateNegativeBalanceNotificationRecordContainer.getCompensateNegativeBalanceNotificationRecord();
+                mailTemplateService.sendOperatorEmailManualCreditDocumentFailure(notificationRecord.getAccountCode(),
+                                                                                 notificationRecord.getAmount(),
+                                                                                 pspReference,
+                                                                                 miraklCreatedManualAccountingDocuments.getManualAccountingDocumentReturns()
+                                                                                                                       .get(0)
+                                                                                                                       .getManualAccountingDocumentError()
+                                                                                                                       .getErrors());
+            }
+        });
     }
 
     private void processAccountholderVerificationNotification(final AccountHolderVerificationNotification verificationNotification) throws Exception {

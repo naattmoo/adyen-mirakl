@@ -2,10 +2,13 @@ package com.adyen.mirakl.cucumber.stepdefs;
 
 import com.adyen.mirakl.cucumber.stepdefs.helpers.stepshelper.StepDefsHelper;
 import com.adyen.mirakl.domain.AdyenPayoutError;
+import com.adyen.mirakl.listeners.AdyenNotificationListener;
 import com.adyen.mirakl.web.rest.AdyenNotificationResource;
 import com.adyen.mirakl.web.rest.MiraklNotificationsResource;
 import com.adyen.mirakl.web.rest.TestUtil;
+import com.adyen.model.Amount;
 import com.adyen.model.marketpay.GetAccountHolderResponse;
+import com.adyen.model.marketpay.notification.CompensateNegativeBalanceNotificationRecord;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import com.jayway.jsonpath.DocumentContext;
@@ -30,6 +33,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.net.URL;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -51,6 +55,7 @@ public class AccountPayoutSteps extends StepDefsHelper{
     private List<DocumentContext> notifications;
     private DocumentContext adyenNotificationBody;
     private final Logger log = LoggerFactory.getLogger(this.getClass());
+    private AdyenNotificationListener adyenNotificationListener;
 
     @Before
     public void setup() {
@@ -240,5 +245,53 @@ public class AccountPayoutSteps extends StepDefsHelper{
     public void aPayoutEmailWillBeSentToTheOperator(String title) {
         log.info("Operator email: [{}]",miraklOperatorConfiguration.getMiraklOperatorEmail());
         validationCheckOnReceivedEmail(title, miraklOperatorConfiguration.getMiraklOperatorEmail(), shop);
+    }
+
+    @When("^a compensate negative balance notification is sent to the Connector$")
+    public void aCompensateNegativeBalanceNotificationIsSent(DataTable table) throws Exception {
+
+        List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
+        String accountCode = retrieveAdyenAccountCode(shop);
+
+        final String adyenRequestJson = "{\n"
+            + "    \"content\": {\n"
+            + "        \"records\": [\n"
+            + "            {\n"
+            + "                \"CompensateNegativeBalanceNotificationRecord\": {\n"
+            + "                    \"accountCode\": \"" + accountCode + "\",\n"
+            + "                    \"amount\": {\n"
+            + "                        \"currency\": \"" + cucumberTable.get(0).get("currency") + "\",\n"
+            + "                        \"value\": " + cucumberTable.get(0).get("amount") + "\n"
+            + "                    },\n"
+            + "                    \"transferDate\": \"2018-01-26T13:16:12+01:00\"\n"
+            + "                }\n"
+            + "            }\n"
+            + "        ]\n"
+            + "    },\n"
+            + "    \"eventType\": \"COMPENSATE_NEGATIVE_BALANCE\",\n"
+            + "    \"executingUserKey\": \"Compensate Negative Balance\",\n"
+            + "    \"live\": \"false\",\n"
+            + "    \"pspReference\": \"9915169689720026\"\n"
+            + "}";
+
+
+
+
+
+        // Create the AdyenNotification - use test:test/dGVzdDp0ZXN0 as credentials
+        restAdyenNotificationMockMvc.perform(post("/api/adyen-notifications").header("Authorization", "Basic dGVzdDp0ZXN0")
+                                                                             .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                                                                             .content(TestUtil.convertObjectToJsonBytes(adyenRequestJson))).andExpect(status().isCreated());
+
+
+
+//        Amount amount = new Amount();
+//        amount.setCurrency(cucumberTable.get(0).get("currency"));
+//        amount.setValue(new Long(cucumberTable.get(0).get("amount")));
+//        CompensateNegativeBalanceNotificationRecord compensateNegativeBalanceNotificationRecord = new CompensateNegativeBalanceNotificationRecord();
+//        compensateNegativeBalanceNotificationRecord.setAccountCode(retrieveAdyenAccountCode(shop));
+//        compensateNegativeBalanceNotificationRecord.setAmount(amount);
+//        compensateNegativeBalanceNotificationRecord.setTransferDate(new Date());
+//        shopService.processCompensateNegativeBalance(compensateNegativeBalanceNotificationRecord, "9915169689720026");
     }
 }

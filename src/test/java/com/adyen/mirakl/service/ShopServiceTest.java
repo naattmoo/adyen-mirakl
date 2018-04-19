@@ -3,18 +3,24 @@ package com.adyen.mirakl.service;
 import com.adyen.mirakl.MiraklShopFactory;
 import com.adyen.mirakl.startup.MiraklStartupValidator;
 import com.adyen.model.Address;
+import com.adyen.model.Amount;
 import com.adyen.model.Name;
 import com.adyen.model.marketpay.*;
+import com.adyen.model.marketpay.notification.CompensateNegativeBalanceNotificationRecord;
 import com.adyen.service.Account;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.mirakl.client.mmp.domain.accounting.document.MiraklAccountingDocumentType;
 import com.mirakl.client.mmp.domain.common.MiraklAdditionalFieldValue;
 import com.mirakl.client.mmp.domain.common.currency.MiraklIsoCurrencyCode;
+import com.mirakl.client.mmp.domain.invoice.MiraklInvoice;
 import com.mirakl.client.mmp.domain.shop.MiraklContactInformation;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
 import com.mirakl.client.mmp.domain.shop.MiraklShops;
 import com.mirakl.client.mmp.domain.shop.bank.MiraklIbanBankAccountInformation;
 import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
+import com.mirakl.client.mmp.operator.domain.invoice.MiraklCreatedManualAccountingDocumentReturn;
+import com.mirakl.client.mmp.operator.domain.invoice.MiraklCreatedManualAccountingDocuments;
 import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
@@ -296,6 +302,38 @@ public class ShopServiceTest {
         assertEquals("GB00IBAN", requestWithIbanChange.getAccountHolderDetails().getBankAccountDetails().get(0).getIban());
     }
 
+    @Test
+    public void testCompensateNegativeBalance() throws Exception {
+        Amount amount = new Amount();
+        amount.setCurrency("EUR");
+        amount.setValue(new Long("-100"));
+        CompensateNegativeBalanceNotificationRecord compensateNegativeBalanceNotificationRecord = new CompensateNegativeBalanceNotificationRecord();
+        compensateNegativeBalanceNotificationRecord.setAccountCode("134846738");
+        compensateNegativeBalanceNotificationRecord.setAmount(amount);
+        compensateNegativeBalanceNotificationRecord.setTransferDate(new Date());
+
+        MiraklCreatedManualAccountingDocuments miraklCreatedManualAccountingDocuments = createManualCreditDocument(amount);
+        GetAccountHolderResponse getAccountHolderResponse = new GetAccountHolderResponse();
+        getAccountHolderResponse.setAccountHolderCode("123321");
+        when(adyenAccountServiceMock.getAccountHolder(any())).thenReturn(getAccountHolderResponse);
+        when(miraklMarketplacePlatformOperatorApiClientMock.createManualAccountingDocument(any())).thenReturn(miraklCreatedManualAccountingDocuments);
+        System.out.println(shopService.processCompensateNegativeBalance(compensateNegativeBalanceNotificationRecord, "123456789"));
+        //Add assertions
+    }
+
+    private MiraklCreatedManualAccountingDocuments createManualCreditDocument(Amount amount){
+        MiraklCreatedManualAccountingDocuments miraklCreatedManualAccountingDocuments = new MiraklCreatedManualAccountingDocuments();
+        MiraklCreatedManualAccountingDocumentReturn miraklCreatedManualAccountingDocumentReturn = new MiraklCreatedManualAccountingDocumentReturn();
+        MiraklInvoice miraklCreditInvoice = new MiraklInvoice();
+        miraklCreditInvoice.setCurrencyIsoCode(MiraklIsoCurrencyCode.valueOf(amount.getCurrency()));
+        miraklCreditInvoice.setType(MiraklAccountingDocumentType.MANUAL_CREDIT);
+        miraklCreditInvoice.setTechnicalId("technicalid");
+        miraklCreatedManualAccountingDocumentReturn.setManualAccountingDocument(miraklCreditInvoice);
+        List<MiraklCreatedManualAccountingDocumentReturn> miraklCreatedManualAccountingDocumentReturnList = new ArrayList<>();
+        miraklCreatedManualAccountingDocumentReturnList.add(miraklCreatedManualAccountingDocumentReturn);
+        miraklCreatedManualAccountingDocuments.setManualAccountingDocumentReturns(miraklCreatedManualAccountingDocumentReturnList);
+        return miraklCreatedManualAccountingDocuments;
+    }
 
     private GetAccountHolderResponse createGetAccountHolderResponse() {
         GetAccountHolderResponse getAccountHolderResponse = new GetAccountHolderResponse();
