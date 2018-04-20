@@ -2,6 +2,7 @@ package com.adyen.mirakl.cucumber.stepdefs.helpers.miraklapi;
 
 import com.adyen.mirakl.service.UboService;
 import com.google.common.collect.ImmutableList;
+import com.mirakl.client.mmp.domain.common.currency.MiraklIsoCurrencyCode;
 import com.mirakl.client.mmp.domain.shop.MiraklProfessionalInformation;
 import com.mirakl.client.mmp.domain.shop.bank.MiraklIbanBankAccountInformation;
 import com.mirakl.client.mmp.domain.shop.create.MiraklCreateShopAddress;
@@ -170,6 +171,9 @@ class MiraklShopProperties extends AbstractMiraklShopSharedProperties {
         newUser.setEmail(email);
         createShop.setNewUser(newUser);
         createShop.setEmail(email);
+        if (rows.get(0).get("currency") != null) {
+            createShop.setCurrencyIsoCode(MiraklIsoCurrencyCode.valueOf(rows.get(0).get("currency")));
+        }
         log.info(String.format("\nShop name to create: [%s]", shopName));
         createShop.setName(shopName);
     }
