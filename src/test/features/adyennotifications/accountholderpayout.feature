@@ -70,3 +70,15 @@ Feature: Payout notifications for seller payout
             | transfer amount | statusCode | message                                           |
             | 100             | Failed     | There is not enough balance available for account |
             | 200             | Initiated  |                                                   |
+
+
+    @ADY-28
+    Scenario: Manual balance adjustments is made in Mirakl
+        Given a shop has been created in Mirakl for an Individual with mandatory KYC data
+            | city   | bank name | iban                   | bankOwnerName | lastName |
+            | PASSED | testBank  | GB26TEST40051512347366 | TestData      | TestData |
+        And the connector processes the data and pushes to Adyen
+        When a compensate negative balance notification is sent to the Connector
+            | currency   | amount |
+            | EUR        | -100   |
+        Then the balance of the shop is increased

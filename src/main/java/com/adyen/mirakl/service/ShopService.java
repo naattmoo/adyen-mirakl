@@ -48,7 +48,6 @@ import com.mirakl.client.mmp.domain.shop.MiraklShops;
 import com.mirakl.client.mmp.domain.shop.bank.MiraklIbanBankAccountInformation;
 import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
 import com.mirakl.client.mmp.operator.domain.invoice.MiraklCreateManualAccountingDocument;
-import com.mirakl.client.mmp.operator.domain.invoice.MiraklCreatedManualAccountingDocumentReturn;
 import com.mirakl.client.mmp.operator.domain.invoice.MiraklCreatedManualAccountingDocuments;
 import com.mirakl.client.mmp.operator.domain.invoice.MiraklManualAccountingDocumentLine;
 import com.mirakl.client.mmp.operator.domain.invoice.MiraklManualAccountingDocumentType;
@@ -436,15 +435,15 @@ public class ShopService {
         this.houseNumberPatterns = houseNumberPatterns;
     }
 
+    /**
+     * IV03: Create a manual accounting document
+     */
     public MiraklCreatedManualAccountingDocuments processCompensateNegativeBalance(CompensateNegativeBalanceNotificationRecord compensateNegativeBalanceNotificationRecord, String pspReference) {
         final String accountCode = compensateNegativeBalanceNotificationRecord.getAccountCode();
         Amount amount = compensateNegativeBalanceNotificationRecord.getAmount();
         Date transferDate = compensateNegativeBalanceNotificationRecord.getTransferDate();
         String shopId = retrieveShopIdFromAccountCode(accountCode);
 
-        /**
-         * IV03: Create a manual accounting document
-         */
         MiraklCreateManualAccountingDocument miraklCreateManualAccountingDocument = new MiraklCreateManualAccountingDocument();
         miraklCreateManualAccountingDocument.setEmissionDate(transferDate);
         miraklCreateManualAccountingDocument.setIssued(true);
@@ -468,7 +467,15 @@ public class ShopService {
 
         MiraklCreateManualAccountingDocumentRequest request = new MiraklCreateManualAccountingDocumentRequest(miraklCreateManualAccountingDocumentList);
 
-        return miraklMarketplacePlatformOperatorApiClient.createManualAccountingDocument(request);
+        MiraklCreatedManualAccountingDocuments miraklCreatedManualAccountingDocuments = null;
+        try {
+            miraklCreatedManualAccountingDocuments = miraklMarketplacePlatformOperatorApiClient.createManualAccountingDocument(request);
+        } catch(Exception e) {
+            log.error("ERROR",  e.getMessage());
+            e.printStackTrace();
+        }
+
+        return miraklCreatedManualAccountingDocuments;
     }
 
     protected String retrieveShopIdFromAccountCode(String accountCode) {

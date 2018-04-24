@@ -140,10 +140,11 @@ public class AdyenNotificationListener {
         }
     }
 
-    private void processCompensateNegativeBalanceNotification(final CompensateNegativeBalanceNotification compensateNegativeBalanceNotification) {
+    private void processCompensateNegativeBalanceNotification(final CompensateNegativeBalanceNotification compensateNegativeBalanceNotification) throws Exception {
         final List<CompensateNegativeBalanceNotificationRecordContainer> compensateNegativeBalanceNotificationRecordContainerList = compensateNegativeBalanceNotification.getContent().getRecords();
         final String pspReference = compensateNegativeBalanceNotification.getPspReference();
         compensateNegativeBalanceNotificationRecordContainerList.forEach(compensateNegativeBalanceNotificationRecordContainer -> {
+
             MiraklCreatedManualAccountingDocuments miraklCreatedManualAccountingDocuments = shopService.processCompensateNegativeBalance(compensateNegativeBalanceNotificationRecordContainer.getCompensateNegativeBalanceNotificationRecord(),
                                                                                                                                          pspReference);
 

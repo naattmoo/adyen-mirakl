@@ -46,6 +46,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
+import static org.testng.AssertJUnit.assertNull;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ShopServiceTest {
@@ -305,20 +306,25 @@ public class ShopServiceTest {
     @Test
     public void testCompensateNegativeBalance() throws Exception {
         Amount amount = new Amount();
-        amount.setCurrency("EUR");
+        String currency = "EUR";
+        amount.setCurrency(currency);
         amount.setValue(new Long("-100"));
         CompensateNegativeBalanceNotificationRecord compensateNegativeBalanceNotificationRecord = new CompensateNegativeBalanceNotificationRecord();
         compensateNegativeBalanceNotificationRecord.setAccountCode("134846738");
         compensateNegativeBalanceNotificationRecord.setAmount(amount);
         compensateNegativeBalanceNotificationRecord.setTransferDate(new Date());
 
-        MiraklCreatedManualAccountingDocuments miraklCreatedManualAccountingDocuments = createManualCreditDocument(amount);
+        MiraklCreatedManualAccountingDocuments miraklCreatedManualAccountingDocumentsMock = createManualCreditDocument(amount);
         GetAccountHolderResponse getAccountHolderResponse = new GetAccountHolderResponse();
         getAccountHolderResponse.setAccountHolderCode("123321");
         when(adyenAccountServiceMock.getAccountHolder(any())).thenReturn(getAccountHolderResponse);
-        when(miraklMarketplacePlatformOperatorApiClientMock.createManualAccountingDocument(any())).thenReturn(miraklCreatedManualAccountingDocuments);
-        System.out.println(shopService.processCompensateNegativeBalance(compensateNegativeBalanceNotificationRecord, "123456789"));
-        //Add assertions
+        when(miraklMarketplacePlatformOperatorApiClientMock.createManualAccountingDocument(any())).thenReturn(miraklCreatedManualAccountingDocumentsMock);
+
+        MiraklCreatedManualAccountingDocuments miraklCreatedManualAccountingDocuments = shopService.processCompensateNegativeBalance(compensateNegativeBalanceNotificationRecord, "123456789");
+
+        assertEquals(MiraklAccountingDocumentType.MANUAL_CREDIT, miraklCreatedManualAccountingDocuments.getManualAccountingDocumentReturns().get(0).getManualAccountingDocument().getType());
+        assertEquals(currency, miraklCreatedManualAccountingDocuments.getManualAccountingDocumentReturns().get(0).getManualAccountingDocument().getCurrencyIsoCode().toString());
+        assertNull(miraklCreatedManualAccountingDocuments.getManualAccountingDocumentReturns().get(0).getManualAccountingDocumentError());
     }
 
     private MiraklCreatedManualAccountingDocuments createManualCreditDocument(Amount amount){
