@@ -40,10 +40,10 @@ Feature: Identity verification check
         And the connector processes the data and pushes to Adyen
         When the seller uploads a document in Mirakl
             | front                   | back                    | UBO |
-            | passportFront.jpg       | passportBack.jpg        | 1   |
-            | idCardFront.jpg         | idCardBack.jpg          | 2   |
-            | drivingLicenseFront.jpg | drivingLicenseBack.jpg  | 3   |
-            |                         | anotherPassportBack.jpg | 4   |
+            | passportFront.png       | passportBack.png        | 1   |
+            | idCardFront.png         | idCardBack.png          | 2   |
+            | drivingLicenseFront.png | drivingLicenseBack.png  | 3   |
+            |                         | anotherPassportBack.png | 4   |
         And sets the photoIdType in Mirakl
             | photoIdType     | UBO |
             | PASSPORT        | 1   |
@@ -53,20 +53,20 @@ Feature: Identity verification check
         And the connector processes the document data and push to Adyen
         Then the documents are successfully uploaded to Adyen
             | documentType    | filename                |
-            | PASSPORT        | passportFront.jpg       |
-            | ID_CARD         | idCardFront.jpg         |
-            | DRIVING_LICENCE | drivingLicenseFront.jpg |
-            | DRIVING_LICENCE | drivingLicenseBack.jpg  |
+            | PASSPORT        | passportFront.png       |
+            | ID_CARD         | idCardFront.png         |
+            | DRIVING_LICENCE | drivingLicenseFront.png |
+            | DRIVING_LICENCE | drivingLicenseBack.png  |
         And the following document will not be uploaded to Adyen
             | documentType | filename         |
-            | PASSPORT     | passportBack.jpg |
+            | PASSPORT     | passportBack.png |
         When the seller uploads a document in Mirakl
             | front             | back | UBO |
-            | passportFront.jpg |      | 4   |
+            | passportFront.png |      | 4   |
         And the connector processes the document data and push to Adyen
         Then the updated documents are successfully uploaded to Adyen
             | documentType | filename          |
-            | PASSPORT     | passportFront.jpg |
+            | PASSPORT     | passportFront.png |
         When adyen will send multiple ACCOUNT_HOLDER_VERIFICATION notifications with IDENTITY_VERIFICATION of status DATA_PROVIDED
         And the ACCOUNT_HOLDER_VERIFICATION notifications are sent to Connector App
         Then the documents will be removed for each of the UBOs

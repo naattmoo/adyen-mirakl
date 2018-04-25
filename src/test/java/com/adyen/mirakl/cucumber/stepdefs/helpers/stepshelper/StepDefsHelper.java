@@ -1,7 +1,30 @@
 package com.adyen.mirakl.cucumber.stepdefs.helpers.stepshelper;
 
+import java.net.URL;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+import javax.annotation.Resource;
+import org.assertj.core.api.Assertions;
+import org.awaitility.Duration;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.web.WebAppConfiguration;
 import com.adyen.mirakl.AdyenMiraklConnectorApp;
-import com.adyen.mirakl.config.*;
+import com.adyen.mirakl.config.AdyenAccountConfiguration;
+import com.adyen.mirakl.config.AdyenConfiguration;
+import com.adyen.mirakl.config.MailTrapConfiguration;
+import com.adyen.mirakl.config.MiraklOperatorConfiguration;
+import com.adyen.mirakl.config.ShopConfiguration;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.StartUpTestingHook;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.miraklapi.MiraklShopApi;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.miraklapi.MiraklUpdateShopApi;
@@ -11,7 +34,16 @@ import com.adyen.mirakl.service.DocService;
 import com.adyen.mirakl.service.RetryPayoutService;
 import com.adyen.mirakl.service.ShopService;
 import com.adyen.model.Amount;
-import com.adyen.model.marketpay.*;
+import com.adyen.model.marketpay.AccountHolderBalanceRequest;
+import com.adyen.model.marketpay.AccountHolderBalanceResponse;
+import com.adyen.model.marketpay.DocumentDetail;
+import com.adyen.model.marketpay.GetAccountHolderRequest;
+import com.adyen.model.marketpay.GetAccountHolderResponse;
+import com.adyen.model.marketpay.ShareholderContact;
+import com.adyen.model.marketpay.TransferFundsRequest;
+import com.adyen.model.marketpay.TransferFundsResponse;
+import com.adyen.model.marketpay.UploadDocumentRequest;
+import com.adyen.model.marketpay.UploadDocumentResponse;
 import com.adyen.service.Account;
 import com.adyen.service.Fund;
 import com.adyen.service.exception.ApiException;
@@ -27,27 +59,6 @@ import com.mirakl.client.mmp.operator.domain.shop.create.MiraklCreatedShops;
 import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
 import io.restassured.RestAssured;
 import io.restassured.response.ResponseBody;
-import org.assertj.core.api.Assertions;
-import org.awaitility.Duration;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.web.WebAppConfiguration;
-
-import javax.annotation.Resource;
-import java.net.URL;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
-
 import static org.awaitility.Awaitility.await;
 import static org.awaitility.pollinterval.FibonacciPollInterval.fibonacci;
 
@@ -120,17 +131,16 @@ public class StepDefsHelper {
     // use for scenarios which don't require verificationType verification
     protected Map<String, Object> retrieveAdyenNotificationBody(String notification, String accountHolderCode) {
         Map<String, Object> adyenNotificationBody = new HashMap<>();
-        Map<String, Object> notificationBody = restAssuredAdyenApi
-            .getAdyenNotificationBody(startUpTestingHook.getBaseRequestBinUrlPath(),
-                accountHolderCode, notification, null);
+        Map<String, Object> notificationBody = restAssuredAdyenApi.getAdyenNotificationBody(startUpTestingHook.getBaseRequestBinUrlPath(), accountHolderCode, notification, null);
 
         Assertions.assertThat(adyenNotificationBody).withFailMessage("No data in endpoint.").isNotNull();
         if (notificationBody != null) {
             adyenNotificationBody.putAll(notificationBody);
         } else {
-            Assertions.fail(String
-                .format("Notification: [%s] was not found for accountHolderCode: [%s] in endpoint: [%s]",
-                    notification, accountHolderCode, startUpTestingHook.getBaseRequestBinUrlPath()));
+            Assertions.fail(String.format("Notification: [%s] was not found for accountHolderCode: [%s] in endpoint: [%s]",
+                                          notification,
+                                          accountHolderCode,
+                                          startUpTestingHook.getBaseRequestBinUrlPath()));
         }
         return adyenNotificationBody;
     }
@@ -144,8 +154,7 @@ public class StepDefsHelper {
     }
 
     protected MiraklShop retrieveCreatedShop(MiraklCreatedShops shopForIndividualWithBankDetails) {
-        return shopForIndividualWithBankDetails.getShopReturns()
-            .stream().map(MiraklCreatedShopReturn::getShopCreated).findFirst().orElse(null);
+        return shopForIndividualWithBankDetails.getShopReturns().stream().map(MiraklCreatedShopReturn::getShopCreated).findFirst().orElse(null);
     }
 
     protected GetAccountHolderResponse retrieveAccountHolderResponse(String accountHolderCode) throws Exception {
@@ -158,10 +167,9 @@ public class StepDefsHelper {
         TransferFundsRequest transferFundsRequest = new TransferFundsRequest();
         Amount amount = new Amount();
         amount.setValue(transferAmount);
-        if(currency != null) {
+        if (currency != null) {
             amount.setCurrency(currency);
-        }
-        else {
+        } else {
             amount.setCurrency("EUR");
         }
         transferFundsRequest.setAmount(amount);
@@ -172,18 +180,22 @@ public class StepDefsHelper {
     }
 
     protected void uploadPassportToAdyen(MiraklShop shop) throws Exception {
-        URL url = Resources.getResource("adyenRequests/PassportDocumentContent.txt");
+        URL url = Resources.getResource("fileuploads/passportFront.png");
         UploadDocumentRequest uploadDocumentRequest = new UploadDocumentRequest();
         uploadDocumentRequest.setDocumentContent(Resources.toString(url, Charsets.UTF_8));
         DocumentDetail documentDetail = new DocumentDetail();
         documentDetail.setAccountHolderCode(shop.getId());
         documentDetail.setDescription("PASSED");
         documentDetail.setDocumentType(DocumentDetail.DocumentTypeEnum.valueOf("PASSPORT"));
-        documentDetail.setFilename("passport.jpg");
+        documentDetail.setFilename("passportFront.png");
         uploadDocumentRequest.setDocumentDetail(documentDetail);
-        UploadDocumentResponse response = adyenAccountService.uploadDocument(uploadDocumentRequest);
-
-        Assertions.assertThat(response.getAccountHolderCode()).isEqualTo(shop.getId());
+        try {
+            UploadDocumentResponse response = adyenAccountService.uploadDocument(uploadDocumentRequest);
+            Assertions.assertThat(response.getAccountHolderCode()).isEqualTo(shop.getId());
+        } catch (ApiException e) {
+            log.error(e.getError().toString());
+            throw e;
+        }
     }
 
     protected void transferAccountHolderBalance(List<Map<String, String>> cucumberTable, MiraklShop shop) throws Exception {
@@ -198,12 +210,7 @@ public class StepDefsHelper {
             accountHolderBalanceRequest.setAccountHolderCode(shop.getId());
             AccountHolderBalanceResponse balance = adyenFundService.AccountHolderBalance(accountHolderBalanceRequest);
 
-            Assertions
-                .assertThat(balance.getTotalBalance().getBalance()
-                    .stream()
-                    .map(Amount::getValue)
-                    .findAny().orElse(null))
-                .isEqualTo(transferAmount);
+            Assertions.assertThat(balance.getTotalBalance().getBalance().stream().map(Amount::getValue).findAny().orElse(null)).isEqualTo(transferAmount);
         });
         log.info(String.format("\nAmount transferred successfully to [%s]", shop.getId()));
     }
@@ -239,55 +246,42 @@ public class StepDefsHelper {
             accountHolderBalanceRequest.setAccountHolderCode(shop.getId());
             AccountHolderBalanceResponse balance = adyenFundService.AccountHolderBalance(accountHolderBalanceRequest);
 
-            Assertions
-                .assertThat(balance.getTotalBalance().getBalance()
-                    .stream()
-                    .map(Amount::getValue)
-                    .findAny().orElse(null))
-                .isGreaterThan(transferAmount);
+            Assertions.assertThat(balance.getTotalBalance().getBalance().stream().map(Amount::getValue).findAny().orElse(null)).isGreaterThan(transferAmount);
         });
         log.info(String.format("\nAmount transferred successfully to [%s]", shop.getId()));
     }
 
     private void transferAmountAndAssert(Long transferAmount, String currency, GetAccountHolderResponse accountHolder) {
-        accountHolder.getAccounts().stream()
-            .map(com.adyen.model.marketpay.Account::getAccountCode)
-            .findAny()
-            .ifPresent(accountCode -> {
-                Integer destinationAccountCode = Integer.valueOf(accountCode);
-                Integer sourceAccountCode = adyenAccountConfiguration.getAccountCode().get("sourceAccountCode");
+        accountHolder.getAccounts().stream().map(com.adyen.model.marketpay.Account::getAccountCode).findAny().ifPresent(accountCode -> {
+            Integer destinationAccountCode = Integer.valueOf(accountCode);
+            Integer sourceAccountCode = adyenAccountConfiguration.getAccountCode().get("sourceAccountCode");
 
-                TransferFundsResponse response = null;
-                try {
-                    response = transferFundsAndRetrieveResponse(transferAmount, currency, sourceAccountCode, destinationAccountCode);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                assert response != null;
-                Assertions
-                    .assertThat(response.getResultCode())
-                    .isEqualTo("Received");
-            });
+            TransferFundsResponse response = null;
+            try {
+                response = transferFundsAndRetrieveResponse(transferAmount, currency, sourceAccountCode, destinationAccountCode);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            assert response != null;
+            Assertions.assertThat(response.getResultCode()).isEqualTo("Received");
+        });
     }
 
-    private void transferAmountFromZeroBalanceAccount(Long transferAmount,  String currency,  GetAccountHolderResponse accountHolder) {
-        accountHolder.getAccounts().stream()
-            .map(com.adyen.model.marketpay.Account::getAccountCode)
-            .findAny()
-            .ifPresent(accountCode -> {
-                Integer destinationAccountCode = Integer.valueOf(accountCode);
-                Integer sourceAccountCode = adyenAccountConfiguration.getAccountCode().get("zeroBalanceSourceAccountCode");
+    private void transferAmountFromZeroBalanceAccount(Long transferAmount, String currency, GetAccountHolderResponse accountHolder) {
+        accountHolder.getAccounts().stream().map(com.adyen.model.marketpay.Account::getAccountCode).findAny().ifPresent(accountCode -> {
+            Integer destinationAccountCode = Integer.valueOf(accountCode);
+            Integer sourceAccountCode = adyenAccountConfiguration.getAccountCode().get("zeroBalanceSourceAccountCode");
 
-                try {
-                    transferFundsAndRetrieveResponse(transferAmount, currency, sourceAccountCode, destinationAccountCode);
-                } catch (ApiException e) {
-                    log.error(e.getError().getMessage(), e);
-                    throw new IllegalStateException(e);
-                } catch (Exception e) {
-                    log.error(e.getMessage(), e);
-                    throw new IllegalStateException(e);
-                }
-            });
+            try {
+                transferFundsAndRetrieveResponse(transferAmount, currency, sourceAccountCode, destinationAccountCode);
+            } catch (ApiException e) {
+                log.error(e.getError().getMessage(), e);
+                throw new IllegalStateException(e);
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+                throw new IllegalStateException(e);
+            }
+        });
     }
 
     protected void validationCheckOnReceivedEmail(String title, String email, MiraklShop shop) {
@@ -312,15 +306,13 @@ public class StepDefsHelper {
                     Assertions.fail("Email was not found in mailtrap. Email: [%s]", email);
                 }
             }
-            Assertions
-                .assertThat(htmlBody).isNotNull();
+            Assertions.assertThat(htmlBody).isNotNull();
             Document parsedBody = Jsoup.parse(htmlBody);
-            Assertions
-                .assertThat(parsedBody.body().text())
-                .contains(shop.getId())
-                .contains(shop.getContactInformation().getCivility())
-                .contains(shop.getContactInformation().getFirstname())
-                .contains(shop.getContactInformation().getLastname());
+            Assertions.assertThat(parsedBody.body().text())
+                      .contains(shop.getId())
+                      .contains(shop.getContactInformation().getCivility())
+                      .contains(shop.getContactInformation().getFirstname())
+                      .contains(shop.getContactInformation().getLastname());
 
             Assertions.assertThat(parsedBody.title()).isEqualTo(title);
         });
@@ -329,44 +321,35 @@ public class StepDefsHelper {
     protected void validationCheckOnReceivedEmails(String title, MiraklShop shop) throws Exception {
         GetAccountHolderResponse accountHolder = retrieveAccountHolderResponse(shop.getId());
 
-        List<String> uboEmails = accountHolder.getAccountHolderDetails().getBusinessDetails().getShareholders().stream()
-            .map(ShareholderContact::getEmail)
-            .collect(Collectors.toList());
+        List<String> uboEmails = accountHolder.getAccountHolderDetails().getBusinessDetails().getShareholders().stream().map(ShareholderContact::getEmail).collect(Collectors.toList());
 
         await().with().pollInterval(fibonacci()).untilAsserted(() -> {
-                ResponseBody responseBody = RestAssured.get(mailTrapConfiguration.mailTrapEndPoint()).thenReturn().body();
-                final String response = responseBody.asString();
-                if (response.equalsIgnoreCase("{\"error\":\"Throttled\"}")) {
-                    log.warn("Mail throttled, will try again");
-                }
-                Assertions.assertThat(response).isNotEqualToIgnoringCase("{\"error\":\"Throttled\"}");
-
-                List<Map<String, Object>> emails = responseBody.jsonPath().getList("");
-                Assertions.assertThat(emails).size().isGreaterThan(0);
-
-                boolean foundEmail = emails.stream()
-                    .anyMatch(map -> map.get("to_email").equals(uboEmails.iterator().next()));
-                Assertions.assertThat(foundEmail).isTrue();
-
-                List<String> htmlBody = new LinkedList<>();
-                for (String uboEmail : uboEmails) {
-                    emails.stream()
-                        .filter(map -> map.get("to_email").equals(uboEmail))
-                        .findAny()
-                        .ifPresent(map -> htmlBody.add(map.get("html_body").toString()));
-                }
-                Assertions.assertThat(htmlBody).isNotEmpty();
-                Assertions.assertThat(htmlBody).hasSize(uboEmails.size());
-
-                for (String body : htmlBody) {
-                    Document parsedBody = Jsoup.parse(body);
-                    Assertions
-                        .assertThat(parsedBody.body().text())
-                        .contains(shop.getId());
-                    Assertions.assertThat(parsedBody.title()).isEqualTo(title);
-                }
+            ResponseBody responseBody = RestAssured.get(mailTrapConfiguration.mailTrapEndPoint()).thenReturn().body();
+            final String response = responseBody.asString();
+            if (response.equalsIgnoreCase("{\"error\":\"Throttled\"}")) {
+                log.warn("Mail throttled, will try again");
             }
-        );
+            Assertions.assertThat(response).isNotEqualToIgnoringCase("{\"error\":\"Throttled\"}");
+
+            List<Map<String, Object>> emails = responseBody.jsonPath().getList("");
+            Assertions.assertThat(emails).size().isGreaterThan(0);
+
+            boolean foundEmail = emails.stream().anyMatch(map -> map.get("to_email").equals(uboEmails.iterator().next()));
+            Assertions.assertThat(foundEmail).isTrue();
+
+            List<String> htmlBody = new LinkedList<>();
+            for (String uboEmail : uboEmails) {
+                emails.stream().filter(map -> map.get("to_email").equals(uboEmail)).findAny().ifPresent(map -> htmlBody.add(map.get("html_body").toString()));
+            }
+            Assertions.assertThat(htmlBody).isNotEmpty();
+            Assertions.assertThat(htmlBody).hasSize(uboEmails.size());
+
+            for (String body : htmlBody) {
+                Document parsedBody = Jsoup.parse(body);
+                Assertions.assertThat(parsedBody.body().text()).contains(shop.getId());
+                Assertions.assertThat(parsedBody.title()).isEqualTo(title);
+            }
+        });
     }
 
     protected ImmutableList<DocumentContext> assertOnMultipleVerificationNotifications(String eventType, String verificationType, String verificationStatus, MiraklShop shop) throws Exception {
@@ -374,30 +357,26 @@ public class StepDefsHelper {
         // get shareholderCodes from Adyen
         GetAccountHolderResponse accountHolder = getGetAccountHolderResponse(shop);
 
-        List<String> shareholderCodes = accountHolder.getAccountHolderDetails().getBusinessDetails().getShareholders().stream()
-            .map(ShareholderContact::getShareholderCode)
-            .collect(Collectors.toList());
+        List<String> shareholderCodes = accountHolder.getAccountHolderDetails()
+                                                     .getBusinessDetails()
+                                                     .getShareholders()
+                                                     .stream()
+                                                     .map(ShareholderContact::getShareholderCode)
+                                                     .collect(Collectors.toList());
 
         log.info("Shareholders found: [{}]", shareholderCodes.size());
         // get all ACCOUNT_HOLDER_VERIFICATION notifications
         AtomicReference<ImmutableList<DocumentContext>> atomicReference = new AtomicReference<>();
         await().untilAsserted(() -> {
-            List<DocumentContext> notifications = restAssuredAdyenApi
-                .getMultipleAdyenNotificationBodies(startUpTestingHook.getBaseRequestBinUrlPath(), shop.getId(), eventType, verificationType);
+            List<DocumentContext> notifications = restAssuredAdyenApi.getMultipleAdyenNotificationBodies(startUpTestingHook.getBaseRequestBinUrlPath(), shop.getId(), eventType, verificationType);
             ImmutableList<DocumentContext> verificationNotifications = restAssuredAdyenApi.extractShareHolderNotifications(notifications, shareholderCodes);
-            Assertions
-                .assertThat(verificationNotifications)
-                .withFailMessage("Notification is empty.")
-                .isNotEmpty();
+            Assertions.assertThat(verificationNotifications).withFailMessage("Notification is empty.").isNotEmpty();
 
-            Assertions
-                .assertThat(verificationNotifications.size())
-                .withFailMessage("Correct number of notifications were not found. Found: <%s>", verificationNotifications.size())
-                .isEqualTo(shareholderCodes.size());
+            Assertions.assertThat(verificationNotifications.size())
+                      .withFailMessage("Correct number of notifications were not found. Found: <%s>", verificationNotifications.size())
+                      .isEqualTo(shareholderCodes.size());
 
-            verificationNotifications.forEach(notification -> Assertions
-                .assertThat(notification.read("content.verificationStatus").toString())
-                .isEqualTo(verificationStatus));
+            verificationNotifications.forEach(notification -> Assertions.assertThat(notification.read("content.verificationStatus").toString()).isEqualTo(verificationStatus));
             atomicReference.set(verificationNotifications);
         });
         return atomicReference.get();
@@ -407,14 +386,12 @@ public class StepDefsHelper {
         AtomicReference<DocumentContext> atomicDocContext = new AtomicReference<>();
         await().untilAsserted(() -> {
             DocumentContext transferNotification = null;
-            ImmutableList<DocumentContext> notificationBodies = restAssuredAdyenApi
-                .getMultipleAdyenTransferNotifications(startUpCucumberHook.getBaseRequestBinUrlPath(), eventType, transferCode);
+            ImmutableList<DocumentContext> notificationBodies = restAssuredAdyenApi.getMultipleAdyenTransferNotifications(startUpCucumberHook.getBaseRequestBinUrlPath(), eventType, transferCode);
             Assertions.assertThat(notificationBodies).isNotEmpty();
 
-            if (notificationBodies.size() > 1){
+            if (notificationBodies.size() > 1) {
                 for (DocumentContext notification : notificationBodies) {
-                    transferNotification = restAssuredAdyenApi
-                        .extractCorrectTransferNotification(notification, sourceAccountCode, destinationAccountCode);
+                    transferNotification = restAssuredAdyenApi.extractCorrectTransferNotification(notification, sourceAccountCode, destinationAccountCode);
                     if (transferNotification != null) {
                         break;
                     }
@@ -423,9 +400,7 @@ public class StepDefsHelper {
                 transferNotification = notificationBodies.get(0);
             }
             Assertions.assertThat(transferNotification).isNotNull();
-            Assertions
-                .assertThat(transferNotification.read("content.status.statusCode").toString())
-                .isEqualTo(status);
+            Assertions.assertThat(transferNotification.read("content.status.statusCode").toString()).isEqualTo(status);
             atomicDocContext.set(transferNotification);
         });
         return atomicDocContext.get();
@@ -433,9 +408,6 @@ public class StepDefsHelper {
 
     protected String retrieveAdyenAccountCode(MiraklShop shop) throws Exception {
         GetAccountHolderResponse response = getGetAccountHolderResponse(shop);
-        return response.getAccounts().stream()
-            .map(com.adyen.model.marketpay.Account::getAccountCode)
-            .findAny()
-            .orElse(null);
+        return response.getAccounts().stream().map(com.adyen.model.marketpay.Account::getAccountCode).findAny().orElse(null);
     }
 }
