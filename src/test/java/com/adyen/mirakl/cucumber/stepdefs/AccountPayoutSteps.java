@@ -208,7 +208,7 @@ public class AccountPayoutSteps extends StepDefsHelper{
     public void adyenWillSendTheTRANSFER_FUNDSNotificationUsingTheTransferCode(String eventType, String status) throws Throwable {
         waitForNotification();
         String accountCode = retrieveAdyenAccountCode(shop);
-        adyenNotificationBody = retrieveAndExtractTransferNotifications(eventType, status, zeroBalanceSourceAccountCode, accountCode, transferCode);
+        adyenNotificationBody = retrieveAndExtractTransferNotifications(eventType, status, zeroBalanceSourceAccountCode, accountCode, subscriptionTransferCode);
     }
 
     @When("^the accountHolders balance is increased beyond the tier level$")

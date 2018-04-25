@@ -1,6 +1,8 @@
 package com.adyen.mirakl.cucumber.stepdefs.helpers.stepshelper;
 
+import java.io.File;
 import java.net.URL;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -47,7 +49,6 @@ import com.adyen.model.marketpay.UploadDocumentResponse;
 import com.adyen.service.Account;
 import com.adyen.service.Fund;
 import com.adyen.service.exception.ApiException;
-import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
 import com.jayway.jsonpath.DocumentContext;
@@ -59,6 +60,7 @@ import com.mirakl.client.mmp.operator.domain.shop.create.MiraklCreatedShops;
 import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
 import io.restassured.RestAssured;
 import io.restassured.response.ResponseBody;
+import static com.google.common.io.Files.toByteArray;
 import static org.awaitility.Awaitility.await;
 import static org.awaitility.pollinterval.FibonacciPollInterval.fibonacci;
 
@@ -106,8 +108,6 @@ public class StepDefsHelper {
 
     @Value("${payoutService.subscriptionTransferCode}")
     protected String subscriptionTransferCode;
-    @Value("${payoutService.transferCode}")
-    protected String transferCode;
     @Value("${payoutService.liableAccountCode}")
     protected String liableAccountCode;
     @Value("${accounts.accountCode.zeroBalanceSourceAccountCode}")
@@ -175,14 +175,20 @@ public class StepDefsHelper {
         transferFundsRequest.setAmount(amount);
         transferFundsRequest.setSourceAccountCode(sourceAccountCode.toString());
         transferFundsRequest.setDestinationAccountCode(destinationAccountCode.toString());
-        transferFundsRequest.setTransferCode(transferCode);
+        transferFundsRequest.setTransferCode(subscriptionTransferCode);
         return adyenFundService.transferFunds(transferFundsRequest);
     }
 
     protected void uploadPassportToAdyen(MiraklShop shop) throws Exception {
         URL url = Resources.getResource("fileuploads/passportFront.png");
+        File file = new File(url.getPath());
+        byte[] bytes = toByteArray(file);
+        Base64.Encoder encoder = Base64.getEncoder();
+        String encoded = encoder.encodeToString(bytes);
+
         UploadDocumentRequest uploadDocumentRequest = new UploadDocumentRequest();
-        uploadDocumentRequest.setDocumentContent(Resources.toString(url, Charsets.UTF_8));
+        uploadDocumentRequest.setDocumentContent(encoded);
+
         DocumentDetail documentDetail = new DocumentDetail();
         documentDetail.setAccountHolderCode(shop.getId());
         documentDetail.setDescription("PASSED");
@@ -259,6 +265,8 @@ public class StepDefsHelper {
             TransferFundsResponse response = null;
             try {
                 response = transferFundsAndRetrieveResponse(transferAmount, currency, sourceAccountCode, destinationAccountCode);
+            } catch (ApiException e) {
+                log.error(e.getError().toString());
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -302,9 +310,8 @@ public class StepDefsHelper {
                     htmlBody = list.get("html_body").toString();
                     Assertions.assertThat(email).isEqualTo(list.get("to_email"));
                     break;
-                } else {
-                    Assertions.fail("Email was not found in mailtrap. Email: [%s]", email);
                 }
+                Assertions.fail("Email was not found in mailtrap. Email: [%s]", email);
             }
             Assertions.assertThat(htmlBody).isNotNull();
             Document parsedBody = Jsoup.parse(htmlBody);
