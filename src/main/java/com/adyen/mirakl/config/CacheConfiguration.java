@@ -17,7 +17,6 @@ import org.springframework.context.annotation.*;
 
 @Configuration
 @EnableCaching
-@AutoConfigureAfter(value = { MetricsConfiguration.class })
 @AutoConfigureBefore(value = { WebConfigurer.class, DatabaseConfiguration.class })
 public class CacheConfiguration {
 
@@ -37,11 +36,6 @@ public class CacheConfiguration {
     @Bean
     public JCacheManagerCustomizer cacheManagerCustomizer() {
         return cm -> {
-            cm.createCache(com.adyen.mirakl.repository.UserRepository.USERS_BY_LOGIN_CACHE, jcacheConfiguration);
-            cm.createCache(com.adyen.mirakl.repository.UserRepository.USERS_BY_EMAIL_CACHE, jcacheConfiguration);
-            cm.createCache(com.adyen.mirakl.domain.User.class.getName(), jcacheConfiguration);
-            cm.createCache(com.adyen.mirakl.domain.Authority.class.getName(), jcacheConfiguration);
-            cm.createCache(com.adyen.mirakl.domain.User.class.getName() + ".authorities", jcacheConfiguration);
             cm.createCache(com.adyen.mirakl.domain.AdyenNotification.class.getName(), jcacheConfiguration);
             cm.createCache(com.adyen.mirakl.domain.MiraklDelta.class.getName(), jcacheConfiguration);
             cm.createCache(com.adyen.mirakl.domain.MiraklDocumentDelta.class.getName(), jcacheConfiguration);

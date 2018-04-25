@@ -1,14 +1,10 @@
 package com.adyen.mirakl.service;
 
-import com.adyen.mirakl.AdyenMiraklConnectorApp;
-import com.adyen.mirakl.config.Constants;
-import com.adyen.mirakl.domain.User;
-import com.adyen.mirakl.exceptions.UnexpectedMailFailureException;
-import com.google.common.io.Resources;
-import com.mirakl.client.core.internal.mapper.CustomObjectMapper;
-import com.mirakl.client.mmp.domain.shop.MiraklShop;
-import com.mirakl.client.mmp.domain.shop.MiraklShops;
-import io.github.jhipster.config.JHipsterProperties;
+import java.io.ByteArrayOutputStream;
+import javax.mail.Multipart;
+import javax.mail.internet.MimeBodyPart;
+import javax.mail.internet.MimeMessage;
+import javax.mail.internet.MimeMultipart;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -29,18 +25,14 @@ import org.springframework.retry.backoff.NoBackOffPolicy;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.thymeleaf.spring4.SpringTemplateEngine;
-
-import javax.mail.Multipart;
-import javax.mail.internet.MimeBodyPart;
-import javax.mail.internet.MimeMessage;
-import javax.mail.internet.MimeMultipart;
-import java.io.ByteArrayOutputStream;
-import java.net.URL;
-import java.util.Locale;
-
+import com.adyen.mirakl.AdyenMiraklConnectorApp;
+import com.adyen.mirakl.exceptions.UnexpectedMailFailureException;
+import io.github.jhipster.config.JHipsterProperties;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = AdyenMiraklConnectorApp.class)
@@ -84,7 +76,7 @@ public class MailServiceIntTest {
 
     //See comments on RetryTemplate
     @After
-    public void resetBackoffPolicyForOtherTests(){
+    public void resetBackoffPolicyForOtherTests() {
         taskRetryTemplate.setBackOffPolicy(exponentialBackOffPolicy);
     }
 
