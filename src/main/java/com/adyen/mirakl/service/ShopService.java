@@ -438,7 +438,7 @@ public class ShopService {
     /**
      * IV03: Create a manual accounting document
      */
-    public MiraklCreatedManualAccountingDocuments processCompensateNegativeBalance(CompensateNegativeBalanceNotificationRecord compensateNegativeBalanceNotificationRecord, String pspReference) {
+    public MiraklCreatedManualAccountingDocuments processCompensateNegativeBalance(CompensateNegativeBalanceNotificationRecord compensateNegativeBalanceNotificationRecord, String pspReference) throws Exception {
         final String accountCode = compensateNegativeBalanceNotificationRecord.getAccountCode();
         Amount amount = compensateNegativeBalanceNotificationRecord.getAmount();
         Date transferDate = compensateNegativeBalanceNotificationRecord.getTransferDate();
@@ -467,15 +467,7 @@ public class ShopService {
 
         MiraklCreateManualAccountingDocumentRequest request = new MiraklCreateManualAccountingDocumentRequest(miraklCreateManualAccountingDocumentList);
 
-        MiraklCreatedManualAccountingDocuments miraklCreatedManualAccountingDocuments = null;
-        try {
-            miraklCreatedManualAccountingDocuments = miraklMarketplacePlatformOperatorApiClient.createManualAccountingDocument(request);
-        } catch(Exception e) {
-            log.error("ERROR",  e.getMessage());
-            e.printStackTrace();
-        }
-
-        return miraklCreatedManualAccountingDocuments;
+        return miraklMarketplacePlatformOperatorApiClient.createManualAccountingDocument(request);
     }
 
     protected String retrieveShopIdFromAccountCode(String accountCode) {

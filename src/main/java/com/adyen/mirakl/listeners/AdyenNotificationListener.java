@@ -143,21 +143,27 @@ public class AdyenNotificationListener {
     private void processCompensateNegativeBalanceNotification(final CompensateNegativeBalanceNotification compensateNegativeBalanceNotification) throws Exception {
         final List<CompensateNegativeBalanceNotificationRecordContainer> compensateNegativeBalanceNotificationRecordContainerList = compensateNegativeBalanceNotification.getContent().getRecords();
         final String pspReference = compensateNegativeBalanceNotification.getPspReference();
+
         compensateNegativeBalanceNotificationRecordContainerList.forEach(compensateNegativeBalanceNotificationRecordContainer -> {
+            try {
+                MiraklCreatedManualAccountingDocuments miraklCreatedManualAccountingDocuments = shopService.processCompensateNegativeBalance(compensateNegativeBalanceNotificationRecordContainer.getCompensateNegativeBalanceNotificationRecord(),
+                                                                                                                                             pspReference);
 
-            MiraklCreatedManualAccountingDocuments miraklCreatedManualAccountingDocuments = shopService.processCompensateNegativeBalance(compensateNegativeBalanceNotificationRecordContainer.getCompensateNegativeBalanceNotificationRecord(),
-                                                                                                                                         pspReference);
-
-            if (miraklCreatedManualAccountingDocuments.getManualAccountingDocumentReturns().get(0).getManualAccountingDocumentError() != null
-                && ! miraklCreatedManualAccountingDocuments.getManualAccountingDocumentReturns().get(0).getManualAccountingDocumentError().getErrors().isEmpty()) {
-                CompensateNegativeBalanceNotificationRecord notificationRecord = compensateNegativeBalanceNotificationRecordContainer.getCompensateNegativeBalanceNotificationRecord();
-                mailTemplateService.sendOperatorEmailManualCreditDocumentFailure(notificationRecord.getAccountCode(),
-                                                                                 notificationRecord.getAmount(),
-                                                                                 pspReference,
-                                                                                 miraklCreatedManualAccountingDocuments.getManualAccountingDocumentReturns()
-                                                                                                                       .get(0)
-                                                                                                                       .getManualAccountingDocumentError()
-                                                                                                                       .getErrors());
+                if (miraklCreatedManualAccountingDocuments.getManualAccountingDocumentReturns().get(0).getManualAccountingDocumentError() != null
+                    && ! miraklCreatedManualAccountingDocuments.getManualAccountingDocumentReturns().get(0).getManualAccountingDocumentError().getErrors().isEmpty()) {
+                    CompensateNegativeBalanceNotificationRecord notificationRecord = compensateNegativeBalanceNotificationRecordContainer.getCompensateNegativeBalanceNotificationRecord();
+                    mailTemplateService.sendOperatorEmailManualCreditDocumentFailure(notificationRecord.getAccountCode(),
+                                                                                     notificationRecord.getAmount(),
+                                                                                     pspReference,
+                                                                                     miraklCreatedManualAccountingDocuments.getManualAccountingDocumentReturns()
+                                                                                                                           .get(0)
+                                                                                                                           .getManualAccountingDocumentError()
+                                                                                                                           .getErrors());
+                }
+            } catch (ApiException e) {
+                log.error("Failed processing notification: {}", e.getError(), e);
+            } catch (Exception e) {
+                log.error("Exception: {}", e.getMessage(), e);
             }
         });
     }

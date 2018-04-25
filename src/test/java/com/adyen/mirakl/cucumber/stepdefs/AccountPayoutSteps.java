@@ -232,10 +232,7 @@ public class AccountPayoutSteps extends StepDefsHelper {
     }
 
     @When("^a compensate negative balance notification is sent to the Connector$")
-    public void aCompensateNegativeBalanceNotificationIsSent(DataTable table) throws Exception {
-
-        List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
-        //        waitForNotification();
+    public void aCompensateNegativeBalanceNotificationIsSent() throws Exception {
         String accountCode = retrieveAdyenAccountCode(shop);
 
         final String adyenRequestJson = "{\n"
@@ -248,7 +245,7 @@ public class AccountPayoutSteps extends StepDefsHelper {
             + "\",\n"
             + "                    \"amount\": {\n"
             + "                        \"currency\": \""
-            + cucumberTable.get(0).get("currency")
+            + "EUR"
             + "\",\n"
             + "                        \"value\": \"-10000\"\n"
             + "                    },\n"
@@ -266,26 +263,6 @@ public class AccountPayoutSteps extends StepDefsHelper {
         restAdyenNotificationMockMvc.perform(post("/api/adyen-notifications").contentType(TestUtil.APPLICATION_JSON_UTF8).content(adyenRequestJson)).andExpect(status().is(201));
     }
 
-
-    //    @Then("^a manual credit document is created$")
-    //    public void aManualCreditMemoIsCreated() {
-    //        waitForNotification();
-    ////        await().untilAsserted(() -> {
-    ////
-    ////            MiraklGetInvoicesRequest miraklGetInvoicesRequest = new MiraklGetInvoicesRequest();
-    ////            MiraklInvoices miraklInvoices = miraklMarketplacePlatformOperatorApiClient.getInvoices(miraklGetInvoicesRequest);
-    ////            miraklInvoices.getInvoices().forEach(miraklInvoice -> { });
-    ////
-    ////            GetAccountHolderResponse account = getGetAccountHolderResponse(shop);
-    ////            Boolean allowPayout = account.getAccountHolderStatus().getPayoutState().getAllowPayout();
-    ////            Assertions
-    ////                .assertThat(allowPayout)
-    ////                .isTrue();
-    ////            log.info(String.format("Payout status is [%s]", allowPayout.toString()));
-    ////        });
-    //    }
-
-
     @Then("^the balance of the shop is increased$")
     public void TheBalanceOfTheShopIsIncreased() {
         // wait until notification is proccessed
@@ -296,5 +273,4 @@ public class AccountPayoutSteps extends StepDefsHelper {
         Assert.assertEquals(100, shop.getPaymentDetail().getPayableBalance().intValue());
 
     }
-
 }

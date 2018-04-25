@@ -79,6 +79,4 @@ Feature: Payout notifications for seller payout
             | PASSED | testBank  | GB26TEST40051512347366 | TestData      | TestData |
         And the connector processes the data and pushes to Adyen
         When a compensate negative balance notification is sent to the Connector
-            | currency   | amount |
-            | EUR        | -100   |
         Then the balance of the shop is increased
