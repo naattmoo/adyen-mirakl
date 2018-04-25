@@ -70,3 +70,21 @@ Feature: Payout notifications for seller payout
             | transfer amount | statusCode | message                                           |
             | 100             | Failed     | There is not enough balance available for account |
             | 200             | Initiated  |                                                   |
+
+    @ADY-47
+    Scenario: Successful payout notification is received upon successful seller payout in a different currency
+        Given a shop has been created in Mirakl for an Individual with mandatory KYC data
+            | city   | bank name | iban                   | bankOwnerName | lastName | currency |
+            | PASSED | testBank  | GB26TEST40051512347366 | TestData      | TestData | GBP      |
+        And the connector processes the data and pushes to Adyen
+        And a passport has been uploaded to Adyen
+        And the accountHolders balance is increased
+            | transfer amount | currency |
+            | 9900            | GBP      |
+        And the PayoutState allowPayout changes from false to true
+        When a payment voucher is sent to the Connector
+            | paymentVoucher                  |
+            | PaymentVoucher_PayoutShopGBP.csv |
+        Then adyen will send the ACCOUNT_HOLDER_PAYOUT notification
+            | currency | amount | statusCode | iban                   |
+            | GBP      | 2914.0 | Initiated  | GB26TEST40051512347366 |
