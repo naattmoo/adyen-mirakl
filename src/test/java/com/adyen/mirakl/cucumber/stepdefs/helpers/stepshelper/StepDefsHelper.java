@@ -112,6 +112,8 @@ public class StepDefsHelper {
     protected String liableAccountCode;
     @Value("${accounts.accountCode.zeroBalanceSourceAccountCode}")
     protected String zeroBalanceSourceAccountCode;
+    @Value("${accounts.accountCode.sourceAccountCode}")
+    protected String configSourceAccountCode;
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 
