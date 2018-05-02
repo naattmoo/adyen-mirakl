@@ -109,7 +109,7 @@ public class DocServiceTest {
     public void testRetrieveBankproofAndUpload() throws Exception {
 
         FileWrapper fileWrapper = mock(FileWrapper.class);
-        URL url = Resources.getResource("fileuploads/BankStatement.jpg");
+        URL url = Resources.getResource("fileuploads/BankStatement.png");
         File file = new File(url.getPath());
 
         List<MiraklShopDocument> miraklShopDocumentList = new ArrayList<>();
@@ -149,7 +149,7 @@ public class DocServiceTest {
 
     @Test
     public void shouldProcessUboDocuments() throws Exception {
-        URL url = Resources.getResource("fileuploads/BankStatement.jpg");
+        URL url = Resources.getResource("fileuploads/BankStatement.png");
         File file = new File(url.getPath());
 
         when(miraklMarketplacePlatformOperatorApiClientMock.getShopDocuments(any())).thenReturn(ImmutableList.of(miraklShopDocumentMock));

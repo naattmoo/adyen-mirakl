@@ -150,8 +150,8 @@ public class AccountCreatedAndUpdatedSteps extends StepDefsHelper {
             retrieveAccountHolderResponse(shop.getId());
         } catch (ApiException e) {
             Assertions
-                .assertThat(e.getError().getMessage())
-                .contains("Account with accountCode='"+shop.getId()+"' does not exist");
+                .assertThat(e.getError().getErrorCode())
+                .isEqualTo("10_035");
         }
     }
 

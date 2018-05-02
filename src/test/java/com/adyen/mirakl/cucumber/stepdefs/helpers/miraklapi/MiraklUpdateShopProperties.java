@@ -141,11 +141,11 @@ class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperties {
     MiraklUploadShopDocumentsRequest uploadMiraklShopWithBankStatement(String shopId) {
         ImmutableList.Builder<MiraklUploadDocument> docUploadRequestBuilder = new ImmutableList.Builder<>();
 
-        URL url = Resources.getResource("fileuploads/BankStatement.jpg");
+        URL url = Resources.getResource("fileuploads/BankStatement.png");
 
         MiraklUploadDocument element = new MiraklUploadDocument();
         element.setFile(new File(url.getPath()));
-        element.setFileName("BankStatement.jpg");
+        element.setFileName("BankStatement.png");
         element.setTypeCode("adyen-bankproof");
 
         docUploadRequestBuilder.add(element);
