@@ -1,7 +1,19 @@
 # Adyen Mirakl Connector
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Build Status](https://travis-ci.org/Adyen/adyen-mirakl.svg?branch=develop)](https://travis-ci.org/Adyen/adyen-mirakl)
+
+
+The Adyen Mirakl Connector integrates a Mirakl Marketplace Platform Instance with an Adyen MarketPay Merchant Account.
+
+* The Connector manages the transfer of Shop data from Mirakl to create and update Account Holders in the MarketPay for purpose of Financial Onboarding and KYC Checks.
+* The Connector manages the Payout of Sellers through MarketPay when Mirakl Posts the Payout Voucher to the Connector.
+
+
+
+ ## Documentation
 We have a [Wiki](https://github.com/e2y/adyen-mirakl/wiki) for more detailed information.
 
-This page is a quick overview cheatsheet for developers.
 
 ## Development
 This application was generated using JHipster 4.14.0, you can find documentation and help at [http://www.jhipster.tech/documentation-archive/v4.14.0](http://www.jhipster.tech/documentation-archive/v4.14.0).
@@ -106,3 +118,5 @@ and run:
 
     src/test/resources/scripts/smtp_nc.sh
     
+## License
+This repository is open source and available under the MIT license. See the LICENSE file for more info.
