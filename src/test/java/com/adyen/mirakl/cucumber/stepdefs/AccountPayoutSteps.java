@@ -1,5 +1,19 @@
 package com.adyen.mirakl.cucumber.stepdefs;
 
+import java.net.URL;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import org.assertj.core.api.Assertions;
+import org.awaitility.Awaitility;
+import org.awaitility.Duration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.stepshelper.StepDefsHelper;
 import com.adyen.mirakl.domain.AdyenPayoutError;
 import com.adyen.mirakl.web.rest.AdyenNotificationResource;
@@ -18,27 +32,11 @@ import cucumber.api.java.en.And;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
-import org.assertj.core.api.Assertions;
-import org.awaitility.Awaitility;
-import org.awaitility.Duration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-
-import java.net.URL;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
 import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-public class AccountPayoutSteps extends StepDefsHelper{
+public class AccountPayoutSteps extends StepDefsHelper {
 
     @Autowired
     private MiraklNotificationsResource miraklNotificationsResource;
@@ -83,9 +81,7 @@ public class AccountPayoutSteps extends StepDefsHelper{
         await().untilAsserted(() -> {
             GetAccountHolderResponse account = getGetAccountHolderResponse(shop);
             Boolean allowPayout = account.getAccountHolderStatus().getPayoutState().getAllowPayout();
-            Assertions
-                .assertThat(allowPayout)
-                .isTrue();
+            Assertions.assertThat(allowPayout).isTrue();
             log.info(String.format("Payout status is [%s]", allowPayout.toString()));
         });
     }
@@ -99,13 +95,12 @@ public class AccountPayoutSteps extends StepDefsHelper{
 
         waitForNotification();
         await().untilAsserted(() -> {
-            notifications = restAssuredAdyenApi
-                .getMultipleAdyenNotificationBodies(startUpTestingHook.getBaseRequestBinUrlPath(), shop.getId(), eventType, null);
+            notifications = restAssuredAdyenApi.getMultipleAdyenNotificationBodies(startUpTestingHook.getBaseRequestBinUrlPath(), shop.getId(), eventType, null);
 
             final Optional<DocumentContext> notification = notifications.stream()
-                .filter(x -> x.read("content.oldStatus.payoutState.allowPayout").equals(oldPayoutState))
-                .filter(x -> x.read("content.newStatus.payoutState.allowPayout").equals(newPayoutState))
-                .findAny();
+                                                                        .filter(x -> x.read("content.oldStatus.payoutState.allowPayout").equals(oldPayoutState))
+                                                                        .filter(x -> x.read("content.newStatus.payoutState.allowPayout").equals(newPayoutState))
+                                                                        .findAny();
             Assertions.assertThat(notification.isPresent()).isTrue();
 
             adyenNotificationBody = notification.get();
@@ -115,10 +110,7 @@ public class AccountPayoutSteps extends StepDefsHelper{
 
     @When("^the notification is sent to the Connector$")
     public void theNotificationIsSentToTheConnector() throws Throwable {
-        restAdyenNotificationMockMvc.perform(post("/api/adyen-notifications")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(adyenNotificationBody.jsonString()))
-            .andExpect(status().is(201));
+        restAdyenNotificationMockMvc.perform(post("/api/adyen-notifications").contentType(TestUtil.APPLICATION_JSON_UTF8).content(adyenNotificationBody.jsonString())).andExpect(status().is(201));
         log.info("Notification posted to Connector: [{}]", adyenNotificationBody.jsonString());
     }
 
@@ -126,13 +118,11 @@ public class AccountPayoutSteps extends StepDefsHelper{
     public void aPaymentVoucherIsSentToAdyen(DataTable table) throws Exception {
         List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
         String paymentVoucher = cucumberTable.get(0).get("paymentVoucher");
-        URL url = Resources.getResource("paymentvouchers/"+paymentVoucher);
+        URL url = Resources.getResource("paymentvouchers/" + paymentVoucher);
         final String csvFile = Resources.toString(url, Charsets.UTF_8);
         String csv = csvFile.replaceAll("\\$shopId\\$", shop.getId());
         MockMultipartFile mockMultipartFile = new MockMultipartFile("file", paymentVoucher, "text/plain", csv.getBytes());
-        restUserMockMvc.perform(MockMvcRequestBuilders.fileUpload("/api/mirakl-notifications/payout")
-            .file(mockMultipartFile))
-            .andExpect(status().is(200));
+        restUserMockMvc.perform(MockMvcRequestBuilders.fileUpload("/api/mirakl-notifications/payout").file(mockMultipartFile)).andExpect(status().is(200));
     }
 
     @Then("^adyen will send the (.*) notification$")
@@ -143,14 +133,10 @@ public class AccountPayoutSteps extends StepDefsHelper{
             Map<String, Object> adyenNotificationBody = retrieveAdyenNotificationBody(notification, accountHolderCode);
             DocumentContext content = JsonPath.parse(adyenNotificationBody.get("content"));
             cucumberTable.forEach(row -> {
-                Assertions.assertThat(row.get("statusCode"))
-                    .isEqualTo(content.read("status.statusCode"));
-                Assertions.assertThat(row.get("currency"))
-                    .isEqualTo(content.read("amounts[0].Amount.currency"));
-                Assertions.assertThat(row.get("amount"))
-                    .isEqualTo(Double.toString(content.read("amounts[0].Amount.value")));
-                Assertions.assertThat(row.get("iban"))
-                    .isEqualTo(content.read("bankAccountDetail.iban"));
+                Assertions.assertThat(row.get("statusCode")).isEqualTo(content.read("status.statusCode"));
+                Assertions.assertThat(row.get("currency")).isEqualTo(content.read("amounts[0].Amount.currency"));
+                Assertions.assertThat(row.get("amount")).isEqualTo(Double.toString(content.read("amounts[0].Amount.value")));
+                Assertions.assertThat(row.get("iban")).isEqualTo(content.read("bankAccountDetail.iban"));
             });
         });
     }
@@ -162,14 +148,10 @@ public class AccountPayoutSteps extends StepDefsHelper{
         await().untilAsserted(() -> {
             Map<String, Object> adyenNotificationBody = retrieveAdyenNotificationBody(notification, shop.getId());
             DocumentContext content = JsonPath.parse(adyenNotificationBody.get("content"));
-            Assertions.assertThat(cucumberTable.get(0).get("statusCode"))
-                .withFailMessage("Status was not correct.")
-                .isEqualTo(content.read("status.statusCode"));
+            Assertions.assertThat(cucumberTable.get(0).get("statusCode")).withFailMessage("Status was not correct.").isEqualTo(content.read("status.statusCode"));
             String message = cucumberTable.get(0).get("message");
-            if (!message.equals("")) {
-                Assertions
-                    .assertThat(content.read("status.message.text").toString())
-                    .contains(message);
+            if (! message.equals("")) {
+                Assertions.assertThat(content.read("status.message.text").toString()).contains(message);
             }
             log.info(content.toString());
             this.adyenNotificationBody = JsonPath.parse(adyenNotificationBody);
@@ -179,9 +161,7 @@ public class AccountPayoutSteps extends StepDefsHelper{
     @And("^the failed payout record is removed from the Connector database$")
     public void theFailedPayoutRecordIsRemovedFromTheConnectorDatabase() {
         List<AdyenPayoutError> byAccountHolderCode = adyenPayoutErrorRepository.findByAccountHolderCode(accountHolderCode);
-        Assertions
-            .assertThat(byAccountHolderCode)
-            .isEmpty();
+        Assertions.assertThat(byAccountHolderCode).isEmpty();
     }
 
     @And("^balance is transferred from a zero balance account$")
@@ -201,14 +181,14 @@ public class AccountPayoutSteps extends StepDefsHelper{
     public void TRANSFER_FUNDSNotificationWillBeSentByAdyen(String eventType, String status) throws Throwable {
         waitForNotification();
         String accountCode = retrieveAdyenAccountCode(shop);
-        retrieveAndExtractTransferNotifications(eventType, status, liableAccountCode, accountCode, subscriptionTransferCode);
+        retrieveAndExtractTransferNotifications(eventType, status, configSourceAccountCode, accountCode, subscriptionTransferCode);
     }
 
     @Then("^adyen will send the (.*) notification using the transferCode$")
     public void adyenWillSendTheTRANSFER_FUNDSNotificationUsingTheTransferCode(String eventType, String status) throws Throwable {
         waitForNotification();
         String accountCode = retrieveAdyenAccountCode(shop);
-        adyenNotificationBody = retrieveAndExtractTransferNotifications(eventType, status, zeroBalanceSourceAccountCode, accountCode, transferCode);
+        adyenNotificationBody = retrieveAndExtractTransferNotifications(eventType, status, zeroBalanceSourceAccountCode, accountCode, subscriptionTransferCode);
     }
 
     @When("^the accountHolders balance is increased beyond the tier level$")
@@ -223,9 +203,7 @@ public class AccountPayoutSteps extends StepDefsHelper{
         await().untilAsserted(() -> {
             GetAccountHolderResponse account = getGetAccountHolderResponse(shop);
             Boolean allowPayout = account.getAccountHolderStatus().getPayoutState().getAllowPayout();
-            Assertions
-                .assertThat(allowPayout)
-                .isFalse();
+            Assertions.assertThat(allowPayout).isFalse();
             log.info(String.format("Payout status is [%s]", allowPayout.toString()));
         });
     }
@@ -238,7 +216,7 @@ public class AccountPayoutSteps extends StepDefsHelper{
 
     @Then("^a payout email will be sent to the operator$")
     public void aPayoutEmailWillBeSentToTheOperator(String title) {
-        log.info("Operator email: [{}]",miraklOperatorConfiguration.getMiraklOperatorEmail());
+        log.info("Operator email: [{}]", miraklOperatorConfiguration.getMiraklOperatorEmail());
         validationCheckOnReceivedEmail(title, miraklOperatorConfiguration.getMiraklOperatorEmail(), shop);
     }
 }
