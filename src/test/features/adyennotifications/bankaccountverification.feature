@@ -19,8 +19,6 @@ Feature: Bank Account Verification
             | eventType              | iban                   |
             | ACCOUNT_HOLDER_UPDATED | GB26TEST40051512393150 |
         And the previous BankAccountDetail will be removed
-            | eventType                    | reason                |
-            | ACCOUNT_HOLDER_STATUS_CHANGE | Bank account deletion |
         When the seller uploads a Bank Statement in Mirakl
         And the connector processes the document data and push to Adyen
         And the document is successfully uploaded to Adyen

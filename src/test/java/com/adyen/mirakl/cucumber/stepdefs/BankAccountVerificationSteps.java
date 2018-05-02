@@ -1,11 +1,14 @@
 package com.adyen.mirakl.cucumber.stepdefs;
 
+import java.util.List;
+import java.util.Map;
+import org.assertj.core.api.Assertions;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.stepshelper.StepDefsHelper;
 import com.adyen.model.marketpay.DocumentDetail;
+import com.adyen.model.marketpay.GetAccountHolderResponse;
 import com.adyen.model.marketpay.GetUploadedDocumentsRequest;
 import com.adyen.model.marketpay.GetUploadedDocumentsResponse;
 import com.google.common.collect.ImmutableList;
-import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
 import com.mirakl.client.mmp.operator.domain.shop.create.MiraklCreatedShops;
@@ -14,23 +17,17 @@ import cucumber.api.java.en.And;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
-import org.assertj.core.api.Assertions;
-
-import java.util.List;
-import java.util.Map;
-
 import static org.awaitility.Awaitility.await;
 
-public class BankAccountVerificationSteps extends StepDefsHelper{
+public class BankAccountVerificationSteps extends StepDefsHelper {
 
     private MiraklShop shop;
-    private List<DocumentContext> notifications;
+    private String lastIban;
 
     @Given("^a shop has been created in Mirakl for an (.*) with Bank Information$")
     public void aShopHasBeenCreatedInMiraklForAnIndividualWithBankInformation(String legalEntity, DataTable table) {
         List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
-        MiraklCreatedShops shops = miraklShopApi
-            .createShopForIndividualWithBankDetails(miraklMarketplacePlatformOperatorApiClient, cucumberTable, legalEntity);
+        MiraklCreatedShops shops = miraklShopApi.createShopForIndividualWithBankDetails(miraklMarketplacePlatformOperatorApiClient, cucumberTable, legalEntity);
         this.shop = retrieveCreatedShop(shops);
     }
 
@@ -44,35 +41,28 @@ public class BankAccountVerificationSteps extends StepDefsHelper{
     @When("^the IBAN has been modified in Mirakl$")
     public void theIBANHasBeenModifiedInMirakl(DataTable table) {
         List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
-        this.shop = miraklUpdateShopApi
-            .updateShopsIbanNumberOnly(this.shop, this.shop.getId(), miraklMarketplacePlatformOperatorApiClient, cucumberTable);
+        this.shop = miraklUpdateShopApi.updateShopsIbanNumberOnly(this.shop, this.shop.getId(), miraklMarketplacePlatformOperatorApiClient, cucumberTable);
+        this.lastIban = cucumberTable.get(0).get("iban");
     }
 
     @And("^a new IBAN has been provided by the seller in Mirakl and the mandatory IBAN fields have been provided$")
     public void aNewIBANHasBeenProvidedByTheSellerInMiraklAndTheMandatoryIBANFieldsHaveBeenProvided() {
-        this.shop = miraklUpdateShopApi
-            .updateShopToAddBankDetails(this.shop, this.shop.getId(), miraklMarketplacePlatformOperatorApiClient);
+        this.shop = miraklUpdateShopApi.updateShopToAddBankDetails(this.shop, this.shop.getId(), miraklMarketplacePlatformOperatorApiClient);
     }
 
     @When("^the seller uploads a Bank Statement in Mirakl$")
     public void theSellerUploadsABankStatementInMirakl() {
-        miraklUpdateShopApi
-            .uploadBankStatementToExistingShop(shop.getId(), miraklMarketplacePlatformOperatorApiClient);
+        miraklUpdateShopApi.uploadBankStatementToExistingShop(shop.getId(), miraklMarketplacePlatformOperatorApiClient);
     }
 
     @Then("^the (.*) notification is sent by Adyen comprising of (.*) and (.*)")
-    public void theACCOUNT_HOLDER_VERIFICATIONNotificationIsSentByAdyenComprisingOfBANK_ACCOUNT_VERIFICATIONAndPASSED(String notification,
-                                                                                                                      String verificationType,
-                                                                                                                      String verificationStatus) {
+    public void theACCOUNT_HOLDER_VERIFICATIONNotificationIsSentByAdyenComprisingOfBANK_ACCOUNT_VERIFICATIONAndPASSED(String notification, String verificationType, String verificationStatus) {
         waitForNotification();
         await().untilAsserted(() -> {
-            Map<String, Object> adyenNotificationBody = restAssuredAdyenApi
-                .getAdyenNotificationBody(startUpTestingHook.getBaseRequestBinUrlPath(), this.shop.getId(), notification, verificationType);
+            Map<String, Object> adyenNotificationBody = restAssuredAdyenApi.getAdyenNotificationBody(startUpTestingHook.getBaseRequestBinUrlPath(), this.shop.getId(), notification, verificationType);
             Assertions.assertThat(adyenNotificationBody).withFailMessage("No data received from notification endpoint").isNotNull();
-            Assertions.assertThat(JsonPath.parse(adyenNotificationBody.get("content"))
-                .read("verificationStatus").toString()).isEqualTo(verificationStatus);
-            Assertions.assertThat(JsonPath.parse(adyenNotificationBody.get("content"))
-                .read("verificationType").toString()).isEqualTo(verificationType);
+            Assertions.assertThat(JsonPath.parse(adyenNotificationBody.get("content")).read("verificationStatus").toString()).isEqualTo(verificationStatus);
+            Assertions.assertThat(JsonPath.parse(adyenNotificationBody.get("content")).read("verificationType").toString()).isEqualTo(verificationType);
         });
     }
 
@@ -83,42 +73,20 @@ public class BankAccountVerificationSteps extends StepDefsHelper{
         await().untilAsserted(() -> {
             String eventType = cucumberTable.get(0).get("eventType");
             Map<String, Object> adyenNotificationBody = retrieveAdyenNotificationBody(eventType, shop.getId());
-            List<Map<Object, Object>> bankAccountDetails = JsonPath.parse(adyenNotificationBody
-                .get("content"))
-                .read("accountHolderDetails.bankAccountDetails");
+            List<Map<Object, Object>> bankAccountDetails = JsonPath.parse(adyenNotificationBody.get("content")).read("accountHolderDetails.bankAccountDetails");
             ImmutableList<String> miraklBankAccountDetail = assertionHelper.miraklBankAccountInformation(shop).build();
             ImmutableList<String> adyenBankAccountDetail = assertionHelper.adyenBankAccountDetail(bankAccountDetails, cucumberTable).build();
             Assertions.assertThat(miraklBankAccountDetail).containsAll(adyenBankAccountDetail);
-            Assertions
-                .assertThat(assertionHelper.getParsedBankAccountDetail().read("primaryAccount").toString())
-                .isEqualTo("true");
-            Assertions
-                .assertThat(assertionHelper.getParsedBankAccountDetail().read("bankAccountUUID").toString())
-                .isNotEmpty();
+            Assertions.assertThat(assertionHelper.getParsedBankAccountDetail().read("primaryAccount").toString()).isEqualTo("true");
+            Assertions.assertThat(assertionHelper.getParsedBankAccountDetail().read("bankAccountUUID").toString()).isNotEmpty();
         });
     }
 
     @And("^the previous BankAccountDetail will be removed$")
-    public void thePreviousBankAccountDetailWillBeRemoved(DataTable table) {
-        List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
-        String eventType = cucumberTable.get(0).get("eventType");
-        String reason = cucumberTable.get(0).get("reason");
-        waitForNotification();
-        await().untilAsserted(() -> {
-            this.notifications = restAssuredAdyenApi
-                .getMultipleAdyenNotificationBodies(startUpTestingHook.getBaseRequestBinUrlPath(), shop.getId(), eventType, null);
-            Assertions.assertThat(notifications).isNotEmpty();
-            boolean foundReason = notifications.stream()
-                .anyMatch(notification -> notification.read("content.reason").toString().contains(reason));
-            Assertions.assertThat(foundReason).isTrue();
-            for (DocumentContext notification : notifications) {
-                String notificationReason = notification.read("content.reason").toString();
-                if (notificationReason.contains(reason)) {
-                    Assertions.assertThat(notificationReason.contains(reason));
-                    break;
-                }
-            }
-        });
+    public void thePreviousBankAccountDetailWillBeRemoved() throws Exception {
+        GetAccountHolderResponse response = getGetAccountHolderResponse(shop);
+        Assertions.assertThat(response.getAccountHolderDetails().getBankAccountDetails().size()).isEqualTo(1);
+        Assertions.assertThat(response.getAccountHolderDetails().getBankAccountDetails().get(0).getIban()).isEqualTo(this.lastIban);
     }
 
     @And("^the document is successfully uploaded to Adyen$")
@@ -127,13 +95,11 @@ public class BankAccountVerificationSteps extends StepDefsHelper{
         GetUploadedDocumentsRequest getUploadedDocumentsRequest = new GetUploadedDocumentsRequest();
         getUploadedDocumentsRequest.setAccountHolderCode(this.shop.getId());
         GetUploadedDocumentsResponse uploadedDocuments = adyenAccountService.getUploadedDocuments(getUploadedDocumentsRequest);
-        boolean documentTypeAndFilenameMatch = uploadedDocuments.getDocumentDetails().stream()
-            .anyMatch(doc ->
-                DocumentDetail.DocumentTypeEnum.valueOf(cucumberTable.get(0).get("documentType")).equals(doc.getDocumentType())
-                    && cucumberTable.get(0).get("filename").equals(doc.getFilename()));
+        boolean documentTypeAndFilenameMatch = uploadedDocuments.getDocumentDetails()
+                                                                .stream()
+                                                                .anyMatch(doc -> DocumentDetail.DocumentTypeEnum.valueOf(cucumberTable.get(0).get("documentType")).equals(doc.getDocumentType())
+                                                                    && cucumberTable.get(0).get("filename").equals(doc.getFilename()));
         String uploadedDocResponse = uploadedDocuments.getDocumentDetails().toString();
-        Assertions.assertThat(documentTypeAndFilenameMatch)
-            .withFailMessage(String.format("Document upload response:[%s]", JsonPath.parse(uploadedDocResponse).toString()))
-            .isTrue();
+        Assertions.assertThat(documentTypeAndFilenameMatch).withFailMessage(String.format("Document upload response:[%s]", JsonPath.parse(uploadedDocResponse).toString())).isTrue();
     }
 }
