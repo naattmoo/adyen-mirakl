@@ -22,6 +22,7 @@
 
 package com.adyen.mirakl.cucumber.stepdefs;
 
+import java.math.BigDecimal;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
@@ -282,10 +283,11 @@ public class AccountPayoutSteps extends StepDefsHelper {
     public void TheBalanceOfTheShopIsIncreased() {
         // wait until notification is proccessed
         waitForNotification();
-        // check if the payable balance indeed increased
-        shop = getMiraklShop(miraklMarketplacePlatformOperatorApiClient, shop.getId());
-        // assertEquals does not support BigDecimal so convert to integer
-        Assert.assertEquals(100, shop.getPaymentDetail().getPayableBalance().intValue());
 
+        // wait until notification is processed and the payable balance is indeed increased
+        await().untilAsserted(() -> {
+            shop = getMiraklShop(miraklMarketplacePlatformOperatorApiClient, shop.getId());
+            Assertions.assertThat(shop.getPaymentDetail().getPayableBalance().equals(new BigDecimal(100)));
+        });
     }
 }
