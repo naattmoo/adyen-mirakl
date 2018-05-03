@@ -1,29 +1,9 @@
 package com.adyen.mirakl.cucumber.stepdefs;
 
-import com.adyen.mirakl.cucumber.stepdefs.helpers.stepshelper.StepDefsHelper;
-import com.adyen.mirakl.domain.AdyenPayoutError;
-import com.adyen.mirakl.listeners.AdyenNotificationListener;
-import com.adyen.mirakl.web.rest.AdyenNotificationResource;
-import com.adyen.mirakl.web.rest.MiraklNotificationsResource;
-import com.adyen.mirakl.web.rest.TestUtil;
-import com.adyen.model.Amount;
-import com.adyen.model.marketpay.GetAccountHolderResponse;
-import com.adyen.model.marketpay.notification.CompensateNegativeBalanceNotificationRecord;
-import com.google.common.base.Charsets;
-import com.google.common.io.Resources;
-import com.jayway.jsonpath.DocumentContext;
-import com.jayway.jsonpath.JsonPath;
-import com.mirakl.client.mmp.domain.invoice.MiraklInvoices;
-import com.mirakl.client.mmp.domain.shop.MiraklShop;
-import com.mirakl.client.mmp.operator.domain.shop.create.MiraklCreatedShops;
-import com.mirakl.client.mmp.operator.request.payment.invoice.MiraklDownloadInvoiceRequest;
-import com.mirakl.client.mmp.operator.request.payment.invoice.MiraklGetInvoicesRequest;
-import cucumber.api.DataTable;
-import cucumber.api.java.Before;
-import cucumber.api.java.en.And;
-import cucumber.api.java.en.Given;
-import cucumber.api.java.en.Then;
-import cucumber.api.java.en.When;
+import java.net.URL;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import org.assertj.core.api.Assertions;
 import org.awaitility.Awaitility;
 import org.awaitility.Duration;
@@ -34,13 +14,26 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import com.adyen.mirakl.cucumber.stepdefs.helpers.stepshelper.StepDefsHelper;
+import com.adyen.mirakl.domain.AdyenPayoutError;
+import com.adyen.mirakl.listeners.AdyenNotificationListener;
+import com.adyen.mirakl.web.rest.AdyenNotificationResource;
+import com.adyen.mirakl.web.rest.MiraklNotificationsResource;
+import com.adyen.mirakl.web.rest.TestUtil;
+import com.adyen.model.marketpay.GetAccountHolderResponse;
+import com.google.common.base.Charsets;
+import com.google.common.io.Resources;
+import com.jayway.jsonpath.DocumentContext;
+import com.jayway.jsonpath.JsonPath;
+import com.mirakl.client.mmp.domain.shop.MiraklShop;
+import com.mirakl.client.mmp.operator.domain.shop.create.MiraklCreatedShops;
+import cucumber.api.DataTable;
+import cucumber.api.java.Before;
+import cucumber.api.java.en.And;
+import cucumber.api.java.en.Given;
+import cucumber.api.java.en.Then;
+import cucumber.api.java.en.When;
 import org.testng.Assert;
-
-import java.math.BigDecimal;
-import java.net.URL;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -192,14 +185,14 @@ public class AccountPayoutSteps extends StepDefsHelper {
     public void TRANSFER_FUNDSNotificationWillBeSentByAdyen(String eventType, String status) throws Throwable {
         waitForNotification();
         String accountCode = retrieveAdyenAccountCode(shop);
-        retrieveAndExtractTransferNotifications(eventType, status, liableAccountCode, accountCode, subscriptionTransferCode);
+        retrieveAndExtractTransferNotifications(eventType, status, configSourceAccountCode, accountCode, subscriptionTransferCode);
     }
 
     @Then("^adyen will send the (.*) notification using the transferCode$")
     public void adyenWillSendTheTRANSFER_FUNDSNotificationUsingTheTransferCode(String eventType, String status) throws Throwable {
         waitForNotification();
         String accountCode = retrieveAdyenAccountCode(shop);
-        adyenNotificationBody = retrieveAndExtractTransferNotifications(eventType, status, zeroBalanceSourceAccountCode, accountCode, transferCode);
+        adyenNotificationBody = retrieveAndExtractTransferNotifications(eventType, status, zeroBalanceSourceAccountCode, accountCode, subscriptionTransferCode);
     }
 
     @When("^the accountHolders balance is increased beyond the tier level$")
