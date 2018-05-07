@@ -27,6 +27,8 @@ import java.net.URL;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import com.adyen.mirakl.repository.AdyenNotificationRepository;
 import org.assertj.core.api.Assertions;
 import org.awaitility.Awaitility;
 import org.awaitility.Duration;
@@ -67,6 +69,8 @@ public class AccountPayoutSteps extends StepDefsHelper {
     private MiraklNotificationsResource miraklNotificationsResource;
     @Autowired
     private AdyenNotificationResource adyenNotificationResource;
+    @Autowired
+    private AdyenNotificationRepository adyenNotificationRepository;
     private MiraklShop shop;
     private String accountHolderCode;
     private MockMvc restUserMockMvc;
@@ -123,9 +127,9 @@ public class AccountPayoutSteps extends StepDefsHelper {
             notifications = restAssuredAdyenApi.getMultipleAdyenNotificationBodies(startUpTestingHook.getBaseRequestBinUrlPath(), shop.getId(), eventType, null);
 
             final Optional<DocumentContext> notification = notifications.stream()
-                                                                        .filter(x -> x.read("content.oldStatus.payoutState.allowPayout").equals(oldPayoutState))
-                                                                        .filter(x -> x.read("content.newStatus.payoutState.allowPayout").equals(newPayoutState))
-                                                                        .findAny();
+                .filter(x -> x.read("content.oldStatus.payoutState.allowPayout").equals(oldPayoutState))
+                .filter(x -> x.read("content.newStatus.payoutState.allowPayout").equals(newPayoutState))
+                .findAny();
             Assertions.assertThat(notification.isPresent()).isTrue();
 
             adyenNotificationBody = notification.get();
@@ -175,7 +179,7 @@ public class AccountPayoutSteps extends StepDefsHelper {
             DocumentContext content = JsonPath.parse(adyenNotificationBody.get("content"));
             Assertions.assertThat(cucumberTable.get(0).get("statusCode")).withFailMessage("Status was not correct.").isEqualTo(content.read("status.statusCode"));
             String message = cucumberTable.get(0).get("message");
-            if (! message.equals("")) {
+            if (!message.equals("")) {
                 Assertions.assertThat(content.read("status.message.text").toString()).contains(message);
             }
             log.info(content.toString());
@@ -258,12 +262,11 @@ public class AccountPayoutSteps extends StepDefsHelper {
     @Then("^the balance of the shop is increased$")
     public void TheBalanceOfTheShopIsIncreased() {
         // wait until notification is processed
-        waitForNotification();
-
-        // wait until notification is processed and the payable balance is indeed increased
         await().with().pollInterval(fibonacci()).untilAsserted(() -> {
-            shop = getMiraklShop(miraklMarketplacePlatformOperatorApiClient, shop.getId());
-            Assertions.assertThat(shop.getPaymentDetail().getPayableBalance().equals(new BigDecimal(100)));
+            Assertions.assertThat(adyenNotificationRepository.findAll().size()).isEqualTo(0);
         });
+
+        shop = getMiraklShop(miraklMarketplacePlatformOperatorApiClient, shop.getId());
+        Assertions.assertThat(shop.getPaymentDetail().getPayableBalance().equals(new BigDecimal(100)));
     }
 }
