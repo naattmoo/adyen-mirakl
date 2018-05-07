@@ -39,7 +39,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.stepshelper.StepDefsHelper;
 import com.adyen.mirakl.domain.AdyenPayoutError;
-import com.adyen.mirakl.listeners.AdyenNotificationListener;
 import com.adyen.mirakl.web.rest.AdyenNotificationResource;
 import com.adyen.mirakl.web.rest.MiraklNotificationsResource;
 import com.adyen.mirakl.web.rest.TestUtil;
@@ -56,9 +55,9 @@ import cucumber.api.java.en.And;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
-import org.testng.Assert;
 
 import static org.awaitility.Awaitility.await;
+import static org.awaitility.pollinterval.FibonacciPollInterval.fibonacci;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -75,7 +74,6 @@ public class AccountPayoutSteps extends StepDefsHelper {
     private List<DocumentContext> notifications;
     private DocumentContext adyenNotificationBody;
     private final Logger log = LoggerFactory.getLogger(this.getClass());
-    private AdyenNotificationListener adyenNotificationListener;
 
     @Before
     public void setup() {
@@ -251,41 +249,19 @@ public class AccountPayoutSteps extends StepDefsHelper {
     public void aCompensateNegativeBalanceNotificationIsSent() throws Exception {
         String accountCode = retrieveAdyenAccountCode(shop);
 
-        final String adyenRequestJson = "{\n"
-            + "    \"content\": {\n"
-            + "        \"records\": [\n"
-            + "            {\n"
-            + "                \"CompensateNegativeBalanceNotificationRecord\": {\n"
-            + "                    \"accountCode\": \""
-            + accountCode
-            + "\",\n"
-            + "                    \"amount\": {\n"
-            + "                        \"currency\": \""
-            + "EUR"
-            + "\",\n"
-            + "                        \"value\": \"-10000\"\n"
-            + "                    },\n"
-            + "                    \"transferDate\": \"2018-01-26T13:16:12+01:00\"\n"
-            + "                }\n"
-            + "            }\n"
-            + "        ]\n"
-            + "    },\n"
-            + "    \"eventType\": \"COMPENSATE_NEGATIVE_BALANCE\",\n"
-            + "    \"executingUserKey\": \"Compensate Negative Balance\",\n"
-            + "    \"live\": \"false\",\n"
-            + "    \"pspReference\": \"9915169689720026\"\n"
-            + "}";
+        URL url = Resources.getResource("adyenRequests/COMPENSATE_NEGATIVE_BALANCE.json");
+        final String adyenRequestJson = Resources.toString(url, Charsets.UTF_8).replace("%ACCOUNT_CODE%", accountCode);
 
         restAdyenNotificationMockMvc.perform(post("/api/adyen-notifications").contentType(TestUtil.APPLICATION_JSON_UTF8).content(adyenRequestJson)).andExpect(status().is(201));
     }
 
     @Then("^the balance of the shop is increased$")
     public void TheBalanceOfTheShopIsIncreased() {
-        // wait until notification is proccessed
+        // wait until notification is processed
         waitForNotification();
 
         // wait until notification is processed and the payable balance is indeed increased
-        await().untilAsserted(() -> {
+        await().with().pollInterval(fibonacci()).untilAsserted(() -> {
             shop = getMiraklShop(miraklMarketplacePlatformOperatorApiClient, shop.getId());
             Assertions.assertThat(shop.getPaymentDetail().getPayableBalance().equals(new BigDecimal(100)));
         });
