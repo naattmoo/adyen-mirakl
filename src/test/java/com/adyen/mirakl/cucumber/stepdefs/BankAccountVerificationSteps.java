@@ -24,6 +24,14 @@ package com.adyen.mirakl.cucumber.stepdefs;
 
 import java.util.List;
 import java.util.Map;
+
+import com.adyen.mirakl.repository.AdyenNotificationRepository;
+import com.adyen.mirakl.web.rest.AdyenNotificationResource;
+import com.adyen.mirakl.web.rest.TestUtil;
+import com.jayway.jsonpath.DocumentContext;
+import com.mirakl.client.mmp.domain.shop.document.MiraklShopDocument;
+import com.mirakl.client.mmp.request.shop.document.MiraklGetShopDocumentsRequest;
+import cucumber.api.java.Before;
 import org.assertj.core.api.Assertions;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.stepshelper.StepDefsHelper;
 import com.adyen.model.marketpay.DocumentDetail;
@@ -39,12 +47,40 @@ import cucumber.api.java.en.And;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
+import org.awaitility.Awaitility;
+import org.awaitility.Duration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
 import static org.awaitility.Awaitility.await;
+import static org.awaitility.pollinterval.FibonacciPollInterval.fibonacci;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public class BankAccountVerificationSteps extends StepDefsHelper {
 
     private MiraklShop shop;
     private String lastIban;
+    private Map<String, Object> adyenNotificationBody;
+
+    @Autowired
+    private AdyenNotificationRepository adyenNotificationRepository;
+
+    @Autowired
+    private AdyenNotificationResource adyenNotificationResource;
+
+    private MockMvc restAdyenNotificationMockMvc;
+
+    private final Logger log = LoggerFactory.getLogger(this.getClass());
+
+    @Before
+    public void setup() {
+        this.restAdyenNotificationMockMvc = MockMvcBuilders.standaloneSetup(adyenNotificationResource).build();
+        Awaitility.setDefaultTimeout(Duration.FIVE_MINUTES);
+    }
 
     @Given("^a shop has been created in Mirakl for an (.*) with Bank Information$")
     public void aShopHasBeenCreatedInMiraklForAnIndividualWithBankInformation(String legalEntity, DataTable table) {
@@ -81,12 +117,14 @@ public class BankAccountVerificationSteps extends StepDefsHelper {
     public void theACCOUNT_HOLDER_VERIFICATIONNotificationIsSentByAdyenComprisingOfBANK_ACCOUNT_VERIFICATIONAndPASSED(String notification, String verificationType, String verificationStatus) {
         waitForNotification();
         await().untilAsserted(() -> {
-            Map<String, Object> adyenNotificationBody = restAssuredAdyenApi.getAdyenNotificationBody(startUpTestingHook.getBaseRequestBinUrlPath(), this.shop.getId(), notification, verificationType);
+            adyenNotificationBody = restAssuredAdyenApi.getAdyenNotificationBody(startUpTestingHook.getBaseRequestBinUrlPath(), this.shop.getId(), notification, verificationType);
             Assertions.assertThat(adyenNotificationBody).withFailMessage("No data received from notification endpoint").isNotNull();
             Assertions.assertThat(JsonPath.parse(adyenNotificationBody.get("content")).read("verificationStatus").toString()).isEqualTo(verificationStatus);
             Assertions.assertThat(JsonPath.parse(adyenNotificationBody.get("content")).read("verificationType").toString()).isEqualTo(verificationType);
         });
     }
+
+
 
     @Then("^a new bankAccountDetail will be created for the existing Account Holder$")
     public void aNewBankAccountDetailWillBeCreatedForTheExistingAccountHolder(DataTable table) {
@@ -123,5 +161,30 @@ public class BankAccountVerificationSteps extends StepDefsHelper {
                                                                     && cucumberTable.get(0).get("filename").equals(doc.getFilename()));
         String uploadedDocResponse = uploadedDocuments.getDocumentDetails().toString();
         Assertions.assertThat(documentTypeAndFilenameMatch).withFailMessage(String.format("Document upload response:[%s]", JsonPath.parse(uploadedDocResponse).toString())).isTrue();
+    }
+
+    @When("^the accountHolders balance is increased to highest tier$")
+    public void theAccountHoldersBalanceIsIncreasedBeyondTheTierLevel(DataTable table) throws Throwable {
+        List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
+        transferAccountHolderBalance(cucumberTable, shop);
+    }
+
+    @Then("^the bank proof documents will be removed$")
+    public void theDocumentsWillBeRemoveTheBankProofDocument() {
+
+        await().with().pollInterval(fibonacci()).untilAsserted(() -> {
+            Assertions.assertThat(adyenNotificationRepository.findAll().size()).isEqualTo(0);
+        });
+
+        MiraklGetShopDocumentsRequest request = new MiraklGetShopDocumentsRequest(ImmutableList.of(shop.getId()));
+        List<MiraklShopDocument> shopDocuments = miraklMarketplacePlatformOperatorApiClient.getShopDocuments(request);
+        Assertions.assertThat(shopDocuments).isEmpty();
+    }
+
+    @And("^the notification is send to the Connector$")
+    public void theNotificationIsProcessedToTheConnector() throws Exception {
+        DocumentContext content  = JsonPath.parse(adyenNotificationBody);
+        restAdyenNotificationMockMvc.perform(post("/api/adyen-notifications").contentType(TestUtil.APPLICATION_JSON_UTF8).content(content.jsonString())).andExpect(status().is(201));
+        log.info("Notification posted to Connector: [{}]", content.jsonString());
     }
 }

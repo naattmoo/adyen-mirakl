@@ -24,7 +24,9 @@ Feature: Bank Account Verification
         And the document is successfully uploaded to Adyen
             | documentType   | filename          |
             | BANK_STATEMENT | BankStatement.png |
-
+        When the ACCOUNT_HOLDER_VERIFICATION notification is sent by Adyen comprising of BANK_ACCOUNT_VERIFICATION and DATA_PROVIDED
+        And the notification is send to the Connector
+        Then the bank proof documents will be removed
     @ADY-8 @ADY-71 @ADY-84 @ADY-104
     Scenario: New BankAccountDetail is created for Account Holder upon new IBAN entry in Mirakl for an existing Adyen accountHolder
         Given a seller creates a shop as a Individual without entering a bank account
