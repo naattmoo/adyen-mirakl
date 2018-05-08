@@ -267,6 +267,6 @@ public class AccountPayoutSteps extends StepDefsHelper {
         });
 
         shop = getMiraklShop(miraklMarketplacePlatformOperatorApiClient, shop.getId());
-        Assertions.assertThat(shop.getPaymentDetail().getPayableBalance().equals(new BigDecimal(100)));
+        Assertions.assertThat(shop.getPaymentDetail().getPayableBalance().intValue()).isEqualTo(new Integer(100));
     }
 }
