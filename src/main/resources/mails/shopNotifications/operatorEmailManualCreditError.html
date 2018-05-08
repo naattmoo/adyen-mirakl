@@ -14,7 +14,7 @@
 </p>
 <ul>
     <li th:each="error : ${errors}"
-        th:text="${error.message}"></li>
+        th:text="|${error.field} ${error.message}|"></li>
 </ul>
 <p th:text="'Kind Regards'">
 </p>
