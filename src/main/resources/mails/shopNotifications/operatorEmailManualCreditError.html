@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="'Manual Credit Error'"></title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <link rel="shortcut icon" th:href="@{|${baseUrl}/favicon.ico|}" />
+</head>
+<body>
+<p th:text="'Dear operator,'">
+</p>
+<p th:text="|The manual credit of the accountCode ${destination} failed with amount: ${manualCreditAmount} and pspreference: ${pspreference}|">
+</p>
+<p th:text="'Errors:'">
+</p>
+<ul>
+    <li th:each="error : ${errors}"
+        th:text="|${error.field} ${error.message}|"></li>
+</ul>
+<p th:text="'Kind Regards'">
+</p>
+</body>
+</html>
