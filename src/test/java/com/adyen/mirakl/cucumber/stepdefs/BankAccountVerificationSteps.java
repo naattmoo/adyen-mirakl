@@ -164,7 +164,7 @@ public class BankAccountVerificationSteps extends StepDefsHelper {
     }
 
     @Then("^the bank proof documents will be removed$")
-    public void theDocumentsWillBeRemoveTheBankProofDocument() {
+    public void theBankProofDocumentWillBeRemoved() {
 
         await().with().pollInterval(fibonacci()).untilAsserted(() -> {
             Assertions.assertThat(adyenNotificationRepository.findAll().size()).isEqualTo(0);
@@ -175,8 +175,8 @@ public class BankAccountVerificationSteps extends StepDefsHelper {
         Assertions.assertThat(shopDocuments).isEmpty();
     }
 
-    @And("^the notification is send to the Connector$")
-    public void theNotificationIsProcessedToTheConnector() throws Exception {
+    @And("^the notification is sent to the Connector$")
+    public void theNotificationIsSentToTheConnector() throws Exception {
         DocumentContext content  = JsonPath.parse(adyenNotificationBody);
         restAdyenNotificationMockMvc.perform(post("/api/adyen-notifications").contentType(TestUtil.APPLICATION_JSON_UTF8).content(content.jsonString())).andExpect(status().is(201));
         log.info("Notification posted to Connector: [{}]", content.jsonString());
