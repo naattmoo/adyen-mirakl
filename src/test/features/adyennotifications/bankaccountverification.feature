@@ -1,6 +1,6 @@
 Feature: Bank Account Verification
 
-    @ADY-8 @ADY-77 @ADY-84 @ADY-102 @ADY-13 @ADY-100 @ADY-15 @ADY-89
+    @ADY-8 @ADY-77 @ADY-84 @ADY-102 @ADY-13 @ADY-100 @ADY-15 @ADY-89 @PW-439
     Scenario: ACCOUNT_HOLDER_VERIFICATION notification including a new BankAccountDetail is sent by Adyen upon providing Bank Account Details and editing IBAN.
     Seller uploads Bank Statement Mirakl to fulfil BANK_ACCOUNT_VERIFICATION in Adyen
         Given a shop has been created in Mirakl for an Individual with Bank Information

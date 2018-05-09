@@ -163,12 +163,6 @@ public class BankAccountVerificationSteps extends StepDefsHelper {
         Assertions.assertThat(documentTypeAndFilenameMatch).withFailMessage(String.format("Document upload response:[%s]", JsonPath.parse(uploadedDocResponse).toString())).isTrue();
     }
 
-    @When("^the accountHolders balance is increased to highest tier$")
-    public void theAccountHoldersBalanceIsIncreasedBeyondTheTierLevel(DataTable table) throws Throwable {
-        List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
-        transferAccountHolderBalance(cucumberTable, shop);
-    }
-
     @Then("^the bank proof documents will be removed$")
     public void theDocumentsWillBeRemoveTheBankProofDocument() {
 
