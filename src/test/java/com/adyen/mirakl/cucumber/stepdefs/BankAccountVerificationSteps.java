@@ -163,7 +163,7 @@ public class BankAccountVerificationSteps extends StepDefsHelper {
         Assertions.assertThat(documentTypeAndFilenameMatch).withFailMessage(String.format("Document upload response:[%s]", JsonPath.parse(uploadedDocResponse).toString())).isTrue();
     }
 
-    @Then("^the bank proof documents will be removed$")
+    @Then("^the bank proof document will be removed$")
     public void theBankProofDocumentWillBeRemoved() {
 
         await().with().pollInterval(fibonacci()).untilAsserted(() -> {
