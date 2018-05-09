@@ -137,8 +137,8 @@ public class AccountPayoutSteps extends StepDefsHelper {
         });
     }
 
-    @When("^the ACCOUNT_HOLDER_VERIFICATION notification is sent to the Connector$")
-    public void theACCOUNT_HOLDER_VERIFICATIONNotificationIsSentToTheConnector() throws Throwable {
+    @When("^the notification is sent to the Connector$")
+    public void theNotificationIsSentToTheConnector() throws Throwable {
         restAdyenNotificationMockMvc.perform(post("/api/adyen-notifications").contentType(TestUtil.APPLICATION_JSON_UTF8).content(adyenNotificationBody.jsonString())).andExpect(status().is(201));
         log.info("Notification posted to Connector: [{}]", adyenNotificationBody.jsonString());
     }

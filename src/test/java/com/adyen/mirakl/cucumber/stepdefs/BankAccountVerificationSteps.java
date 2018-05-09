@@ -175,8 +175,8 @@ public class BankAccountVerificationSteps extends StepDefsHelper {
         Assertions.assertThat(shopDocuments).isEmpty();
     }
 
-    @And("^the notification is sent to the Connector$")
-    public void theNotificationIsSentToTheConnector() throws Exception {
+    @And("^the ACCOUNT_HOLDER_VERIFICATION notification is sent to the Connector$")
+    public void theACCOUNT_HOLDER_VERIFICATIONNotificationIsSentToTheConnector() throws Exception {
         DocumentContext content  = JsonPath.parse(adyenNotificationBody);
         restAdyenNotificationMockMvc.perform(post("/api/adyen-notifications").contentType(TestUtil.APPLICATION_JSON_UTF8).content(content.jsonString())).andExpect(status().is(201));
         log.info("Notification posted to Connector: [{}]", content.jsonString());
