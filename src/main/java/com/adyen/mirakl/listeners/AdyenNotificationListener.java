@@ -219,7 +219,10 @@ public class AdyenNotificationListener {
             mailTemplateService.sendMiraklShopEmailFromTemplate(shop, Locale.getDefault(), getTemplate(verificationType, verificationStatus), getSubject(verificationType, verificationStatus));
         } else if (dataProvidedForPassportOrIdentity(verificationStatus, verificationType, CheckStatusEnum.DATA_PROVIDED, CheckTypeEnum.PASSPORT_VERIFICATION, CheckTypeEnum.IDENTITY_VERIFICATION)) {
             docService.removeMiraklMediaForShareHolder(verificationNotification.getContent().getShareholderCode());
+        } else if (CheckStatusEnum.DATA_PROVIDED.equals(verificationStatus) && CheckTypeEnum.BANK_ACCOUNT_VERIFICATION.equals(verificationType)) {
+            docService.removeMiraklMediaForBankProof(verificationNotification.getContent().getAccountHolderCode());
         }
+
     }
 
     private boolean dataProvidedForPassportOrIdentity(final CheckStatusEnum verificationStatus,
