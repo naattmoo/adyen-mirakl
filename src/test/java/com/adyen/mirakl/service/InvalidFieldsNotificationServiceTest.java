@@ -97,7 +97,7 @@ public class InvalidFieldsNotificationServiceTest {
         Mockito.verify(mailTemplateServiceMock).sendSellerEmailWithErrors(miraklShopSellerArgumentCaptor.getValue(), errorsSellerArgumentCaptor.getValue());
 
         List<String> errors = errorsSellerArgumentCaptor.getValue();
-        Assertions.assertThat(errors).hasSize(1);
+        Assertions.assertThat(errors).hasSize(2);
         Assertions.assertThat(errors).contains("Email address invalidemailhere is invalid");
 
         Assertions.assertThat(miraklShopSellerArgumentCaptor.getValue()).isEqualTo(miraklShop);
