@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -121,12 +122,17 @@ public class RestAssuredAdyenApi {
         // add all that match to list builder
         Integer counter = 0;
         ImmutableList.Builder<DocumentContext> notificationsBuilder = new ImmutableList.Builder<>();
+        List<String> uniqueShareHolders = new ArrayList<>();
         for (DocumentContext notification : notifications) {
             if (notification.read("content.shareholderCode") != null) {
                 for (String shareholderCode : shareholderCodes) {
                     if (notification.read("content.shareholderCode").toString().equals(shareholderCode)) {
-                        notificationsBuilder.add(notification);
-                        counter++;
+                        // Only add if the shareholderCode is unique and does not already exists
+                        if(!uniqueShareHolders.contains(shareholderCode)) {
+                            notificationsBuilder.add(notification);
+                            uniqueShareHolders.add(shareholderCode);
+                            counter++;
+                        }
                         if(shareholderCodes.size() == counter){
                             return notificationsBuilder.build();
                         }

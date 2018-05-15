@@ -23,6 +23,7 @@
 package com.adyen.mirakl.cucumber.stepdefs;
 
 import com.adyen.mirakl.cucumber.stepdefs.helpers.stepshelper.StepDefsHelper;
+import com.adyen.mirakl.repository.AdyenNotificationRepository;
 import com.adyen.mirakl.web.rest.AdyenNotificationResource;
 import com.adyen.mirakl.web.rest.TestUtil;
 import com.adyen.model.marketpay.*;
@@ -54,6 +55,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.awaitility.Awaitility.await;
+import static org.awaitility.pollinterval.FibonacciPollInterval.fibonacci;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -65,6 +67,8 @@ public class IdentityVerificationSteps extends StepDefsHelper {
     private MiraklShop shop;
     private GetUploadedDocumentsResponse uploadedDocuments;
     private ImmutableList<DocumentContext> notifications;
+    @Autowired
+    private AdyenNotificationRepository adyenNotificationRepository;
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 
@@ -210,17 +214,18 @@ public class IdentityVerificationSteps extends StepDefsHelper {
                     DocumentDetail.DocumentTypeEnum.valueOf(documentType).equals(doc.getDocumentType())
                         && filename.equals(doc.getFilename()))
                 .collect(Collectors.toList());
-            Assertions.assertThat(documents).hasSize(2);
+            Assertions.assertThat(documents).hasSize(1);
         }
     }
 
     @Then("^the documents will be removed for each of the UBOs$")
     public void theDocumentsWillBeRemovedForEachOfTheUBOs() {
-        await().atMost(Duration.TEN_SECONDS).untilAsserted(() -> {
-            MiraklGetShopDocumentsRequest request = new MiraklGetShopDocumentsRequest(ImmutableList.of(shop.getId()));
-            List<MiraklShopDocument> shopDocuments = miraklMarketplacePlatformOperatorApiClient.getShopDocuments(request);
-            Assertions.assertThat(shopDocuments).isEmpty();
+        await().with().pollInterval(fibonacci()).untilAsserted(() -> {
+            Assertions.assertThat(adyenNotificationRepository.findAll().size()).isEqualTo(0);
         });
+        MiraklGetShopDocumentsRequest request = new MiraklGetShopDocumentsRequest(ImmutableList.of(shop.getId()));
+        List<MiraklShopDocument> shopDocuments = miraklMarketplacePlatformOperatorApiClient.getShopDocuments(request);
+        Assertions.assertThat(shopDocuments).isEmpty();
     }
 
     @Then("^each UBO will receive a remedial email$")
