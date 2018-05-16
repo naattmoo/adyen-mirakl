@@ -140,7 +140,7 @@ public class StepDefsHelper {
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 
     protected void waitForNotification() {
-        await().atMost(new Duration(30, TimeUnit.MINUTES)).untilAsserted(() -> {
+        await().with().pollInterval(fibonacci()).atMost(new Duration(5, TimeUnit.MINUTES)).untilAsserted(() -> {
             boolean endpointHasReceivedANotification = restAssuredAdyenApi.endpointHasANotification(startUpTestingHook.getBaseRequestBinUrlPath());
             Assertions.assertThat(endpointHasReceivedANotification).isTrue();
         });

@@ -102,7 +102,7 @@ public class AccountCreatedAndUpdatedSteps extends StepDefsHelper {
                 GetAccountHolderResponse accountHolderResponse = adyenAccountService.getAccountHolder(accountHolderRequest);
                 Assertions.assertThat(accountHolderResponse.getAccountHolderStatus().getStatus().toString()).isEqualTo("Active");
             } catch (ApiException e) {
-                log.error("Failing test due to exception", e);
+                log.error("Failing test due to exception: {}", e.getError());
                 Assertions.fail(e.getError().toString());
             }
         });

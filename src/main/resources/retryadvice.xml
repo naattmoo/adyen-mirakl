@@ -29,7 +29,8 @@
                            http://www.springframework.org/schema/beans/spring-beans.xsd
                            http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
 
-    <aop:config>
+    <!--setting proxy-target-class="true" for mail health indicator-->
+    <aop:config proxy-target-class="true">
         <aop:pointcut id="transactional"
                       expression="execution(* org.springframework.mail.javamail.JavaMailSenderImpl.send(..))"/>
         <aop:advisor pointcut-ref="transactional"

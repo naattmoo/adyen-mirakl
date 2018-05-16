@@ -13,12 +13,6 @@
 # http://docs.spring.io/spring-boot/docs/current/reference/html/common-application-properties.html
 # ===================================================================
 
-
-management:
-    health:
-        mail:
-            enabled: false # When using the MailService, configure an SMTP server and set this to true
-
 spring:
     application:
         name: adyenMiraklConnector
@@ -196,4 +190,3 @@ accounts:
     accountCode:
         sourceAccountCode: 148401008
         zeroBalanceSourceAccountCode: 163126229
-
