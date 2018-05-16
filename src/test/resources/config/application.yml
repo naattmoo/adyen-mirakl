@@ -134,6 +134,7 @@ adyenConfig:
     password: ${ADYEN_PASS}
     environment: ${ADYEN_ENV}
     appName: adyen-mirakl-connector
+    appVersion: 1.0.0
 
 adyenNotificationsConfig:
     notificationConfigurationDetails:
@@ -193,5 +194,6 @@ payoutService:
 
 accounts:
     accountCode:
-        sourceAccountCode: 131712554
-        zeroBalanceSourceAccountCode: 185335929
+        sourceAccountCode: 148401008
+        zeroBalanceSourceAccountCode: 163126229
+

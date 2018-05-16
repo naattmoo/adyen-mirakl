@@ -41,6 +41,7 @@ public class AdyenConfiguration {
     private String password;
     private Environment environment;
     private String appName;
+    private String appVersion;
 
     public String getUserName() {
         return userName;
@@ -74,12 +75,20 @@ public class AdyenConfiguration {
         this.appName = appName;
     }
 
+    public String getAppVersion() {
+        return appVersion;
+    }
+
+    public void setAppVersion(String appVersion) {
+        this.appVersion = appVersion;
+    }
+
     @Bean
     public Config adyenConfig() {
         final Config config = new Config();
         config.setUsername(userName);
         config.setPassword(password);
-        config.setApplicationName(appName);
+        config.setApplicationName(appName + "_" + appVersion);
         return config;
     }
 
