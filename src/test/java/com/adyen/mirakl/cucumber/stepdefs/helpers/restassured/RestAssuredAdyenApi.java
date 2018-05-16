@@ -85,8 +85,17 @@ public class RestAssuredAdyenApi {
     }
 
     public ImmutableList<DocumentContext> getMultipleAdyenNotificationBodies(String endpoint, String miraklShopId, String eventType, String verificationType) {
-        ResponseBody body = getResponseBody(endpoint);
-        List<String> allNotifications = body.jsonPath().get("body");
+        List<String> allNotifications = new ArrayList<>();
+        try {
+            ResponseBody body = getResponseBody(endpoint);
+            allNotifications = body.jsonPath().get("body");
+        } catch (JsonPathException e) {
+            Assertions.fail(String.format("getMultipleAdyenNotificationBodies failed for endpoint: [%s], miraklShopId: [%s], eventType: [%s], verificationType: [%s]",
+                                          endpoint,
+                                          miraklShopId,
+                                          eventType,
+                                          verificationType));
+        }
         ImmutableList.Builder<DocumentContext> notifications = new ImmutableList.Builder<>();
         // filter through all notifications and add all that match criteria to String List
         for (String notification : allNotifications) {
@@ -109,8 +118,16 @@ public class RestAssuredAdyenApi {
     }
 
     public ImmutableList<DocumentContext> getMultipleAdyenTransferNotifications(String endpoint, String eventType, String transferCode) {
-        ResponseBody body = getResponseBody(endpoint);
-        List<String> allNotifications = body.jsonPath().get("body");
+        List<String> allNotifications = new ArrayList<>();
+        try {
+            ResponseBody body = getResponseBody(endpoint);
+            allNotifications = body.jsonPath().get("body");
+        } catch (JsonPathException e) {
+            Assertions.fail(String.format("getMultipleAdyenTransferNotifications failed for endpoint: [%s], eventType: [%s], transferCode: [%s]",
+                                          endpoint,
+                                          eventType,
+                                          transferCode));
+        }
 
         ImmutableList.Builder<DocumentContext> notifications = new ImmutableList.Builder<>();
         allNotifications.forEach(notification -> {
@@ -164,15 +181,16 @@ public class RestAssuredAdyenApi {
 
         try {
             body.jsonPath().get("error");
+
+            if (body.jsonPath().get("error").equals("Bin not found")) {
+                throw new IllegalStateException(String.format("Bin no longer exists. Endpoint is showing: [%s]", body.jsonPath().get("error").toString()));
+            }
         } catch (Exception e) {
             log.info("\n-------------------------------------------------------");
             log.info("\nget body response was: \n{}", body.prettyPrint());
             log.info("\n-------------------------------------------------------");
         }
 
-        if (body.jsonPath().get("error").equals("Bin not found")) {
-            throw new IllegalStateException(String.format("Bin no longer exists. Endpoint is showing: [%s]", body.jsonPath().get("error").toString()));
-        }
         return body;
     }
 }
