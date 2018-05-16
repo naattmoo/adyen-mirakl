@@ -214,7 +214,7 @@ public class IdentityVerificationSteps extends StepDefsHelper {
                     DocumentDetail.DocumentTypeEnum.valueOf(documentType).equals(doc.getDocumentType())
                         && filename.equals(doc.getFilename()))
                 .collect(Collectors.toList());
-            Assertions.assertThat(documents).hasSize(1);
+            Assertions.assertThat(documents).hasSize(2);
         }
     }
 
