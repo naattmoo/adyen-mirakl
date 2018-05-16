@@ -107,7 +107,7 @@ public class AccountPayoutSteps extends StepDefsHelper {
 
     @When("^the PayoutState allowPayout changes from false to true$")
     public void thePayoutStateAllowPayoutChangesFromFalseToTrue() {
-        await().untilAsserted(() -> {
+        await().with().pollInterval(fibonacci()).untilAsserted(() -> {
             GetAccountHolderResponse account = getGetAccountHolderResponse(shop);
             Boolean allowPayout = account.getAccountHolderStatus().getPayoutState().getAllowPayout();
             Assertions.assertThat(allowPayout).isTrue();
@@ -123,7 +123,7 @@ public class AccountPayoutSteps extends StepDefsHelper {
         String oldPayoutState = cucumberTable.get(0).get("oldPayoutState");
 
         waitForNotification();
-        await().untilAsserted(() -> {
+        await().with().pollInterval(fibonacci()).untilAsserted(() -> {
             notifications = restAssuredAdyenApi.getMultipleAdyenNotificationBodies(startUpTestingHook.getBaseRequestBinUrlPath(), shop.getId(), eventType, null);
 
             final Optional<DocumentContext> notification = notifications.stream()
@@ -158,7 +158,7 @@ public class AccountPayoutSteps extends StepDefsHelper {
     public void adyenWillSendTheACCOUNT_HOLDER_PAYOUTNotification(String notification, DataTable table) {
         List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
         waitForNotification();
-        await().untilAsserted(() -> {
+        await().with().pollInterval(fibonacci()).untilAsserted(() -> {
             Map<String, Object> adyenNotificationBody = retrieveAdyenNotificationBody(notification, accountHolderCode);
             DocumentContext content = JsonPath.parse(adyenNotificationBody.get("content"));
             cucumberTable.forEach(row -> {
@@ -174,7 +174,7 @@ public class AccountPayoutSteps extends StepDefsHelper {
     public void adyenWillSendTheACCOUNT_HOLDER_PAYOUTNotificationWithStatusCode(String notification, DataTable table) {
         List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
         waitForNotification();
-        await().untilAsserted(() -> {
+        await().with().pollInterval(fibonacci()).untilAsserted(() -> {
             Map<String, Object> adyenNotificationBody = retrieveAdyenNotificationBody(notification, shop.getId());
             DocumentContext content = JsonPath.parse(adyenNotificationBody.get("content"));
             Assertions.assertThat(cucumberTable.get(0).get("statusCode")).withFailMessage("Status was not correct.").isEqualTo(content.read("status.statusCode"));
@@ -229,7 +229,7 @@ public class AccountPayoutSteps extends StepDefsHelper {
 
     @When("^the PayoutState allowPayout changes from true to false$")
     public void thePayoutStateAllowPayoutChangesFromTrueToFalse() {
-        await().untilAsserted(() -> {
+        await().with().pollInterval(fibonacci()).untilAsserted(() -> {
             GetAccountHolderResponse account = getGetAccountHolderResponse(shop);
             Boolean allowPayout = account.getAccountHolderStatus().getPayoutState().getAllowPayout();
             Assertions.assertThat(allowPayout).isFalse();
