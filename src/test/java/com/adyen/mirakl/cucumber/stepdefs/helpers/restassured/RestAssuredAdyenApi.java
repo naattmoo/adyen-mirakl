@@ -22,23 +22,23 @@
 
 package com.adyen.mirakl.cucumber.stepdefs.helpers.restassured;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import org.assertj.core.api.Assertions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import com.google.common.collect.ImmutableList;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import io.restassured.RestAssured;
+import io.restassured.path.json.exception.JsonPathException;
 import io.restassured.response.ResponseBody;
-import org.assertj.core.api.Assertions;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @Service
 public class RestAssuredAdyenApi {
@@ -46,9 +46,19 @@ public class RestAssuredAdyenApi {
     private static final Logger log = LoggerFactory.getLogger(RestAssuredAdyenApi.class);
 
     public Map<String, Object> getAdyenNotificationBody(String endpoint, String miraklShopId, String eventType, String verificationType) {
-        ResponseBody body = getResponseBody(endpoint);
-        List<String> check = body.jsonPath().get("body");
-        if (!CollectionUtils.isEmpty(check)) {
+        List<String> check = new ArrayList<>();
+        try {
+            ResponseBody body = getResponseBody(endpoint);
+            check = body.jsonPath().get("body");
+        } catch (JsonPathException e) {
+            Assertions.fail(String.format("getAdyenNotificationBody failed for endpoint: [%s], miraklShopId: [%s], eventType: [%s], verificationType: [%s]",
+                                          endpoint,
+                                          miraklShopId,
+                                          eventType,
+                                          verificationType));
+        }
+
+        if (! CollectionUtils.isEmpty(check)) {
             for (String list : check) {
 
                 Map<String, Object> mapResult = new HashMap<>(new Gson().fromJson(list, new TypeToken<HashMap<String, Object>>() {
@@ -59,9 +69,7 @@ public class RestAssuredAdyenApi {
                 // by cucumber and they match the notification in endpoint then return that notification
                 // else if only accountHolderCode and eventType have been provided then return that notification
                 if (contentMap.get("verificationType") != null && verificationType != null) {
-                    if (contentMap.get("accountHolderCode").equals(miraklShopId)
-                        && mapResult.get("eventType").equals(eventType)
-                        && contentMap.get("verificationType").equals(verificationType)) {
+                    if (contentMap.get("accountHolderCode").equals(miraklShopId) && mapResult.get("eventType").equals(eventType) && contentMap.get("verificationType").equals(verificationType)) {
                         log.info("found from url: {} : {}", endpoint, list);
                         return mapResult;
                     }
@@ -86,14 +94,12 @@ public class RestAssuredAdyenApi {
             DocumentContext content = JsonPath.parse(contentMap);
             Assertions.assertThat(JsonPath.parse(notification).read("eventType").toString()).isNotEmpty();
             if (verificationType != null) {
-                if (JsonPath.parse(notification).read("eventType").toString().equals(eventType) &&
-                    content.read("accountHolderCode").equals(miraklShopId) &&
-                    content.read("verificationType").equals(verificationType)) {
+                if (JsonPath.parse(notification).read("eventType").toString().equals(eventType) && content.read("accountHolderCode").equals(miraklShopId) && content.read("verificationType")
+                                                                                                                                                                    .equals(verificationType)) {
                     notifications.add(JsonPath.parse(notification));
                 }
             } else {
-                if (JsonPath.parse(notification).read("eventType").toString().equals(eventType) &&
-                    content.read("accountHolderCode").equals(miraklShopId)) {
+                if (JsonPath.parse(notification).read("eventType").toString().equals(eventType) && content.read("accountHolderCode").equals(miraklShopId)) {
                     notifications.add(JsonPath.parse(notification));
                 }
             }
@@ -109,8 +115,7 @@ public class RestAssuredAdyenApi {
         ImmutableList.Builder<DocumentContext> notifications = new ImmutableList.Builder<>();
         allNotifications.forEach(notification -> {
             DocumentContext jsonBody = JsonPath.parse(notification);
-            if (jsonBody.read("eventType").toString().equals(eventType) &&
-                jsonBody.read("content.transferCode").toString().equals(transferCode)) {
+            if (jsonBody.read("eventType").toString().equals(eventType) && jsonBody.read("content.transferCode").toString().equals(transferCode)) {
                 notifications.add(jsonBody);
             }
         });
@@ -128,12 +133,12 @@ public class RestAssuredAdyenApi {
                 for (String shareholderCode : shareholderCodes) {
                     if (notification.read("content.shareholderCode").toString().equals(shareholderCode)) {
                         // Only add if the shareholderCode is unique and does not already exists
-                        if(!uniqueShareHolders.contains(shareholderCode)) {
+                        if (! uniqueShareHolders.contains(shareholderCode)) {
                             notificationsBuilder.add(notification);
                             uniqueShareHolders.add(shareholderCode);
                             counter++;
                         }
-                        if(shareholderCodes.size() == counter){
+                        if (shareholderCodes.size() == counter) {
                             return notificationsBuilder.build();
                         }
                     }
@@ -144,15 +149,14 @@ public class RestAssuredAdyenApi {
     }
 
     public DocumentContext extractCorrectTransferNotification(DocumentContext notification, String sourceAccountCode, String destAccountCode) {
-        if (notification.read("content.sourceAccountCode").equals(sourceAccountCode) &&
-            notification.read("content.destinationAccountCode").equals(destAccountCode)) {
+        if (notification.read("content.sourceAccountCode").equals(sourceAccountCode) && notification.read("content.destinationAccountCode").equals(destAccountCode)) {
             return notification;
         }
         return null;
     }
 
     public boolean endpointHasANotification(String endpoint) {
-        return !"[]".equals(getResponseBody(endpoint).asString());
+        return ! "[]".equals(getResponseBody(endpoint).asString());
     }
 
     private ResponseBody getResponseBody(String endpoint) {

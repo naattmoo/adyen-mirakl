@@ -156,7 +156,6 @@ public class StepDefsHelper {
     protected Map<String, Object> retrieveAdyenNotificationBody(String notification, String accountHolderCode) {
         Map<String, Object> adyenNotificationBody = new HashMap<>();
         Map<String, Object> notificationBody = restAssuredAdyenApi.getAdyenNotificationBody(startUpTestingHook.getBaseRequestBinUrlPath(), accountHolderCode, notification, null);
-
         Assertions.assertThat(adyenNotificationBody).withFailMessage("No data in endpoint.").isNotNull();
         if (notificationBody != null) {
             adyenNotificationBody.putAll(notificationBody);
