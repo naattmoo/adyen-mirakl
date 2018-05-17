@@ -88,6 +88,7 @@ For more information, refer to the [Running tests page][].
 
 ## Heroku 
 The connector can be deployed to Heroku for testing purposes. We only allow deployment to Heroku to connect to our test platform.
+
 [![Deploy](https://www.herokucdn.com/deploy/button.png)](https://heroku.com/deploy)
 
 
