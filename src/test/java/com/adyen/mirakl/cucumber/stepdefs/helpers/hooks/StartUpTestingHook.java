@@ -1,3 +1,25 @@
+/*
+ *                       ######
+ *                       ######
+ * ############    ####( ######  #####. ######  ############   ############
+ * #############  #####( ######  #####. ######  #############  #############
+ *        ######  #####( ######  #####. ######  #####  ######  #####  ######
+ * ###### ######  #####( ######  #####. ######  #####  #####   #####  ######
+ * ###### ######  #####( ######  #####. ######  #####          #####  ######
+ * #############  #############  #############  #############  #####  ######
+ *  ############   ############  #############   ############  #####  ######
+ *                                      ######
+ *                               #############
+ *                               ############
+ *
+ * Adyen Mirakl Connector
+ *
+ * Copyright (c) 2018 Adyen B.V.
+ * This file is open source and available under the MIT license.
+ * See the LICENSE file for more info.
+ *
+ */
+
 package com.adyen.mirakl.cucumber.stepdefs.helpers.hooks;
 
 import javax.annotation.Resource;
@@ -17,6 +39,7 @@ import com.adyen.model.marketpay.notification.GetNotificationConfigurationListRe
 import com.adyen.model.marketpay.notification.NotificationConfigurationDetails;
 import com.adyen.model.marketpay.notification.NotificationEventConfiguration;
 import com.adyen.service.Notification;
+import com.adyen.service.exception.ApiException;
 import com.google.common.collect.ImmutableList;
 import io.restassured.RestAssured;
 import io.restassured.response.ResponseBody;
@@ -57,6 +80,9 @@ public class StartUpTestingHook implements ApplicationListener<ContextRefreshedE
             CreateNotificationConfigurationResponse configs = createConfigs();
             notificationId = configs.getConfigurationDetails().getNotificationId();
             log.info(String.format("Notification created successfully. notificationId: [%s]", configs.getConfigurationDetails().getNotificationId().toString()));
+        } catch (ApiException e) {
+            log.error(e.getError().toString());
+            throw new IllegalStateException("Could not create config", e);
         } catch (Exception e) {
             throw new IllegalStateException("Could not create config", e);
         }

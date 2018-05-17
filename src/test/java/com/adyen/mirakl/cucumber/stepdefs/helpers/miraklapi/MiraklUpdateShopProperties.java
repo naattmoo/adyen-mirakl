@@ -1,3 +1,25 @@
+/*
+ *                       ######
+ *                       ######
+ * ############    ####( ######  #####. ######  ############   ############
+ * #############  #####( ######  #####. ######  #############  #############
+ *        ######  #####( ######  #####. ######  #####  ######  #####  ######
+ * ###### ######  #####( ######  #####. ######  #####  #####   #####  ######
+ * ###### ######  #####( ######  #####. ######  #####          #####  ######
+ * #############  #############  #############  #############  #####  ######
+ *  ############   ############  #############   ############  #####  ######
+ *                                      ######
+ *                               #############
+ *                               ############
+ *
+ * Adyen Mirakl Connector
+ *
+ * Copyright (c) 2018 Adyen B.V.
+ * This file is open source and available under the MIT license.
+ * See the LICENSE file for more info.
+ *
+ */
+
 package com.adyen.mirakl.cucumber.stepdefs.helpers.miraklapi;
 
 import com.adyen.mirakl.service.UboService;
@@ -119,11 +141,11 @@ class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperties {
     MiraklUploadShopDocumentsRequest uploadMiraklShopWithBankStatement(String shopId) {
         ImmutableList.Builder<MiraklUploadDocument> docUploadRequestBuilder = new ImmutableList.Builder<>();
 
-        URL url = Resources.getResource("fileuploads/BankStatement.jpg");
+        URL url = Resources.getResource("fileuploads/BankStatement.png");
 
         MiraklUploadDocument element = new MiraklUploadDocument();
         element.setFile(new File(url.getPath()));
-        element.setFileName("BankStatement.jpg");
+        element.setFileName("BankStatement.png");
         element.setTypeCode("adyen-bankproof");
 
         docUploadRequestBuilder.add(element);

@@ -1,3 +1,25 @@
+/*
+ *                       ######
+ *                       ######
+ * ############    ####( ######  #####. ######  ############   ############
+ * #############  #####( ######  #####. ######  #############  #############
+ *        ######  #####( ######  #####. ######  #####  ######  #####  ######
+ * ###### ######  #####( ######  #####. ######  #####  #####   #####  ######
+ * ###### ######  #####( ######  #####. ######  #####          #####  ######
+ * #############  #############  #############  #############  #####  ######
+ *  ############   ############  #############   ############  #####  ######
+ *                                      ######
+ *                               #############
+ *                               ############
+ *
+ * Adyen Mirakl Connector
+ *
+ * Copyright (c) 2018 Adyen B.V.
+ * This file is open source and available under the MIT license.
+ * See the LICENSE file for more info.
+ *
+ */
+
 package com.adyen.mirakl.service;
 
 import com.adyen.mirakl.config.Constants;
@@ -244,6 +266,24 @@ public class DocService {
         String uboStartingTypeCode = "adyen-ubo"+uboNumber;
         return shopDocuments.stream()
             .filter(x -> x.getTypeCode().startsWith(uboStartingTypeCode))
+            .map(MiraklShopDocument::getId)
+            .collect(Collectors.toList());
+    }
+
+    public void removeMiraklMediaForBankProof(final String accountHolderCode) {
+        final List<MiraklShopDocument> shopDocuments = miraklMarketplacePlatformOperatorApiClient.getShopDocuments(new MiraklGetShopDocumentsRequest(ImmutableList.of(accountHolderCode)));
+        List<String> documentIdsToDelete = extractBankProofDocumentsToDelete(shopDocuments);
+
+        documentIdsToDelete.forEach(docIdToDel -> {
+            final MiraklDeleteShopDocumentRequest request = new MiraklDeleteShopDocumentRequest(docIdToDel);
+            miraklMarketplacePlatformOperatorApiClient.deleteShopDocument(request);
+        });
+
+    }
+
+    private List<String> extractBankProofDocumentsToDelete(final List<MiraklShopDocument> shopDocuments) {
+        return shopDocuments.stream()
+            .filter(x -> x.getTypeCode().contentEquals(Constants.BANKPROOF))
             .map(MiraklShopDocument::getId)
             .collect(Collectors.toList());
     }

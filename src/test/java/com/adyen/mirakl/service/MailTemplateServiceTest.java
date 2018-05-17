@@ -1,11 +1,32 @@
+/*
+ *                       ######
+ *                       ######
+ * ############    ####( ######  #####. ######  ############   ############
+ * #############  #####( ######  #####. ######  #############  #############
+ *        ######  #####( ######  #####. ######  #####  ######  #####  ######
+ * ###### ######  #####( ######  #####. ######  #####  #####   #####  ######
+ * ###### ######  #####( ######  #####. ######  #####          #####  ######
+ * #############  #############  #############  #############  #####  ######
+ *  ############   ############  #############   ############  #####  ######
+ *                                      ######
+ *                               #############
+ *                               ############
+ *
+ * Adyen Mirakl Connector
+ *
+ * Copyright (c) 2018 Adyen B.V.
+ * This file is open source and available under the MIT license.
+ * See the LICENSE file for more info.
+ *
+ */
+
 package com.adyen.mirakl.service;
 
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 import com.adyen.mirakl.config.MiraklOperatorConfiguration;
+import com.mirakl.client.domain.common.error.ErrorBean;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,6 +48,7 @@ import com.mirakl.client.mmp.domain.shop.MiraklContactInformation;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
 import com.mirakl.client.mmp.domain.shop.MiraklShops;
 import io.github.jhipster.config.JHipsterProperties;
+
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.doNothing;
@@ -70,10 +92,10 @@ public class MailTemplateServiceTest {
         mailTemplateService.sendMiraklShopEmailFromTemplate(miraklShop, Locale.UK, "testMiraklShopEmail", "email.test.title");
 
         verify(mailServiceMock).sendEmail("adyen-mirakl-cb966314-55c3-40e6-91f7-db6d8f0be825@mailinator.com",
-                                          "test title",
-                                          "<html>test title, http://127.0.0.1:8080, Mr, Ford, TestData, null/mmp/shop/account/shop/5073</html>\n",
-                                          false,
-                                          true);
+            "test title",
+            "<html>test title, http://127.0.0.1:8080, Mr, Ford, TestData, null/mmp/shop/account/shop/5073</html>\n",
+            false,
+            true);
     }
 
     @Test
@@ -178,5 +200,31 @@ public class MailTemplateServiceTest {
         Assertions.assertThat(content).contains(amount.getDecimalValue() + " " + amount.getCurrency());
         Assertions.assertThat(content).contains(sourceAccountHolderCodeNotExisting);
         Assertions.assertThat(content).contains(destinationAccountHolderCodeNotExisting);
+    }
+
+    @Test
+    public void testSendOperatorEmailManualCreditDocumentFailure() {
+
+        doNothing().when(mailServiceMock).sendEmail(isA(String.class), isA(String.class), contentCaptor.capture(), anyBoolean(), anyBoolean());
+
+        String destinationAccountHolderCode = "100";
+        Amount amount = new Amount();
+        amount.setCurrency("EUR");
+        amount.setValue(new Long(100));
+        String pspReference = "99999999";
+        Set<ErrorBean> errors = new HashSet<ErrorBean>();
+        String field = "manual_accounting_documents[0].shopId";
+        String message = "Cannot be empty";
+        ErrorBean errorBean = new ErrorBean(field, "100", message);
+        errors.add(errorBean);
+
+        mailTemplateService.sendOperatorEmailManualCreditDocumentFailure(destinationAccountHolderCode, amount, pspReference, errors);
+
+        final String content = contentCaptor.getValue();
+
+        // verify that all the payout code and text are there
+        Assertions.assertThat(content).contains(destinationAccountHolderCode);
+        Assertions.assertThat(content).contains(pspReference);
+        Assertions.assertThat(content).contains(field + " " +  message);
     }
 }

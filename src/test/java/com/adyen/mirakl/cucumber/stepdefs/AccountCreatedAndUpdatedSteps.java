@@ -1,3 +1,25 @@
+/*
+ *                       ######
+ *                       ######
+ * ############    ####( ######  #####. ######  ############   ############
+ * #############  #####( ######  #####. ######  #############  #############
+ *        ######  #####( ######  #####. ######  #####  ######  #####  ######
+ * ###### ######  #####( ######  #####. ######  #####  #####   #####  ######
+ * ###### ######  #####( ######  #####. ######  #####          #####  ######
+ * #############  #############  #############  #############  #####  ######
+ *  ############   ############  #############   ############  #####  ######
+ *                                      ######
+ *                               #############
+ *                               ############
+ *
+ * Adyen Mirakl Connector
+ *
+ * Copyright (c) 2018 Adyen B.V.
+ * This file is open source and available under the MIT license.
+ * See the LICENSE file for more info.
+ *
+ */
+
 package com.adyen.mirakl.cucumber.stepdefs;
 
 import com.adyen.mirakl.cucumber.stepdefs.helpers.stepshelper.StepDefsHelper;
@@ -80,7 +102,7 @@ public class AccountCreatedAndUpdatedSteps extends StepDefsHelper {
                 GetAccountHolderResponse accountHolderResponse = adyenAccountService.getAccountHolder(accountHolderRequest);
                 Assertions.assertThat(accountHolderResponse.getAccountHolderStatus().getStatus().toString()).isEqualTo("Active");
             } catch (ApiException e) {
-                log.error("Failing test due to exception", e);
+                log.error("Failing test due to exception: {}", e.getError());
                 Assertions.fail(e.getError().toString());
             }
         });
@@ -128,8 +150,8 @@ public class AccountCreatedAndUpdatedSteps extends StepDefsHelper {
             retrieveAccountHolderResponse(shop.getId());
         } catch (ApiException e) {
             Assertions
-                .assertThat(e.getError().getMessage())
-                .contains("Account with accountCode='"+shop.getId()+"' does not exist");
+                .assertThat(e.getError().getErrorCode())
+                .isEqualTo("10_035");
         }
     }
 

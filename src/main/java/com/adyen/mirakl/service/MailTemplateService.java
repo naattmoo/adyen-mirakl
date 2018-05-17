@@ -1,3 +1,25 @@
+/*
+ *                       ######
+ *                       ######
+ * ############    ####( ######  #####. ######  ############   ############
+ * #############  #####( ######  #####. ######  #############  #############
+ *        ######  #####( ######  #####. ######  #####  ######  #####  ######
+ * ###### ######  #####( ######  #####. ######  #####  #####   #####  ######
+ * ###### ######  #####( ######  #####. ######  #####          #####  ######
+ * #############  #############  #############  #############  #####  ######
+ *  ############   ############  #############   ############  #####  ######
+ *                                      ######
+ *                               #############
+ *                               ############
+ *
+ * Adyen Mirakl Connector
+ *
+ * Copyright (c) 2018 Adyen B.V.
+ * This file is open source and available under the MIT license.
+ * See the LICENSE file for more info.
+ *
+ */
+
 package com.adyen.mirakl.service;
 
 import com.adyen.mirakl.config.Constants;
@@ -7,6 +29,7 @@ import com.adyen.model.marketpay.Message;
 import com.adyen.model.marketpay.ShareholderContact;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.mirakl.client.domain.common.error.ErrorBean;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
 import com.mirakl.client.mmp.domain.shop.MiraklShops;
 import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
@@ -22,6 +45,7 @@ import org.thymeleaf.spring4.SpringTemplateEngine;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import javax.annotation.Resource;
 
 @Service
@@ -38,6 +62,8 @@ public class MailTemplateService {
     private static final String TRANSFER_FUNDS_ERROR = "transferFundsError";
     private static final String SOURCE = "source";
     private static final String DESTINATION = "destination";
+    private static final String MANUAL_CREDIT_AMOUNT = "manualCreditAmount";
+    private static final String PSPREFERENCE = "pspreference";
 
 
     @Value("${miraklOperator.miraklEnvUrl}")
@@ -144,6 +170,25 @@ public class MailTemplateService {
         String subject = messageSource.getMessage(Constants.Messages.EMAIL_TRANSFER_FUND_FAILED_TITLE, null, Locale.getDefault());
         mailService.sendEmail(miraklOperatorConfiguration.getMiraklOperatorEmail(), subject, content, false, true);
     }
+
+
+    @Async
+    public void sendOperatorEmailManualCreditDocumentFailure(String destinationAccountHolderCode, Amount amount, String pspReference, Set<ErrorBean> errors){
+        Context context = new Context(Locale.getDefault());
+
+        context.setVariable(DESTINATION, getText(destinationAccountHolderCode));
+
+        context.setVariable(MANUAL_CREDIT_AMOUNT, amount.getDecimalValue() + " " + amount.getCurrency());
+
+        context.setVariable(BASE_URL, jHipsterProperties.getMail().getBaseUrl());
+        context.setVariable(PSPREFERENCE, pspReference);
+        context.setVariable(ERRORS, errors);
+
+        String content = templateEngine.process("shopNotifications/operatorEmailManualCreditError", context);
+        String subject = messageSource.getMessage(Constants.Messages.EMAIL_MANUAL_CREDIT_DOCUMENT_FAILED_TITLE, null, Locale.getDefault());
+        mailService.sendEmail(miraklOperatorConfiguration.getMiraklOperatorEmail(), subject, content, false, true);
+    }
+
 
     /**
      * Try to find shop for accountCode could be there is not if it is the liableAccount

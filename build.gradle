@@ -1,3 +1,25 @@
+/*
+ *                       ######
+ *                       ######
+ * ############    ####( ######  #####. ######  ############   ############
+ * #############  #####( ######  #####. ######  #############  #############
+ *        ######  #####( ######  #####. ######  #####  ######  #####  ######
+ * ###### ######  #####( ######  #####. ######  #####  #####   #####  ######
+ * ###### ######  #####( ######  #####. ######  #####          #####  ######
+ * #############  #############  #############  #############  #####  ######
+ *  ############   ############  #############   ############  #####  ######
+ *                                      ######
+ *                               #############
+ *                               ############
+ *
+ * Adyen Mirakl Connector
+ *
+ * Copyright (c) 2018 Adyen B.V.
+ * This file is open source and available under the MIT license.
+ * See the LICENSE file for more info.
+ *
+ */
+
 import org.gradle.internal.os.OperatingSystem
 
 buildscript {
@@ -47,7 +69,7 @@ dependencyManagement {
 defaultTasks 'bootRun'
 
 group = 'com.adyen.mirakl'
-version = '0.0.1-SNAPSHOT'
+version = '1.0.0'
 
 description = ''
 
@@ -136,14 +158,6 @@ if (project.hasProperty('prod')) {
     apply from: 'gradle/profile_dev.gradle'
 }
 
-if (project.hasProperty('graphite')) {
-    apply from: 'gradle/graphite.gradle'
-}
-
-if (project.hasProperty('prometheus')) {
-    apply from: 'gradle/prometheus.gradle'
-}
-
 configurations {
     providedRuntime
     compile.exclude module: "spring-boot-starter-tomcat"
@@ -159,24 +173,11 @@ repositories {
         }
         url "https://artifactory.mirakl.net/artifactory/mirakl-ext-repo/"
     }
-    maven {
-        url 'http://artifactory.aws.e2y.co.uk/artifactory/adyen-java-api-library-temp/'
-        credentials {
-            username = "adyen"
-            password = "adyen"
-        }
-    }
 }
 
 dependencies {
     compile "org.springframework.boot:spring-boot-starter-cache"
     compile "io.github.jhipster:jhipster"
-    compile "io.dropwizard.metrics:metrics-core"
-    compile "io.dropwizard.metrics:metrics-jcache"
-    compile "io.dropwizard.metrics:metrics-json"
-    compile "io.dropwizard.metrics:metrics-jvm"
-    compile "io.dropwizard.metrics:metrics-servlet"
-    compile "io.dropwizard.metrics:metrics-servlets"
     compile "net.logstash.logback:logstash-logback-encoder"
     compile "com.fasterxml.jackson.datatype:jackson-datatype-json-org"
     compile "com.fasterxml.jackson.datatype:jackson-datatype-hppc"
@@ -185,7 +186,6 @@ dependencies {
     compile "com.fasterxml.jackson.core:jackson-annotations"
     compile "com.fasterxml.jackson.core:jackson-databind"
     compile "com.fasterxml.jackson.module:jackson-module-afterburner"
-    compile "com.ryantenney.metrics:metrics-spring"
     compile "javax.cache:cache-api"
     compile "org.hibernate:hibernate-core"
     compile "com.zaxxer:HikariCP"
@@ -220,13 +220,13 @@ dependencies {
     compile "org.springframework.security:spring-security-config"
     compile "org.springframework.security:spring-security-data"
     compile "org.springframework.security:spring-security-web"
-    compile "io.jsonwebtoken:jjwt"
     compile ("io.springfox:springfox-swagger2") {
         exclude module: 'mapstruct'
     }
     compile "io.springfox:springfox-bean-validators"
     compile "mysql:mysql-connector-java"
     compile "org.mapstruct:mapstruct-jdk8:${mapstruct_version}"
+    testCompile group: 'joda-time', name: 'joda-time', version: '2.3'
     testCompile "com.jayway.jsonpath:json-path"
     testCompile "info.cukes:cucumber-junit"
     testCompile "info.cukes:cucumber-spring"
@@ -252,7 +252,7 @@ dependencies {
     }
     //jhipster-needle-gradle-dependency - JHipster will add additional dependencies here
 
-    compile "com.adyen:adyen-java-api-library:1.4.marketplace.beta.2"
+    compile "com.adyen:adyen-java-api-library:1.4.1"
     compile "com.mirakl:mmp-sdk-operator:3.25.23"
     testCompile "com.mirakl:mmp-sdk-front:3.25.23"
 }

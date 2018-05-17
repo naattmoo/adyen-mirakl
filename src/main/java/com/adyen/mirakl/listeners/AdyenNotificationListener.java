@@ -1,17 +1,53 @@
+/*
+ *                       ######
+ *                       ######
+ * ############    ####( ######  #####. ######  ############   ############
+ * #############  #####( ######  #####. ######  #############  #############
+ *        ######  #####( ######  #####. ######  #####  ######  #####  ######
+ * ###### ######  #####( ######  #####. ######  #####  #####   #####  ######
+ * ###### ######  #####( ######  #####. ######  #####          #####  ######
+ * #############  #############  #############  #############  #####  ######
+ *  ############   ############  #############   ############  #####  ######
+ *                                      ######
+ *                               #############
+ *                               ############
+ *
+ * Adyen Mirakl Connector
+ *
+ * Copyright (c) 2018 Adyen B.V.
+ * This file is open source and available under the MIT license.
+ * See the LICENSE file for more info.
+ *
+ */
+
 package com.adyen.mirakl.listeners;
 
-import com.adyen.mirakl.service.DocService;
-import com.adyen.mirakl.service.MailTemplateService;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import com.adyen.mirakl.domain.AdyenNotification;
 import com.adyen.mirakl.events.AdyenNotifcationEvent;
 import com.adyen.mirakl.repository.AdyenNotificationRepository;
+import com.adyen.mirakl.service.DocService;
+import com.adyen.mirakl.service.MailTemplateService;
 import com.adyen.mirakl.service.RetryPayoutService;
+import com.adyen.mirakl.service.ShopService;
 import com.adyen.model.marketpay.GetAccountHolderRequest;
 import com.adyen.model.marketpay.GetAccountHolderResponse;
 import com.adyen.model.marketpay.ShareholderContact;
 import com.adyen.model.marketpay.notification.AccountHolderPayoutNotification;
 import com.adyen.model.marketpay.notification.AccountHolderStatusChangeNotification;
 import com.adyen.model.marketpay.notification.AccountHolderVerificationNotification;
+import com.adyen.model.marketpay.notification.CompensateNegativeBalanceNotification;
+import com.adyen.model.marketpay.notification.CompensateNegativeBalanceNotificationRecord;
+import com.adyen.model.marketpay.notification.CompensateNegativeBalanceNotificationRecordContainer;
 import com.adyen.model.marketpay.notification.GenericNotification;
 import com.adyen.model.marketpay.notification.TransferFundsNotification;
 import com.adyen.notification.NotificationHandler;
@@ -21,22 +57,12 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
 import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
+import com.mirakl.client.mmp.operator.domain.invoice.MiraklCreatedManualAccountingDocuments;
 import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.context.event.EventListener;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Component;
-import org.springframework.util.CollectionUtils;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-
 import static com.adyen.mirakl.listeners.AdyenNotificationListener.TemplateAndSubjectKey.getSubject;
 import static com.adyen.mirakl.listeners.AdyenNotificationListener.TemplateAndSubjectKey.getTemplate;
-import static com.adyen.model.marketpay.KYCCheckStatusData.*;
+import static com.adyen.model.marketpay.KYCCheckStatusData.CheckStatusEnum;
+import static com.adyen.model.marketpay.KYCCheckStatusData.CheckTypeEnum;
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 
@@ -82,6 +108,7 @@ public class AdyenNotificationListener {
     private RetryPayoutService retryPayoutService;
     private Account adyenAccountService;
     private DocService docService;
+    private ShopService shopService;
 
     AdyenNotificationListener(final NotificationHandler notificationHandler,
                               final AdyenNotificationRepository adyenNotificationRepository,
@@ -89,7 +116,8 @@ public class AdyenNotificationListener {
                               final MiraklMarketplacePlatformOperatorApiClient miraklMarketplacePlatformOperatorApiClient,
                               final Account adyenAccountService,
                               final RetryPayoutService retryPayoutService,
-                              final DocService docService) {
+                              final DocService docService,
+                              final ShopService shopService) {
         this.notificationHandler = notificationHandler;
         this.adyenNotificationRepository = adyenNotificationRepository;
         this.mailTemplateService = mailTemplateService;
@@ -97,6 +125,7 @@ public class AdyenNotificationListener {
         this.adyenAccountService = adyenAccountService;
         this.retryPayoutService = retryPayoutService;
         this.docService = docService;
+        this.shopService = shopService;
     }
 
     @Async
@@ -128,6 +157,37 @@ public class AdyenNotificationListener {
         if (genericNotification instanceof TransferFundsNotification) {
             processTransferFunds((TransferFundsNotification) genericNotification);
         }
+        if (genericNotification instanceof CompensateNegativeBalanceNotification) {
+            processCompensateNegativeBalanceNotification((CompensateNegativeBalanceNotification) genericNotification);
+        }
+    }
+
+    private void processCompensateNegativeBalanceNotification(final CompensateNegativeBalanceNotification compensateNegativeBalanceNotification) throws Exception {
+        final List<CompensateNegativeBalanceNotificationRecordContainer> compensateNegativeBalanceNotificationRecordContainerList = compensateNegativeBalanceNotification.getContent().getRecords();
+        final String pspReference = compensateNegativeBalanceNotification.getPspReference();
+
+        compensateNegativeBalanceNotificationRecordContainerList.forEach(compensateNegativeBalanceNotificationRecordContainer -> {
+            try {
+                MiraklCreatedManualAccountingDocuments miraklCreatedManualAccountingDocuments = shopService.processCompensateNegativeBalance(compensateNegativeBalanceNotificationRecordContainer.getCompensateNegativeBalanceNotificationRecord(),
+                                                                                                                                             pspReference);
+
+                if (miraklCreatedManualAccountingDocuments.getManualAccountingDocumentReturns().get(0).getManualAccountingDocumentError() != null
+                    && ! miraklCreatedManualAccountingDocuments.getManualAccountingDocumentReturns().get(0).getManualAccountingDocumentError().getErrors().isEmpty()) {
+                    CompensateNegativeBalanceNotificationRecord notificationRecord = compensateNegativeBalanceNotificationRecordContainer.getCompensateNegativeBalanceNotificationRecord();
+                    mailTemplateService.sendOperatorEmailManualCreditDocumentFailure(notificationRecord.getAccountCode(),
+                                                                                     notificationRecord.getAmount(),
+                                                                                     pspReference,
+                                                                                     miraklCreatedManualAccountingDocuments.getManualAccountingDocumentReturns()
+                                                                                                                           .get(0)
+                                                                                                                           .getManualAccountingDocumentError()
+                                                                                                                           .getErrors());
+                }
+            } catch (ApiException e) {
+                log.error("Failed processing notification: {}", e.getError(), e);
+            } catch (Exception e) {
+                log.error("Exception: {}", e.getMessage(), e);
+            }
+        });
     }
 
     private void processAccountholderVerificationNotification(final AccountHolderVerificationNotification verificationNotification) throws Exception {
@@ -157,27 +217,32 @@ public class AdyenNotificationListener {
         } else if (invalidOrAwaitingCompanyVerificationData(verificationStatus, verificationType)) {
             final MiraklShop shop = getShop(shopId);
             mailTemplateService.sendMiraklShopEmailFromTemplate(shop, Locale.getDefault(), getTemplate(verificationType, verificationStatus), getSubject(verificationType, verificationStatus));
-        } else if(dataProvidedForPassportOrIdentity(verificationStatus, verificationType, CheckStatusEnum.DATA_PROVIDED, CheckTypeEnum.PASSPORT_VERIFICATION, CheckTypeEnum.IDENTITY_VERIFICATION)){
+        } else if (dataProvidedForPassportOrIdentity(verificationStatus, verificationType, CheckStatusEnum.DATA_PROVIDED, CheckTypeEnum.PASSPORT_VERIFICATION, CheckTypeEnum.IDENTITY_VERIFICATION)) {
             docService.removeMiraklMediaForShareHolder(verificationNotification.getContent().getShareholderCode());
+        } else if (CheckStatusEnum.DATA_PROVIDED.equals(verificationStatus) && CheckTypeEnum.BANK_ACCOUNT_VERIFICATION.equals(verificationType)) {
+            docService.removeMiraklMediaForBankProof(verificationNotification.getContent().getAccountHolderCode());
         }
+
     }
 
-    private boolean dataProvidedForPassportOrIdentity(final CheckStatusEnum verificationStatus, final CheckTypeEnum verificationType, final CheckStatusEnum dataProvided, final CheckTypeEnum passportVerification, final CheckTypeEnum identityVerification) {
-        return dataProvided.equals(verificationStatus) &&
-            (passportVerification.equals(verificationType) || identityVerification.equals(verificationType));
+    private boolean dataProvidedForPassportOrIdentity(final CheckStatusEnum verificationStatus,
+                                                      final CheckTypeEnum verificationType,
+                                                      final CheckStatusEnum dataProvided,
+                                                      final CheckTypeEnum passportVerification,
+                                                      final CheckTypeEnum identityVerification) {
+        return dataProvided.equals(verificationStatus) && (passportVerification.equals(verificationType) || identityVerification.equals(verificationType));
     }
 
     private boolean invalidOrAwaitingCompanyVerificationData(final CheckStatusEnum verificationStatus, final CheckTypeEnum verificationType) {
-        return CheckTypeEnum.COMPANY_VERIFICATION.equals(verificationType) && (CheckStatusEnum.INVALID_DATA.equals(verificationStatus)
-            || CheckStatusEnum.AWAITING_DATA.equals(verificationStatus));
+        return CheckTypeEnum.COMPANY_VERIFICATION.equals(verificationType) && (CheckStatusEnum.INVALID_DATA.equals(verificationStatus) || CheckStatusEnum.AWAITING_DATA.equals(verificationStatus));
     }
 
     private boolean awaitingDataForIdentityOrPassport(final CheckStatusEnum verificationStatus, final CheckTypeEnum verificationType) {
-        return dataProvidedForPassportOrIdentity(verificationStatus, verificationType,CheckStatusEnum.AWAITING_DATA,CheckTypeEnum.IDENTITY_VERIFICATION,CheckTypeEnum.PASSPORT_VERIFICATION);
+        return dataProvidedForPassportOrIdentity(verificationStatus, verificationType, CheckStatusEnum.AWAITING_DATA, CheckTypeEnum.IDENTITY_VERIFICATION, CheckTypeEnum.PASSPORT_VERIFICATION);
     }
 
     private boolean invalidDataForIdentityOrPassport(final CheckStatusEnum verificationStatus, final CheckTypeEnum verificationType) {
-        return dataProvidedForPassportOrIdentity(verificationStatus, verificationType,CheckStatusEnum.INVALID_DATA,CheckTypeEnum.IDENTITY_VERIFICATION,CheckTypeEnum.PASSPORT_VERIFICATION);
+        return dataProvidedForPassportOrIdentity(verificationStatus, verificationType, CheckStatusEnum.INVALID_DATA, CheckTypeEnum.IDENTITY_VERIFICATION, CheckTypeEnum.PASSPORT_VERIFICATION);
     }
 
     private MiraklShop getShop(String shopId) {
@@ -232,8 +297,6 @@ public class AdyenNotificationListener {
             final GetAccountHolderRequest getAccountHolderDestinationRequest = new GetAccountHolderRequest();
             getAccountHolderDestinationRequest.setAccountCode(transferFundsNotification.getContent().getDestinationAccountCode());
             final GetAccountHolderResponse accountHolderDestinationResponse = adyenAccountService.getAccountHolder(getAccountHolderDestinationRequest);
-
-
 
 
             mailTemplateService.sendOperatorEmailTransferFundsFailure(accountHolderSourceResponse.getAccountHolderCode(),

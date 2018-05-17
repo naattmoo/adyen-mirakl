@@ -1,3 +1,25 @@
+/*
+ *                       ######
+ *                       ######
+ * ############    ####( ######  #####. ######  ############   ############
+ * #############  #####( ######  #####. ######  #############  #############
+ *        ######  #####( ######  #####. ######  #####  ######  #####  ######
+ * ###### ######  #####( ######  #####. ######  #####  #####   #####  ######
+ * ###### ######  #####( ######  #####. ######  #####          #####  ######
+ * #############  #############  #############  #############  #####  ######
+ *  ############   ############  #############   ############  #####  ######
+ *                                      ######
+ *                               #############
+ *                               ############
+ *
+ * Adyen Mirakl Connector
+ *
+ * Copyright (c) 2018 Adyen B.V.
+ * This file is open source and available under the MIT license.
+ * See the LICENSE file for more info.
+ *
+ */
+
 package com.adyen.mirakl.security;
 
 /**
@@ -6,10 +28,6 @@ package com.adyen.mirakl.security;
 public final class AuthoritiesConstants {
 
     public static final String ADMIN = "ROLE_ADMIN";
-
-    public static final String USER = "ROLE_USER";
-
-    public static final String ANONYMOUS = "ROLE_ANONYMOUS";
 
     private AuthoritiesConstants() {
     }

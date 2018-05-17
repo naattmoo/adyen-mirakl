@@ -1,3 +1,25 @@
+/*
+ *                       ######
+ *                       ######
+ * ############    ####( ######  #####. ######  ############   ############
+ * #############  #####( ######  #####. ######  #############  #############
+ *        ######  #####( ######  #####. ######  #####  ######  #####  ######
+ * ###### ######  #####( ######  #####. ######  #####  #####   #####  ######
+ * ###### ######  #####( ######  #####. ######  #####          #####  ######
+ * #############  #############  #############  #############  #####  ######
+ *  ############   ############  #############   ############  #####  ######
+ *                                      ######
+ *                               #############
+ *                               ############
+ *
+ * Adyen Mirakl Connector
+ *
+ * Copyright (c) 2018 Adyen B.V.
+ * This file is open source and available under the MIT license.
+ * See the LICENSE file for more info.
+ *
+ */
+
 package com.adyen.mirakl.web.rest;
 
 import java.net.URL;
@@ -20,7 +42,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.adyen.mirakl.AdyenMiraklConnectorApp;
 import com.adyen.mirakl.domain.AdyenNotification;
 import com.adyen.mirakl.repository.AdyenNotificationRepository;
-import com.adyen.mirakl.web.rest.errors.ExceptionTranslator;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import static com.adyen.mirakl.web.rest.TestUtil.createFormattingConversionService;
@@ -48,9 +69,6 @@ public class AdyenNotificationResourceIntTest {
     @Autowired
     private PageableHandlerMethodArgumentResolver pageableArgumentResolver;
 
-    @Autowired
-    private ExceptionTranslator exceptionTranslator;
-
     @Mock
     private ApplicationEventPublisher publisherMock;
 
@@ -66,7 +84,6 @@ public class AdyenNotificationResourceIntTest {
         this.restAdyenNotificationMockMvc = MockMvcBuilders.standaloneSetup(adyenNotificationResource)
                                                            .addFilter(springSecurityFilterChain)
                                                            .setCustomArgumentResolvers(pageableArgumentResolver)
-                                                           .setControllerAdvice(exceptionTranslator)
                                                            .setConversionService(createFormattingConversionService())
                                                            .setMessageConverters(jacksonMessageConverter)
                                                            .build();

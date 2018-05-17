@@ -13,12 +13,6 @@
 # http://docs.spring.io/spring-boot/docs/current/reference/html/common-application-properties.html
 # ===================================================================
 
-
-management:
-    health:
-        mail:
-            enabled: false # When using the MailService, configure an SMTP server and set this to true
-
 spring:
     application:
         name: adyenMiraklConnector
@@ -93,17 +87,6 @@ jhipster:
     mail:
         from: test@localhost
         base-url: http://127.0.0.1:8080
-    security:
-        authentication:
-            jwt:
-                secret: dce94bef3eaf00a6eec9df0a559602b5600715bf
-                # Token is valid 24 hours
-                token-validity-in-seconds: 86400
-    metrics: # DropWizard Metrics configuration, used by MetricsConfiguration
-        jmx.enabled: true
-        logs: # Reports Dropwizard metrics in the logs
-            enabled: true
-            report-frequency: 60 # in seconds
 
 # ===================================================================
 # Application specific properties
@@ -145,6 +128,7 @@ adyenConfig:
     password: ${ADYEN_PASS}
     environment: ${ADYEN_ENV}
     appName: adyen-mirakl-connector
+    appVersion: 1.0.0
 
 adyenNotificationsConfig:
     notificationConfigurationDetails:
@@ -195,15 +179,14 @@ mail.max.retries: 10
 
 mailtrapConfig:
     baseMailTrapUrl: https://mailtrap.io/api/v1/inboxes/
-    mailTrapInboxId: 356812
+    mailTrapInboxId: ${MAILTRAP_INBOX_ID}
     apiToken: ${MAILTRAP_API_TOKEN}
 
 payoutService:
     subscriptionTransferCode: SUBSCRIPTION
-    transferCode: TransferCode_1
     liableAccountCode: ${ADYEN_LIABLE_ACCOUNT_CODE}
 
 accounts:
     accountCode:
-        sourceAccountCode: 131712554
-        zeroBalanceSourceAccountCode: 185335929
+        sourceAccountCode: 148401008
+        zeroBalanceSourceAccountCode: 163126229

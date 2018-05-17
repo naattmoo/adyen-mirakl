@@ -1,10 +1,31 @@
+/*
+ *                       ######
+ *                       ######
+ * ############    ####( ######  #####. ######  ############   ############
+ * #############  #####( ######  #####. ######  #############  #############
+ *        ######  #####( ######  #####. ######  #####  ######  #####  ######
+ * ###### ######  #####( ######  #####. ######  #####  #####   #####  ######
+ * ###### ######  #####( ######  #####. ######  #####          #####  ######
+ * #############  #############  #############  #############  #####  ######
+ *  ############   ############  #############   ############  #####  ######
+ *                                      ######
+ *                               #############
+ *                               ############
+ *
+ * Adyen Mirakl Connector
+ *
+ * Copyright (c) 2018 Adyen B.V.
+ * This file is open source and available under the MIT license.
+ * See the LICENSE file for more info.
+ *
+ */
+
 package com.adyen.mirakl.web.rest;
 
 import com.adyen.mirakl.domain.AdyenNotification;
 import com.adyen.mirakl.events.AdyenNotifcationEvent;
 import com.adyen.mirakl.repository.AdyenNotificationRepository;
 import com.adyen.mirakl.web.rest.util.HeaderUtil;
-import com.codahale.metrics.annotation.Timed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
@@ -45,7 +66,6 @@ public class AdyenNotificationResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/adyen-notifications")
-    @Timed
     public ResponseEntity<AdyenNotification> createAdyenNotification(@RequestBody String adyenNotification) throws URISyntaxException {
         final AdyenNotification entity = new AdyenNotification();
         entity.setRawAdyenNotification(adyenNotification);
