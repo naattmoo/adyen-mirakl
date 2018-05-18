@@ -9,3 +9,10 @@ Feature: Smoke test
         And the connector processes the data and pushes to Adyen
         Then the ACCOUNT_HOLDER_UPDATED will be sent by Adyen
 
+    Scenario Outline: Top up default sourceAccountCode
+        When a payment of <amount> <currency> has been authorised
+        Then the payment is captured
+        Examples:
+            | amount | currency |
+            | 10000  | EUR      |
+            | 10000  | GBP      |

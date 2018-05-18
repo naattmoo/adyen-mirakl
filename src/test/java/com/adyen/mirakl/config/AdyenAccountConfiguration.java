@@ -33,11 +33,21 @@ public class AdyenAccountConfiguration {
 
     private Map<String, Integer> accountCode;
 
+    private Map<String, String> adyenPal;
+
     public Map<String, Integer> getAccountCode() {
         return accountCode;
     }
 
     public void setAccountCode(Map<String, Integer> accountCode) {
         this.accountCode = accountCode;
+    }
+
+    public Map<String, String> getAdyenPal() {
+        return adyenPal;
+    }
+
+    public void setAdyenPal(Map<String, String> adyenPal) {
+        this.adyenPal = adyenPal;
     }
 }

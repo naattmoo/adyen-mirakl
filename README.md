@@ -11,7 +11,7 @@ The Adyen Mirakl Connector integrates a Mirakl Marketplace Platform Instance wit
 
 
 
- ## Documentation
+## Documentation
 We have a [Wiki](https://github.com/e2y/adyen-mirakl/wiki) for more detailed information.
 
 
@@ -26,7 +26,6 @@ export MIRAKL_SDK_PASSWORD=<pass>
 export MIRAKL_ENV_URL=<miraklEnvUrl>
 export MIRAKL_API_OPERATOR_KEY=<miraklApiOperatorKey>
 export MIRAKL_OPERATOR_EMAIL=<miraklOperatorEmail>
-export MIRAKL_API_FRONT_KEY=<miraklApiFrontKey>
 ```
 
 Same goes for Adyen: `ADYEN_USER_NAME`, `ADYEN_PASS`, `ADYEN_ENV`, `ADYEN_NOTIFY_URL` AND `ADYEN_LIABLE_ACCOUNT_CODE`. 
@@ -51,6 +50,14 @@ export MAIL_PORT=<port>
 export MAIL_USER=<user>
 export MAIL_PASS=<pass>
 ```
+
+(Optional) For running integration tests:
+````
+export MIRAKL_API_FRONT_KEY=<miraklApiFrontKey>
+export ADYEN_PAL_USERNAME=<ws@company.merchantaccount>
+export ADYEN_PAL_PASSWORD=<pass>
+export ADYEN_PAL_MERCHANT_ACCOUNT=<merchant account>
+````
 
 And run `source ~/.bashrc`
 
