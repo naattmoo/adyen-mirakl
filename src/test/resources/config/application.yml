@@ -190,3 +190,7 @@ accounts:
     accountCode:
         sourceAccountCode: 148401008
         zeroBalanceSourceAccountCode: 163126229
+    adyenPal:
+        username: ${ADYEN_PAL_USERNAME}
+        password: ${ADYEN_PAL_PASSWORD}
+        merchantAccount: ${ADYEN_PAL_MERCHANT_ACCOUNT}
