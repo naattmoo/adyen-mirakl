@@ -23,6 +23,7 @@
 package com.adyen.mirakl.domain;
 
 import com.adyen.mirakl.service.util.MiraklDataExtractionUtil;
+import com.adyen.mirakl.startup.MiraklStartupValidator.CustomMiraklFields;
 import com.adyen.model.marketpay.CreateAccountHolderRequest;
 import com.mirakl.client.mmp.domain.common.MiraklAdditionalFieldValue;
 import org.apache.commons.lang3.StringUtils;
@@ -82,9 +83,9 @@ public class StreetDetails {
     public static String extractHouseNumberOrNameFromAdditionalFields(final List<MiraklAdditionalFieldValue> additionalFieldValues){
         final CreateAccountHolderRequest.LegalEntityEnum legalEntityType = MiraklDataExtractionUtil.getLegalEntityFromShop(additionalFieldValues);
         if(CreateAccountHolderRequest.LegalEntityEnum.BUSINESS.equals(legalEntityType)){
-            return MiraklDataExtractionUtil.extractTextFieldFromAdditionalFields(additionalFieldValues, "adyen-business-housenumber");
+            return MiraklDataExtractionUtil.extractTextFieldFromAdditionalFields(additionalFieldValues, CustomMiraklFields.ADYEN_BUSINESS_HOUSENUMBER.toString());
         }else if(CreateAccountHolderRequest.LegalEntityEnum.INDIVIDUAL.equals(legalEntityType)){
-            return MiraklDataExtractionUtil.extractTextFieldFromAdditionalFields(additionalFieldValues, "adyen-individual-housenumber");
+            return MiraklDataExtractionUtil.extractTextFieldFromAdditionalFields(additionalFieldValues, CustomMiraklFields.ADYEN_BUSINESS_HOUSENUMBER.toString());
         }
         log.warn("Unable to extract house number or name from additional fields");
         return null;
