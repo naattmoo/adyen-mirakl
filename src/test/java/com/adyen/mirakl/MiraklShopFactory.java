@@ -34,12 +34,11 @@ public final class MiraklShopFactory {
     private MiraklShopFactory() {
     }
 
-    public static final Map<String, String> UBO_FIELDS_ENUMS = ImmutableMap.of("civility", "mr", "phonetype", "mobile");
+    public static final Map<String, String> UBO_FIELDS_ENUMS = ImmutableMap.of("civility", "mr", "phonetype", "mobile", "dob", "1986-08-30T22:00:00Z");
 
     public static final Set<String> UBO_FIELDS = ImmutableSet.of("firstname",
                                                                  "lastname",
                                                                  "email",
-                                                                 "dob",
                                                                  "nationality",
                                                                  "idnumber",
                                                                  "housenumber",

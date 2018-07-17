@@ -355,7 +355,7 @@ public class UboServiceTest {
         Assertions.assertThat(emails).containsExactlyInAnyOrder("email1", "email2", "email3", "email4");
 
         final Set<String> dateOfBirth = shareHolders.stream().map(ShareholderContact::getPersonalData).map(PersonalData::getDateOfBirth).collect(Collectors.toSet());
-        Assertions.assertThat(dateOfBirth).containsExactlyInAnyOrder("dob1", "dob2", "dob3", "dob4");
+        Assertions.assertThat(dateOfBirth).containsExactly("1986-08-30");
 
         final Set<String> nationalities = shareHolders.stream().map(ShareholderContact::getPersonalData).map(PersonalData::getNationality).collect(Collectors.toSet());
         Assertions.assertThat(nationalities).containsExactlyInAnyOrder("nationality1", "nationality2", "nationality3", "nationality4");
