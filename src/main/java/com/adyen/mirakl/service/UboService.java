@@ -339,7 +339,7 @@ public class UboService {
         if (dateOfBirth != null || nationality != null || idNumber != null) {
             final PersonalData personalData = new PersonalData();
 
-            if (!dateOfBirth.isEmpty()) {
+            if (dateOfBirth != null && !dateOfBirth.isEmpty()) {
                 DateTime dateTime = MiraklDataExtractionUtil.formatCustomDateField(dateOfBirth);
                 org.joda.time.format.DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd");
                 personalData.setDateOfBirth(dateTime.toString(formatter));
