@@ -22,32 +22,13 @@
 
 package com.adyen.mirakl.service;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import org.assertj.core.api.Assertions;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Answers;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
 import com.adyen.mirakl.MiraklShopFactory;
 import com.adyen.mirakl.domain.ShareholderMapping;
 import com.adyen.mirakl.repository.ShareholderMappingRepository;
 import com.adyen.mirakl.service.dto.UboDocumentDTO;
 import com.adyen.model.Address;
 import com.adyen.model.Name;
-import com.adyen.model.marketpay.DocumentDetail;
-import com.adyen.model.marketpay.GetAccountHolderResponse;
-import com.adyen.model.marketpay.PersonalData;
-import com.adyen.model.marketpay.PhoneNumber;
-import com.adyen.model.marketpay.ShareholderContact;
+import com.adyen.model.marketpay.*;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -58,6 +39,19 @@ import com.mirakl.client.mmp.domain.shop.MiraklShops;
 import com.mirakl.client.mmp.domain.shop.document.MiraklShopDocument;
 import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
 import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
+import org.assertj.core.api.Assertions;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.*;
+import org.mockito.runners.MockitoJUnitRunner;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
 import static com.adyen.mirakl.MiraklShopFactory.UBO_FIELDS;
 import static com.adyen.mirakl.MiraklShopFactory.UBO_FIELDS_ENUMS;
 import static org.mockito.Mockito.when;
@@ -220,6 +214,30 @@ public class UboServiceTest {
     }
 
     @Test
+    public void shouldMapDateOfBirthCorrect() {
+
+        uboService.setMaxUbos(1);
+        List<MiraklAdditionalFieldValue> ubo1Start = MiraklShopFactory.createMiraklAdditionalUboField("1", ImmutableSet.of("firstname", "lastname", "email"), ImmutableMap.of("civility", "Mr"));
+
+        MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue additionalDobField = new MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue();
+        additionalDobField.setCode("adyen-ubo1-dob");
+        additionalDobField.setValue("1986-08-30T22:00:00Z");
+
+        final List<MiraklAdditionalFieldValue> ubo1WithStreet = Streams.concat(ubo1Start.stream(), ImmutableList.of(additionalDobField).stream()).collect(Collectors.toList());
+
+        when(miraklShopMock.getAdditionalFieldValues()).thenReturn(ubo1WithStreet);
+        when(miraklShopMock.getId()).thenReturn("shopCode");
+        when(miraklShopMock.getContactInformation().getCountry()).thenReturn("NLD");
+        when(shareholderMappingRepositoryMock.findOneByMiraklShopIdAndMiraklUboNumber("shopCode", 1)).thenReturn(Optional.empty());
+
+        final List<ShareholderContact> result = uboService.extractUbos(miraklShopMock);
+
+        Assertions.assertThat(result.size()).isOne();
+        final ShareholderContact shareholderContact = result.iterator().next();
+        Assertions.assertThat(shareholderContact.getPersonalData().getDateOfBirth()).isEqualTo("1986-08-30");
+    }
+
+    @Test
     public void shouldUseMappingFromExistingShop() {
         uboService.setMaxUbos(4);
         List<MiraklAdditionalFieldValue> ubo1 = MiraklShopFactory.createMiraklAdditionalUboField("1", UBO_FIELDS, UBO_FIELDS_ENUMS);
@@ -239,9 +257,9 @@ public class UboServiceTest {
         when(shareholderMappingRepositoryMock.findOneByAdyenShareholderCode("shareholderCode4")).thenReturn(Optional.empty());
 
         when(existingAccountHolderMock.getAccountHolderDetails().getBusinessDetails().getShareholders()).thenReturn(ImmutableList.of(shareholderMock1,
-                                                                                                                                     shareholderMock2,
-                                                                                                                                     shareholderMock3,
-                                                                                                                                     shareholderMock4));
+            shareholderMock2,
+            shareholderMock3,
+            shareholderMock4));
         when(shareholderMock1.getShareholderCode()).thenReturn("shareholderCode1");
         when(shareholderMock2.getShareholderCode()).thenReturn("shareholderCode2");
         when(shareholderMock3.getShareholderCode()).thenReturn("shareholderCode3");
@@ -294,11 +312,11 @@ public class UboServiceTest {
         when(shareholderMappingMock3.getAdyenShareholderCode()).thenReturn("shareholderCode3");
 
         final List<UboDocumentDTO> result = uboService.extractUboDocuments(ImmutableList.of(miraklShopDocument1,
-                                                                                            miraklShopDocument2,
-                                                                                            miraklShopDocument3,
-                                                                                            miraklShopDocument4,
-                                                                                            miraklShopDocument5,
-                                                                                            miraklShopDocument6));
+            miraklShopDocument2,
+            miraklShopDocument3,
+            miraklShopDocument4,
+            miraklShopDocument5,
+            miraklShopDocument6));
 
         List<MiraklGetShopsRequest> requestsToMirakl = miraklGetShopsRequestCaptor.getAllValues();
         Assertions.assertThat(requestsToMirakl.size()).isEqualTo(3);
@@ -337,7 +355,7 @@ public class UboServiceTest {
         Assertions.assertThat(emails).containsExactlyInAnyOrder("email1", "email2", "email3", "email4");
 
         final Set<String> dateOfBirth = shareHolders.stream().map(ShareholderContact::getPersonalData).map(PersonalData::getDateOfBirth).collect(Collectors.toSet());
-        Assertions.assertThat(dateOfBirth).containsExactlyInAnyOrder("dob1", "dob2", "dob3", "dob4");
+        Assertions.assertThat(dateOfBirth).containsExactly("1986-08-30");
 
         final Set<String> nationalities = shareHolders.stream().map(ShareholderContact::getPersonalData).map(PersonalData::getNationality).collect(Collectors.toSet());
         Assertions.assertThat(nationalities).containsExactlyInAnyOrder("nationality1", "nationality2", "nationality3", "nationality4");

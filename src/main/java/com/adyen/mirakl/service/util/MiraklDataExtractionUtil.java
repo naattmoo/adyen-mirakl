@@ -26,6 +26,9 @@ import com.adyen.mirakl.startup.MiraklStartupValidator;
 import com.adyen.model.marketpay.CreateAccountHolderRequest;
 import com.mirakl.client.mmp.domain.additionalfield.MiraklAdditionalFieldType;
 import com.mirakl.client.mmp.domain.common.MiraklAdditionalFieldValue;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.format.DateTimeFormat;
 
 import java.util.Arrays;
 import java.util.List;
@@ -53,12 +56,21 @@ public final class MiraklDataExtractionUtil {
         return MiraklAdditionalFieldType.LIST.equals(additionalFieldValue.getFieldType()) && field.toString().equalsIgnoreCase(additionalFieldValue.getCode());
     }
 
-    public static String extractTextFieldFromAdditionalFields(final List<MiraklAdditionalFieldValue> additionalFieldValues, String key){
+    public static String extractTextFieldFromAdditionalFields(final List<MiraklAdditionalFieldValue> additionalFieldValues, String key) {
         return additionalFieldValues.stream()
             .filter(MiraklAdditionalFieldValue.MiraklStringAdditionalFieldValue.class::isInstance)
             .map(MiraklAdditionalFieldValue.MiraklStringAdditionalFieldValue.class::cast)
             .filter(x -> key.equalsIgnoreCase(x.getCode()))
             .map(MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithSingleValue::getValue)
             .findAny().orElse(null);
+    }
+
+    /**
+     * The custom field dates in the API responses are returned in UTC time.
+     */
+    public static DateTime formatCustomDateField(String customDateField) {
+        org.joda.time.format.DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ssZ");
+        DateTime date = formatter.parseDateTime(customDateField).withZone(DateTimeZone.UTC);
+        return date;
     }
 }
