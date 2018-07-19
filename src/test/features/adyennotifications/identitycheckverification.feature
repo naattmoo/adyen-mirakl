@@ -55,6 +55,7 @@ Feature: Identity verification check
             | documentType    | filename                |
             | PASSPORT        | passportFront.png       |
             | ID_CARD         | idCardFront.png         |
+            | ID_CARD         | idCardBack.png         |
             | DRIVING_LICENCE | drivingLicenseFront.png |
             | DRIVING_LICENCE | drivingLicenseBack.png  |
         And the following document will not be uploaded to Adyen

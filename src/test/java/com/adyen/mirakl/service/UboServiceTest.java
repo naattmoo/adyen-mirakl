@@ -282,7 +282,7 @@ public class UboServiceTest {
         //shop 2
         when(miraklShopDocument3.getTypeCode()).thenReturn("adyen-ubo1-photoid");//id front used
         when(miraklShopDocument3.getShopId()).thenReturn("shop2");
-        when(miraklShopDocument4.getTypeCode()).thenReturn("adyen-ubo1-photoid-rear");//rear id picture ignored
+        when(miraklShopDocument4.getTypeCode()).thenReturn("adyen-ubo1-photoid-rear");//rear id used
         when(miraklShopDocument4.getShopId()).thenReturn("shop2");
         when(miraklShopDocument5.getTypeCode()).thenReturn("adyen-ubo2-photoid");//front driving licence always mapped to front
         when(miraklShopDocument5.getShopId()).thenReturn("shop2");
@@ -290,7 +290,7 @@ public class UboServiceTest {
         when(miraklShopDocument6.getShopId()).thenReturn("shop2");
         // result will be 4 documents sent to adyen
         // 1 passport                                                       - shop 1 ubo 1
-        // 1 id                                                             - shop 2 ubo 1
+        // 1 front id  & 1 back id                                          - shop 2 ubo 1
         // 1 front driving licence & 1 rear driving licence                 - shop 2 ubo 2
 
         when(miraklMarketplacePlatformOperatorApiClientMock.getShops(miraklGetShopsRequestCaptor.capture())).thenReturn(miraklShops1).thenReturn(miraklShops2);
@@ -322,23 +322,31 @@ public class UboServiceTest {
         Assertions.assertThat(requestsToMirakl.size()).isEqualTo(3);
         Assertions.assertThat(requestsToMirakl.get(0).getShopIds()).containsOnly("shop1");
         Assertions.assertThat(requestsToMirakl.get(1).getShopIds()).containsOnly("shop2");
-        Assertions.assertThat(result.size()).isEqualTo(4);
+        Assertions.assertThat(result.size()).isEqualTo(5);
         Assertions.assertThat(result.get(0).getShareholderCode()).isEqualTo("shareholderCode1");
         Assertions.assertThat(result.get(0).getMiraklShopDocument().getShopId()).isEqualTo("shop1");
         Assertions.assertThat(result.get(0).getMiraklShopDocument().getTypeCode()).isEqualTo("adyen-ubo1-photoid");
         Assertions.assertThat(result.get(0).getDocumentTypeEnum()).isEqualTo(DocumentDetail.DocumentTypeEnum.PASSPORT);
+
         Assertions.assertThat(result.get(1).getShareholderCode()).isEqualTo("shareholderCode2");
         Assertions.assertThat(result.get(1).getMiraklShopDocument().getShopId()).isEqualTo("shop2");
         Assertions.assertThat(result.get(1).getMiraklShopDocument().getTypeCode()).isEqualTo("adyen-ubo1-photoid");
-        Assertions.assertThat(result.get(1).getDocumentTypeEnum()).isEqualTo(DocumentDetail.DocumentTypeEnum.ID_CARD);
-        Assertions.assertThat(result.get(2).getShareholderCode()).isEqualTo("shareholderCode3");
+        Assertions.assertThat(result.get(1).getDocumentTypeEnum()).isEqualTo(DocumentDetail.DocumentTypeEnum.ID_CARD_FRONT);
+
+        Assertions.assertThat(result.get(2).getShareholderCode()).isEqualTo("shareholderCode2");
         Assertions.assertThat(result.get(2).getMiraklShopDocument().getShopId()).isEqualTo("shop2");
-        Assertions.assertThat(result.get(2).getMiraklShopDocument().getTypeCode()).isEqualTo("adyen-ubo2-photoid");
-        Assertions.assertThat(result.get(2).getDocumentTypeEnum()).isEqualTo(DocumentDetail.DocumentTypeEnum.DRIVING_LICENCE_FRONT);
+        Assertions.assertThat(result.get(2).getMiraklShopDocument().getTypeCode()).isEqualTo("adyen-ubo1-photoid-rear");
+        Assertions.assertThat(result.get(2).getDocumentTypeEnum()).isEqualTo(DocumentDetail.DocumentTypeEnum.ID_CARD_BACK);
+
         Assertions.assertThat(result.get(3).getShareholderCode()).isEqualTo("shareholderCode3");
         Assertions.assertThat(result.get(3).getMiraklShopDocument().getShopId()).isEqualTo("shop2");
-        Assertions.assertThat(result.get(3).getMiraklShopDocument().getTypeCode()).isEqualTo("adyen-ubo2-photoid-rear");
-        Assertions.assertThat(result.get(3).getDocumentTypeEnum()).isEqualTo(DocumentDetail.DocumentTypeEnum.DRIVING_LICENCE_BACK);
+        Assertions.assertThat(result.get(3).getMiraklShopDocument().getTypeCode()).isEqualTo("adyen-ubo2-photoid");
+        Assertions.assertThat(result.get(3).getDocumentTypeEnum()).isEqualTo(DocumentDetail.DocumentTypeEnum.DRIVING_LICENCE_FRONT);
+
+        Assertions.assertThat(result.get(4).getShareholderCode()).isEqualTo("shareholderCode3");
+        Assertions.assertThat(result.get(4).getMiraklShopDocument().getShopId()).isEqualTo("shop2");
+        Assertions.assertThat(result.get(4).getMiraklShopDocument().getTypeCode()).isEqualTo("adyen-ubo2-photoid-rear");
+        Assertions.assertThat(result.get(4).getDocumentTypeEnum()).isEqualTo(DocumentDetail.DocumentTypeEnum.DRIVING_LICENCE_BACK);
     }
 
     private void verifyShareHolders(final List<ShareholderContact> shareHolders) {
