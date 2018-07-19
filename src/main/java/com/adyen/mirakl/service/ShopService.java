@@ -260,6 +260,10 @@ public class ShopService {
             if (StringUtils.isNotEmpty(shop.getProfessionalInformation().getTaxIdentificationNumber())) {
                 businessDetails.setTaxId(shop.getProfessionalInformation().getTaxIdentificationNumber());
             }
+
+            if (StringUtils.isNotEmpty(shop.getProfessionalInformation().getIdentificationNumber())) {
+                businessDetails.setRegistrationNumber(shop.getProfessionalInformation().getIdentificationNumber());
+            }
         }
 
         // set doingBusinessAs field if present
