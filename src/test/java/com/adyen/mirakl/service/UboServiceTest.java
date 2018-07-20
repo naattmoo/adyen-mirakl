@@ -22,32 +22,13 @@
 
 package com.adyen.mirakl.service;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import org.assertj.core.api.Assertions;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Answers;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
 import com.adyen.mirakl.MiraklShopFactory;
 import com.adyen.mirakl.domain.ShareholderMapping;
 import com.adyen.mirakl.repository.ShareholderMappingRepository;
 import com.adyen.mirakl.service.dto.UboDocumentDTO;
 import com.adyen.model.Address;
 import com.adyen.model.Name;
-import com.adyen.model.marketpay.DocumentDetail;
-import com.adyen.model.marketpay.GetAccountHolderResponse;
-import com.adyen.model.marketpay.PersonalData;
-import com.adyen.model.marketpay.PhoneNumber;
-import com.adyen.model.marketpay.ShareholderContact;
+import com.adyen.model.marketpay.*;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -58,6 +39,19 @@ import com.mirakl.client.mmp.domain.shop.MiraklShops;
 import com.mirakl.client.mmp.domain.shop.document.MiraklShopDocument;
 import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
 import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
+import org.assertj.core.api.Assertions;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.*;
+import org.mockito.runners.MockitoJUnitRunner;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
 import static com.adyen.mirakl.MiraklShopFactory.UBO_FIELDS;
 import static com.adyen.mirakl.MiraklShopFactory.UBO_FIELDS_ENUMS;
 import static org.mockito.Mockito.when;
@@ -220,6 +214,30 @@ public class UboServiceTest {
     }
 
     @Test
+    public void shouldMapDateOfBirthCorrect() {
+
+        uboService.setMaxUbos(1);
+        List<MiraklAdditionalFieldValue> ubo1Start = MiraklShopFactory.createMiraklAdditionalUboField("1", ImmutableSet.of("firstname", "lastname", "email"), ImmutableMap.of("civility", "Mr"));
+
+        MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue additionalDobField = new MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue();
+        additionalDobField.setCode("adyen-ubo1-dob");
+        additionalDobField.setValue("1986-08-30T22:00:00Z");
+
+        final List<MiraklAdditionalFieldValue> ubo1WithStreet = Streams.concat(ubo1Start.stream(), ImmutableList.of(additionalDobField).stream()).collect(Collectors.toList());
+
+        when(miraklShopMock.getAdditionalFieldValues()).thenReturn(ubo1WithStreet);
+        when(miraklShopMock.getId()).thenReturn("shopCode");
+        when(miraklShopMock.getContactInformation().getCountry()).thenReturn("NLD");
+        when(shareholderMappingRepositoryMock.findOneByMiraklShopIdAndMiraklUboNumber("shopCode", 1)).thenReturn(Optional.empty());
+
+        final List<ShareholderContact> result = uboService.extractUbos(miraklShopMock);
+
+        Assertions.assertThat(result.size()).isOne();
+        final ShareholderContact shareholderContact = result.iterator().next();
+        Assertions.assertThat(shareholderContact.getPersonalData().getDateOfBirth()).isEqualTo("1986-08-30");
+    }
+
+    @Test
     public void shouldUseMappingFromExistingShop() {
         uboService.setMaxUbos(4);
         List<MiraklAdditionalFieldValue> ubo1 = MiraklShopFactory.createMiraklAdditionalUboField("1", UBO_FIELDS, UBO_FIELDS_ENUMS);
@@ -239,9 +257,9 @@ public class UboServiceTest {
         when(shareholderMappingRepositoryMock.findOneByAdyenShareholderCode("shareholderCode4")).thenReturn(Optional.empty());
 
         when(existingAccountHolderMock.getAccountHolderDetails().getBusinessDetails().getShareholders()).thenReturn(ImmutableList.of(shareholderMock1,
-                                                                                                                                     shareholderMock2,
-                                                                                                                                     shareholderMock3,
-                                                                                                                                     shareholderMock4));
+            shareholderMock2,
+            shareholderMock3,
+            shareholderMock4));
         when(shareholderMock1.getShareholderCode()).thenReturn("shareholderCode1");
         when(shareholderMock2.getShareholderCode()).thenReturn("shareholderCode2");
         when(shareholderMock3.getShareholderCode()).thenReturn("shareholderCode3");
@@ -264,7 +282,7 @@ public class UboServiceTest {
         //shop 2
         when(miraklShopDocument3.getTypeCode()).thenReturn("adyen-ubo1-photoid");//id front used
         when(miraklShopDocument3.getShopId()).thenReturn("shop2");
-        when(miraklShopDocument4.getTypeCode()).thenReturn("adyen-ubo1-photoid-rear");//rear id picture ignored
+        when(miraklShopDocument4.getTypeCode()).thenReturn("adyen-ubo1-photoid-rear");//rear id used
         when(miraklShopDocument4.getShopId()).thenReturn("shop2");
         when(miraklShopDocument5.getTypeCode()).thenReturn("adyen-ubo2-photoid");//front driving licence always mapped to front
         when(miraklShopDocument5.getShopId()).thenReturn("shop2");
@@ -272,7 +290,7 @@ public class UboServiceTest {
         when(miraklShopDocument6.getShopId()).thenReturn("shop2");
         // result will be 4 documents sent to adyen
         // 1 passport                                                       - shop 1 ubo 1
-        // 1 id                                                             - shop 2 ubo 1
+        // 1 front id  & 1 back id                                          - shop 2 ubo 1
         // 1 front driving licence & 1 rear driving licence                 - shop 2 ubo 2
 
         when(miraklMarketplacePlatformOperatorApiClientMock.getShops(miraklGetShopsRequestCaptor.capture())).thenReturn(miraklShops1).thenReturn(miraklShops2);
@@ -294,33 +312,41 @@ public class UboServiceTest {
         when(shareholderMappingMock3.getAdyenShareholderCode()).thenReturn("shareholderCode3");
 
         final List<UboDocumentDTO> result = uboService.extractUboDocuments(ImmutableList.of(miraklShopDocument1,
-                                                                                            miraklShopDocument2,
-                                                                                            miraklShopDocument3,
-                                                                                            miraklShopDocument4,
-                                                                                            miraklShopDocument5,
-                                                                                            miraklShopDocument6));
+            miraklShopDocument2,
+            miraklShopDocument3,
+            miraklShopDocument4,
+            miraklShopDocument5,
+            miraklShopDocument6));
 
         List<MiraklGetShopsRequest> requestsToMirakl = miraklGetShopsRequestCaptor.getAllValues();
         Assertions.assertThat(requestsToMirakl.size()).isEqualTo(3);
         Assertions.assertThat(requestsToMirakl.get(0).getShopIds()).containsOnly("shop1");
         Assertions.assertThat(requestsToMirakl.get(1).getShopIds()).containsOnly("shop2");
-        Assertions.assertThat(result.size()).isEqualTo(4);
+        Assertions.assertThat(result.size()).isEqualTo(5);
         Assertions.assertThat(result.get(0).getShareholderCode()).isEqualTo("shareholderCode1");
         Assertions.assertThat(result.get(0).getMiraklShopDocument().getShopId()).isEqualTo("shop1");
         Assertions.assertThat(result.get(0).getMiraklShopDocument().getTypeCode()).isEqualTo("adyen-ubo1-photoid");
         Assertions.assertThat(result.get(0).getDocumentTypeEnum()).isEqualTo(DocumentDetail.DocumentTypeEnum.PASSPORT);
+
         Assertions.assertThat(result.get(1).getShareholderCode()).isEqualTo("shareholderCode2");
         Assertions.assertThat(result.get(1).getMiraklShopDocument().getShopId()).isEqualTo("shop2");
         Assertions.assertThat(result.get(1).getMiraklShopDocument().getTypeCode()).isEqualTo("adyen-ubo1-photoid");
-        Assertions.assertThat(result.get(1).getDocumentTypeEnum()).isEqualTo(DocumentDetail.DocumentTypeEnum.ID_CARD);
-        Assertions.assertThat(result.get(2).getShareholderCode()).isEqualTo("shareholderCode3");
+        Assertions.assertThat(result.get(1).getDocumentTypeEnum()).isEqualTo(DocumentDetail.DocumentTypeEnum.ID_CARD_FRONT);
+
+        Assertions.assertThat(result.get(2).getShareholderCode()).isEqualTo("shareholderCode2");
         Assertions.assertThat(result.get(2).getMiraklShopDocument().getShopId()).isEqualTo("shop2");
-        Assertions.assertThat(result.get(2).getMiraklShopDocument().getTypeCode()).isEqualTo("adyen-ubo2-photoid");
-        Assertions.assertThat(result.get(2).getDocumentTypeEnum()).isEqualTo(DocumentDetail.DocumentTypeEnum.DRIVING_LICENCE_FRONT);
+        Assertions.assertThat(result.get(2).getMiraklShopDocument().getTypeCode()).isEqualTo("adyen-ubo1-photoid-rear");
+        Assertions.assertThat(result.get(2).getDocumentTypeEnum()).isEqualTo(DocumentDetail.DocumentTypeEnum.ID_CARD_BACK);
+
         Assertions.assertThat(result.get(3).getShareholderCode()).isEqualTo("shareholderCode3");
         Assertions.assertThat(result.get(3).getMiraklShopDocument().getShopId()).isEqualTo("shop2");
-        Assertions.assertThat(result.get(3).getMiraklShopDocument().getTypeCode()).isEqualTo("adyen-ubo2-photoid-rear");
-        Assertions.assertThat(result.get(3).getDocumentTypeEnum()).isEqualTo(DocumentDetail.DocumentTypeEnum.DRIVING_LICENCE_BACK);
+        Assertions.assertThat(result.get(3).getMiraklShopDocument().getTypeCode()).isEqualTo("adyen-ubo2-photoid");
+        Assertions.assertThat(result.get(3).getDocumentTypeEnum()).isEqualTo(DocumentDetail.DocumentTypeEnum.DRIVING_LICENCE_FRONT);
+
+        Assertions.assertThat(result.get(4).getShareholderCode()).isEqualTo("shareholderCode3");
+        Assertions.assertThat(result.get(4).getMiraklShopDocument().getShopId()).isEqualTo("shop2");
+        Assertions.assertThat(result.get(4).getMiraklShopDocument().getTypeCode()).isEqualTo("adyen-ubo2-photoid-rear");
+        Assertions.assertThat(result.get(4).getDocumentTypeEnum()).isEqualTo(DocumentDetail.DocumentTypeEnum.DRIVING_LICENCE_BACK);
     }
 
     private void verifyShareHolders(final List<ShareholderContact> shareHolders) {
@@ -337,7 +363,7 @@ public class UboServiceTest {
         Assertions.assertThat(emails).containsExactlyInAnyOrder("email1", "email2", "email3", "email4");
 
         final Set<String> dateOfBirth = shareHolders.stream().map(ShareholderContact::getPersonalData).map(PersonalData::getDateOfBirth).collect(Collectors.toSet());
-        Assertions.assertThat(dateOfBirth).containsExactlyInAnyOrder("dob1", "dob2", "dob3", "dob4");
+        Assertions.assertThat(dateOfBirth).containsExactly("1986-08-30");
 
         final Set<String> nationalities = shareHolders.stream().map(ShareholderContact::getPersonalData).map(PersonalData::getNationality).collect(Collectors.toSet());
         Assertions.assertThat(nationalities).containsExactlyInAnyOrder("nationality1", "nationality2", "nationality3", "nationality4");

@@ -23,6 +23,7 @@
 package com.adyen.mirakl.cucumber.stepdefs.helpers.miraklapi;
 
 import com.adyen.mirakl.service.UboService;
+import com.adyen.mirakl.startup.MiraklStartupValidator;
 import com.google.common.collect.ImmutableList;
 import com.mirakl.client.mmp.domain.common.currency.MiraklIsoCurrencyCode;
 import com.mirakl.client.mmp.domain.shop.MiraklProfessionalInformation;
@@ -35,8 +36,6 @@ import com.mirakl.client.mmp.operator.domain.shop.create.MiraklCreatedShops;
 import com.mirakl.client.mmp.request.additionalfield.MiraklRequestAdditionalFieldValue;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,8 +81,8 @@ class MiraklShopProperties extends AbstractMiraklShopSharedProperties {
             int ubo = Integer.valueOf(maxUbos);
             Map<Integer, Map<String, String>> uboKeys = uboService.generateMiraklUboKeys(Integer.valueOf(maxUbos));
             buildShareHolderMinimumData(builder, ubo, uboKeys, civility());
-            builder.add(createAdditionalField("adyen-legal-entity-type", legalEntity));
-            builder.add(createAdditionalField("adyen-business-housenumber", FAKER.address().streetAddressNumber()));
+            builder.add(createAdditionalField(MiraklStartupValidator.CustomMiraklFields.ADYEN_LEGAL_ENTITY_TYPE.toString(), legalEntity));
+            builder.add(createAdditionalField(MiraklStartupValidator.CustomMiraklFields.ADYEN_BUSINESS_HOUSENUMBER.toString(), FAKER.address().streetAddressNumber()));
             createShop.setAdditionalFieldValues(builder.build());
         });
     }
@@ -104,12 +103,12 @@ class MiraklShopProperties extends AbstractMiraklShopSharedProperties {
                     builder.add(createAdditionalField(uboKeys.get(i).get(UboService.POSTAL_CODE), FAKER.address().zipCode()));
                     builder.add(createAdditionalField(uboKeys.get(i).get(UboService.PHONE_COUNTRY_CODE), "GB"));
                     builder.add(createAdditionalField(uboKeys.get(i).get(UboService.PHONE_NUMBER), FAKER.phoneNumber().phoneNumber()));
-                    builder.add(createAdditionalField(uboKeys.get(i).get(UboService.DATE_OF_BIRTH), dateOfBirth().toString()));
+                    builder.add(createAdditionalField(uboKeys.get(i).get(UboService.DATE_OF_BIRTH), dateOfBirth()));
                     builder.add(createAdditionalField(uboKeys.get(i).get(UboService.NATIONALITY), "GB"));
                     builder.add(createAdditionalField(uboKeys.get(i).get(UboService.ID_NUMBER), UUID.randomUUID().toString()));
                 }
-                builder.add(createAdditionalField("adyen-legal-entity-type", legalEntity));
-                builder.add(createAdditionalField("adyen-business-housenumber", FAKER.address().streetAddressNumber()));
+                builder.add(createAdditionalField(MiraklStartupValidator.CustomMiraklFields.ADYEN_LEGAL_ENTITY_TYPE.toString(), legalEntity));
+                builder.add(createAdditionalField(MiraklStartupValidator.CustomMiraklFields.ADYEN_BUSINESS_HOUSENUMBER.toString(), FAKER.address().streetAddressNumber()));
                 createShop.setAdditionalFieldValues(builder.build());
             }
         });
@@ -130,21 +129,19 @@ class MiraklShopProperties extends AbstractMiraklShopSharedProperties {
                     builder.add(createAdditionalField(uboKeys.get(i).get(UboService.POSTAL_CODE), FAKERNL.address().zipCode()));
                     builder.add(createAdditionalField(uboKeys.get(i).get(UboService.PHONE_COUNTRY_CODE), "NL"));
                     builder.add(createAdditionalField(uboKeys.get(i).get(UboService.PHONE_NUMBER), FAKERNL.phoneNumber().phoneNumber()));
-                    builder.add(createAdditionalField(uboKeys.get(i).get(UboService.DATE_OF_BIRTH), dateOfBirth().toString()));
+                    builder.add(createAdditionalField(uboKeys.get(i).get(UboService.DATE_OF_BIRTH), dateOfBirth()));
                     builder.add(createAdditionalField(uboKeys.get(i).get(UboService.NATIONALITY), "NL"));
                     builder.add(createAdditionalField(uboKeys.get(i).get(UboService.ID_NUMBER), UUID.randomUUID().toString()));
                 }
-                builder.add(createAdditionalField("adyen-legal-entity-type", legalEntity));
-                builder.add(createAdditionalField("adyen-business-housenumber", FAKER.address().streetAddressNumber()));
+                builder.add(createAdditionalField(MiraklStartupValidator.CustomMiraklFields.ADYEN_LEGAL_ENTITY_TYPE.toString(), legalEntity));
+                builder.add(createAdditionalField(MiraklStartupValidator.CustomMiraklFields.ADYEN_BUSINESS_HOUSENUMBER.toString(), FAKER.address().streetAddressNumber()));
                 createShop.setAdditionalFieldValues(builder.build());
             }
         });
     }
 
-    private DateTime dateOfBirth() {
-        String dob = "1989-03-15 23:00:00";
-        org.joda.time.format.DateTimeFormatter formatter = DateTimeFormat.forPattern("yyy-MM-dd HH:mm:ss");
-        return formatter.parseDateTime(dob);
+    private String dateOfBirth() {
+        return "1989-03-15T23:00:00Z";
     }
 
     void populateShareholderWithMissingData(String legalEntity, List<Map<String, String>> rows, MiraklCreateShop createShop) {
@@ -157,7 +154,7 @@ class MiraklShopProperties extends AbstractMiraklShopSharedProperties {
                 for (int i = 1; i <= Integer.valueOf(maxUbos); i++) {
                     buildShareHolderMinimumData(builder, i, uboKeys, civility());
                 }
-                builder.add(createAdditionalField("adyen-legal-entity-type", legalEntity));
+                builder.add(createAdditionalField(MiraklStartupValidator.CustomMiraklFields.ADYEN_LEGAL_ENTITY_TYPE.toString(), legalEntity));
                 createShop.setAdditionalFieldValues(builder.build());
             }
         });
@@ -174,10 +171,10 @@ class MiraklShopProperties extends AbstractMiraklShopSharedProperties {
     void populateAddFieldsLegalAndHouseNumber(String legalEntity, MiraklCreateShop createShop) {
 
         createShop.setAdditionalFieldValues(ImmutableList.of(
-            createAdditionalField("adyen-individual-housenumber", FAKER.address().streetAddressNumber()),
-            createAdditionalField("adyen-legal-entity-type", legalEntity),
-            createAdditionalField("adyen-individual-dob", dateOfBirth().toString()),
-            createAdditionalField("adyen-individual-idnumber", "01234567890")
+            createAdditionalField(MiraklStartupValidator.CustomMiraklFields.ADYEN_INDIVIDUAL_HOUSENUMBER.toString(), FAKER.address().streetAddressNumber()),
+            createAdditionalField(MiraklStartupValidator.CustomMiraklFields.ADYEN_LEGAL_ENTITY_TYPE.toString(), legalEntity),
+            createAdditionalField(MiraklStartupValidator.CustomMiraklFields.ADYEN_INDIVIDUAL_DOB.toString(), dateOfBirth()),
+            createAdditionalField(MiraklStartupValidator.CustomMiraklFields.ADYEN_INDIVIDUAL_IDNUMBER.toString(), "01234567890")
         ));
     }
 

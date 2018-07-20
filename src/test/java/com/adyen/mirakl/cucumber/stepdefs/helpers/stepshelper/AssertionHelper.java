@@ -22,6 +22,7 @@
 
 package com.adyen.mirakl.cucumber.stepdefs.helpers.stepshelper;
 
+import com.adyen.mirakl.startup.MiraklStartupValidator;
 import com.adyen.model.marketpay.GetAccountHolderResponse;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -172,7 +173,7 @@ public class AssertionHelper {
             .stream()
             .filter(MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue.class::isInstance)
             .map(MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue.class::cast)
-            .filter(x -> "adyen-legal-entity-type".equals(x.getCode()))
+            .filter(x -> MiraklStartupValidator.CustomMiraklFields.ADYEN_LEGAL_ENTITY_TYPE.toString().equals(x.getCode()))
             .map(MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue::getValue)
             .findAny()
             .orElse("");

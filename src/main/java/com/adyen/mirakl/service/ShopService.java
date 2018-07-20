@@ -22,44 +22,15 @@
 
 package com.adyen.mirakl.service;
 
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import javax.annotation.Resource;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 import com.adyen.mirakl.domain.StreetDetails;
 import com.adyen.mirakl.service.util.IsoUtil;
 import com.adyen.mirakl.service.util.MiraklDataExtractionUtil;
+import com.adyen.mirakl.startup.MiraklStartupValidator;
 import com.adyen.model.Address;
 import com.adyen.model.Amount;
 import com.adyen.model.Name;
-import com.adyen.model.marketpay.AccountHolderDetails;
-import com.adyen.model.marketpay.BankAccountDetail;
-import com.adyen.model.marketpay.BusinessDetails;
-import com.adyen.model.marketpay.CreateAccountHolderRequest;
+import com.adyen.model.marketpay.*;
 import com.adyen.model.marketpay.CreateAccountHolderRequest.LegalEntityEnum;
-import com.adyen.model.marketpay.CreateAccountHolderResponse;
-import com.adyen.model.marketpay.DeleteBankAccountRequest;
-import com.adyen.model.marketpay.DeleteBankAccountResponse;
-import com.adyen.model.marketpay.ErrorFieldType;
-import com.adyen.model.marketpay.GetAccountHolderRequest;
-import com.adyen.model.marketpay.GetAccountHolderResponse;
-import com.adyen.model.marketpay.IndividualDetails;
-import com.adyen.model.marketpay.PersonalData;
-import com.adyen.model.marketpay.ShareholderContact;
-import com.adyen.model.marketpay.UpdateAccountHolderRequest;
-import com.adyen.model.marketpay.UpdateAccountHolderResponse;
 import com.adyen.model.marketpay.notification.CompensateNegativeBalanceNotificationRecord;
 import com.adyen.service.Account;
 import com.adyen.service.exception.ApiException;
@@ -75,6 +46,21 @@ import com.mirakl.client.mmp.operator.domain.invoice.MiraklManualAccountingDocum
 import com.mirakl.client.mmp.operator.domain.invoice.MiraklManualAccountingDocumentType;
 import com.mirakl.client.mmp.operator.request.payment.invoice.MiraklCreateManualAccountingDocumentRequest;
 import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
+import org.apache.commons.lang3.StringUtils;
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
+
+import javax.annotation.Resource;
+import java.time.ZonedDateTime;
+import java.util.*;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -137,7 +123,7 @@ public class ShopService {
         CreateAccountHolderResponse response = adyenAccountService.createAccountHolder(createAccountHolderRequest);
         shareholderMappingService.updateShareholderMapping(response, shop);
         log.debug("CreateAccountHolderResponse: {}", response);
-        if (! CollectionUtils.isEmpty(response.getInvalidFields())) {
+        if (!CollectionUtils.isEmpty(response.getInvalidFields())) {
             final String invalidFields = response.getInvalidFields().stream().map(ErrorFieldType::toString).collect(Collectors.joining(","));
             log.warn("Invalid fields when trying to create shop {}: {}", shop.getId(), invalidFields);
             invalidFieldsNotificationService.handleErrorsInResponse(shop, response.getInvalidFields());
@@ -151,7 +137,7 @@ public class ShopService {
         shareholderMappingService.updateShareholderMapping(response, shop);
         log.debug("UpdateAccountHolderResponse: {}", response);
 
-        if (! CollectionUtils.isEmpty(response.getInvalidFields())) {
+        if (!CollectionUtils.isEmpty(response.getInvalidFields())) {
             final String invalidFields = response.getInvalidFields().stream().map(ErrorFieldType::toString).collect(Collectors.joining(","));
             log.warn("Invalid fields when trying to update shop {}: {}", shop.getId(), invalidFields);
             invalidFieldsNotificationService.handleErrorsInResponse(shop, response.getInvalidFields());
@@ -169,18 +155,18 @@ public class ShopService {
 
         String existingBankAccountDetailUuid = getBankAccountDetailFromShop(getAccountHolderResponse.getAccountHolderDetails(), shop).map(BankAccountDetail::getBankAccountUUID).orElse(null);
         List<String> uuids = getAccountHolderResponse.getAccountHolderDetails()
-                                                     .getBankAccountDetails()
-                                                     .stream()
-                                                     .filter(b -> ! b.getBankAccountUUID().equals(existingBankAccountDetailUuid))
-                                                     .map(BankAccountDetail::getBankAccountUUID)
-                                                     .collect(Collectors.toList());
+            .getBankAccountDetails()
+            .stream()
+            .filter(b -> !b.getBankAccountUUID().equals(existingBankAccountDetailUuid))
+            .map(BankAccountDetail::getBankAccountUUID)
+            .collect(Collectors.toList());
 
-        if (! uuids.isEmpty()) {
+        if (!uuids.isEmpty()) {
             DeleteBankAccountResponse deleteBankAccountResponse = adyenAccountService.deleteBankAccount(deleteBankAccountRequest(getAccountHolderResponse.getAccountHolderCode(), uuids));
             log.debug("DeleteBankAccountResponse: {}", deleteBankAccountResponse);
         }
 
-        return ! uuids.isEmpty();
+        return !uuids.isEmpty();
     }
 
     /**
@@ -246,7 +232,7 @@ public class ShopService {
 
     private Address createAddressFromShop(MiraklShop shop) {
         MiraklContactInformation contactInformation = getContactInformationFromShop(shop);
-        if (contactInformation != null && ! StringUtils.isEmpty(contactInformation.getCountry())) {
+        if (contactInformation != null && !StringUtils.isEmpty(contactInformation.getCountry())) {
 
             Address address = new Address();
             address.setPostalCode(contactInformation.getZipCode());
@@ -254,8 +240,8 @@ public class ShopService {
             address.setCity(contactInformation.getCity());
 
             StreetDetails streetDetails = StreetDetails.createStreetDetailsFromSingleLine(StreetDetails.extractHouseNumberOrNameFromAdditionalFields(shop.getAdditionalFieldValues()),
-                                                                                          contactInformation.getStreet1(),
-                                                                                          houseNumberPatterns.get(IsoUtil.getIso2CountryCodeFromIso3(shop.getContactInformation().getCountry())));
+                contactInformation.getStreet1(),
+                houseNumberPatterns.get(IsoUtil.getIso2CountryCodeFromIso3(shop.getContactInformation().getCountry())));
             address.setStreet(streetDetails.getStreetName());
             address.setHouseNumberOrName(streetDetails.getHouseNumberOrName());
 
@@ -274,7 +260,23 @@ public class ShopService {
             if (StringUtils.isNotEmpty(shop.getProfessionalInformation().getTaxIdentificationNumber())) {
                 businessDetails.setTaxId(shop.getProfessionalInformation().getTaxIdentificationNumber());
             }
+
+            if (StringUtils.isNotEmpty(shop.getProfessionalInformation().getIdentificationNumber())) {
+                businessDetails.setRegistrationNumber(shop.getProfessionalInformation().getIdentificationNumber());
+            }
         }
+
+        // set doingBusinessAs field if present
+        shop.getAdditionalFieldValues()
+            .stream()
+            .filter(MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithSingleValue.class::isInstance)
+            .map(MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithSingleValue.class::cast)
+            .filter(fieldValue -> MiraklStartupValidator.CustomMiraklFields.ADYEN_BUSINESS_REGISTEREDNAME.toString().equals(fieldValue.getCode()))
+            .findAny()
+            .ifPresent(value -> {
+                businessDetails.setDoingBusinessAs(value.getValue());
+            });
+
         List<ShareholderContact> shareholders = uboService.extractUbos(shop, existingAccountHolder);
         if (shareholders.isEmpty()) {
             log.info("No shareholder data for shop {}", shop.getId());
@@ -295,7 +297,9 @@ public class ShopService {
             .findAny()
             .ifPresent(value -> {
                 PersonalData personalData = new PersonalData();
-                personalData.setDateOfBirth(value.getValue());
+                DateTime dateTime = MiraklDataExtractionUtil.formatCustomDateField(value.getValue());
+                org.joda.time.format.DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd");
+                personalData.setDateOfBirth(dateTime.toString(formatter));
                 individualDetails.setPersonalData(personalData);
             });
 
@@ -320,7 +324,7 @@ public class ShopService {
 
         try {
             GetAccountHolderResponse getAccountHolderResponse = adyenAccountService.getAccountHolder(getAccountHolderRequest);
-            if (! getAccountHolderResponse.getAccountHolderCode().isEmpty()) {
+            if (!getAccountHolderResponse.getAccountHolderCode().isEmpty()) {
                 return getAccountHolderResponse;
             }
         } catch (ApiException e) {
@@ -332,7 +336,7 @@ public class ShopService {
     }
 
     private Optional<String> getIbanFromShop(MiraklShop shop) {
-        if (shop == null || ! (shop.getPaymentInformation() instanceof MiraklIbanBankAccountInformation)) {
+        if (shop == null || !(shop.getPaymentInformation() instanceof MiraklIbanBankAccountInformation)) {
             return Optional.empty();
         }
 
@@ -346,7 +350,7 @@ public class ShopService {
 
     private Optional<BankAccountDetail> getBankAccountDetailFromShop(AccountHolderDetails accountHolderDetails, MiraklShop shop) {
         Optional<String> ibanOptional = getIbanFromShop(shop);
-        if (! ibanOptional.isPresent() || accountHolderDetails == null || accountHolderDetails.getBankAccountDetails() == null || accountHolderDetails.getBankAccountDetails().isEmpty()) {
+        if (!ibanOptional.isPresent() || accountHolderDetails == null || accountHolderDetails.getBankAccountDetails() == null || accountHolderDetails.getBankAccountDetails().isEmpty()) {
             return Optional.empty();
         }
 
@@ -373,7 +377,7 @@ public class ShopService {
             existingBankAccountDetail.ifPresent(b -> bankAccountDetail.get().setBankAccountUUID(b.getBankAccountUUID()));
 
             // add BankAccountDetails in case of new or changed bank
-            if (! existingBankAccountDetail.isPresent() || ! existingBankAccountDetail.get().equals(bankAccountDetail.get())) {
+            if (!existingBankAccountDetail.isPresent() || !existingBankAccountDetail.get().equals(bankAccountDetail.get())) {
                 accountHolderDetails.addBankAccountDetail(bankAccountDetail.get());
             }
         }
@@ -402,7 +406,7 @@ public class ShopService {
     }
 
     private Optional<BankAccountDetail> createBankAccountDetail(MiraklShop shop) {
-        if (shop.getPaymentInformation() == null || ! (shop.getPaymentInformation() instanceof MiraklIbanBankAccountInformation)) {
+        if (shop.getPaymentInformation() == null || !(shop.getPaymentInformation() instanceof MiraklIbanBankAccountInformation)) {
             log.info("No MiraklIbanBankAccountInformation found for shop: {}", shop.getId());
             return Optional.empty();
         }
@@ -429,8 +433,8 @@ public class ShopService {
 
         if (shop.getContactInformation() != null) {
             StreetDetails streetDetails = StreetDetails.createStreetDetailsFromSingleLine(StreetDetails.extractHouseNumberOrNameFromAdditionalFields(shop.getAdditionalFieldValues()),
-                                                                                          shop.getContactInformation().getStreet1(),
-                                                                                          houseNumberPatterns.get(IsoUtil.getIso2CountryCodeFromIso3(shop.getContactInformation().getCountry())));
+                shop.getContactInformation().getStreet1(),
+                houseNumberPatterns.get(IsoUtil.getIso2CountryCodeFromIso3(shop.getContactInformation().getCountry())));
             bankAccountDetail.setOwnerStreet(streetDetails.getStreetName());
             bankAccountDetail.setOwnerHouseNumberOrName(streetDetails.getHouseNumberOrName());
 
@@ -497,7 +501,7 @@ public class ShopService {
         getAccountHolderRequest.setAccountCode(accountCode);
         try {
             GetAccountHolderResponse getAccountHolderResponse = adyenAccountService.getAccountHolder(getAccountHolderRequest);
-            if (! getAccountHolderResponse.getAccountHolderCode().isEmpty()) {
+            if (!getAccountHolderResponse.getAccountHolderCode().isEmpty()) {
                 return getAccountHolderResponse.getAccountHolderCode();
             }
         } catch (ApiException e) {

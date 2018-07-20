@@ -27,6 +27,7 @@ import com.adyen.mirakl.domain.StreetDetails;
 import com.adyen.mirakl.repository.ShareholderMappingRepository;
 import com.adyen.mirakl.service.dto.UboDocumentDTO;
 import com.adyen.mirakl.service.util.IsoUtil;
+import com.adyen.mirakl.service.util.MiraklDataExtractionUtil;
 import com.adyen.model.Address;
 import com.adyen.model.Name;
 import com.adyen.model.marketpay.*;
@@ -40,6 +41,8 @@ import com.mirakl.client.mmp.domain.shop.document.MiraklShopDocument;
 import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
 import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
 import org.apache.commons.lang3.EnumUtils;
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -247,11 +250,11 @@ public class UboService {
         MiraklShop shop = shops.getShops().iterator().next();
         String code = ADYEN_UBO + uboNumber + "-photoidtype";
         Optional<MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue> photoIdType = shop.getAdditionalFieldValues()
-                                                                                                   .stream()
-                                                                                                   .filter(MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue.class::isInstance)
-                                                                                                   .map(MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue.class::cast)
-                                                                                                   .filter(x -> code.equalsIgnoreCase(x.getCode()))
-                                                                                                   .findAny();
+            .stream()
+            .filter(MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue.class::isInstance)
+            .map(MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue.class::cast)
+            .filter(x -> code.equalsIgnoreCase(x.getCode()))
+            .findAny();
         return photoIdType.map(MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithSingleValue::getValue).orElse(null);
     }
 
@@ -266,11 +269,11 @@ public class UboService {
             && existingAccountHolder != null
             && existingAccountHolder.getAccountHolderDetails() != null
             && existingAccountHolder.getAccountHolderDetails().getBusinessDetails() != null
-            && ! CollectionUtils.isEmpty(existingAccountHolder.getAccountHolderDetails().getBusinessDetails().getShareholders())) {
+            && !CollectionUtils.isEmpty(existingAccountHolder.getAccountHolderDetails().getBusinessDetails().getShareholders())) {
             final List<ShareholderContact> shareholders = existingAccountHolder.getAccountHolderDetails().getBusinessDetails().getShareholders();
             if (uboNumber - 1 < shareholders.size()) {
                 final String shareholderCode = shareholders.get(uboNumber - 1).getShareholderCode();
-                if(mappingDoesNotAlreadyExist(shareholderCode)){
+                if (mappingDoesNotAlreadyExist(shareholderCode)) {
                     final ShareholderMapping shareholderMapping = new ShareholderMapping();
                     shareholderMapping.setAdyenShareholderCode(shareholderCode);
                     shareholderMapping.setMiraklShopId(shop.getId());
@@ -335,7 +338,13 @@ public class UboService {
     private void addPersonalData(final Integer uboNumber, final String dateOfBirth, final String nationality, final String idNumber, final ShareholderContact shareholderContact) {
         if (dateOfBirth != null || nationality != null || idNumber != null) {
             final PersonalData personalData = new PersonalData();
-            Optional.ofNullable(dateOfBirth).ifPresent(personalData::setDateOfBirth);
+
+            if (dateOfBirth != null && !dateOfBirth.isEmpty()) {
+                DateTime dateTime = MiraklDataExtractionUtil.formatCustomDateField(dateOfBirth);
+                org.joda.time.format.DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd");
+                personalData.setDateOfBirth(dateTime.toString(formatter));
+            }
+
             Optional.ofNullable(nationality).ifPresent(personalData::setNationality);
             Optional.ofNullable(idNumber).ifPresent(personalData::setIdNumber);
             shareholderContact.setPersonalData(personalData);
@@ -354,22 +363,22 @@ public class UboService {
         return IntStream.rangeClosed(1, maxUbos).mapToObj(i -> {
             final Map<Integer, Map<String, String>> grouped = new HashMap<>();
             grouped.put(i,
-                        new ImmutableMap.Builder<String, String>().put(CIVILITY, ADYEN_UBO + String.valueOf(i) + "-civility")
-                                                                  .put(FIRSTNAME, ADYEN_UBO + String.valueOf(i) + "-firstname")
-                                                                  .put(LASTNAME, ADYEN_UBO + String.valueOf(i) + "-lastname")
-                                                                  .put(EMAIL, ADYEN_UBO + String.valueOf(i) + "-email")
-                                                                  .put(DATE_OF_BIRTH, ADYEN_UBO + String.valueOf(i) + "-dob")
-                                                                  .put(NATIONALITY, ADYEN_UBO + String.valueOf(i) + "-nationality")
-                                                                  .put(ID_NUMBER, ADYEN_UBO + String.valueOf(i) + "-idnumber")
-                                                                  .put(HOUSE_NUMBER_OR_NAME, ADYEN_UBO + String.valueOf(i) + "-housenumber")
-                                                                  .put(STREET, ADYEN_UBO + String.valueOf(i) + "-streetname")
-                                                                  .put(CITY, ADYEN_UBO + String.valueOf(i) + "-city")
-                                                                  .put(POSTAL_CODE, ADYEN_UBO + String.valueOf(i) + "-zip")
-                                                                  .put(COUNTRY, ADYEN_UBO + String.valueOf(i) + "-country")
-                                                                  .put(PHONE_COUNTRY_CODE, ADYEN_UBO + String.valueOf(i) + "-phonecountry")
-                                                                  .put(PHONE_TYPE, ADYEN_UBO + String.valueOf(i) + "-phonetype")
-                                                                  .put(PHONE_NUMBER, ADYEN_UBO + String.valueOf(i) + "-phonenumber")
-                                                                  .build());
+                new ImmutableMap.Builder<String, String>().put(CIVILITY, ADYEN_UBO + String.valueOf(i) + "-civility")
+                    .put(FIRSTNAME, ADYEN_UBO + String.valueOf(i) + "-firstname")
+                    .put(LASTNAME, ADYEN_UBO + String.valueOf(i) + "-lastname")
+                    .put(EMAIL, ADYEN_UBO + String.valueOf(i) + "-email")
+                    .put(DATE_OF_BIRTH, ADYEN_UBO + String.valueOf(i) + "-dob")
+                    .put(NATIONALITY, ADYEN_UBO + String.valueOf(i) + "-nationality")
+                    .put(ID_NUMBER, ADYEN_UBO + String.valueOf(i) + "-idnumber")
+                    .put(HOUSE_NUMBER_OR_NAME, ADYEN_UBO + String.valueOf(i) + "-housenumber")
+                    .put(STREET, ADYEN_UBO + String.valueOf(i) + "-streetname")
+                    .put(CITY, ADYEN_UBO + String.valueOf(i) + "-city")
+                    .put(POSTAL_CODE, ADYEN_UBO + String.valueOf(i) + "-zip")
+                    .put(COUNTRY, ADYEN_UBO + String.valueOf(i) + "-country")
+                    .put(PHONE_COUNTRY_CODE, ADYEN_UBO + String.valueOf(i) + "-phonecountry")
+                    .put(PHONE_TYPE, ADYEN_UBO + String.valueOf(i) + "-phonetype")
+                    .put(PHONE_NUMBER, ADYEN_UBO + String.valueOf(i) + "-phonenumber")
+                    .build());
             return grouped;
         }).reduce((x, y) -> {
             x.put(y.entrySet().iterator().next().getKey(), y.entrySet().iterator().next().getValue());

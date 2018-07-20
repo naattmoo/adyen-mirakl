@@ -20,34 +20,20 @@
  *
  */
 
-package com.adyen.mirakl.config;
+package com.adyen.mirakl.service.util;
 
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
+import org.assertj.core.api.Assertions;
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
+import org.junit.Test;
 
-import java.util.Map;
+public final class MiraklDataExtractionUtilTest {
 
-@Configuration
-@ConfigurationProperties(prefix = "accounts", ignoreUnknownFields = false)
-public class AdyenAccountConfiguration {
-
-    private Map<String, Integer> accountCode;
-
-    private Map<String, String> adyenPal;
-
-    public Map<String, Integer> getAccountCode() {
-        return accountCode;
-    }
-
-    public void setAccountCode(Map<String, Integer> accountCode) {
-        this.accountCode = accountCode;
-    }
-
-    public Map<String, String> getAdyenPal() {
-        return adyenPal;
-    }
-
-    public void setAdyenPal(Map<String, String> adyenPal) {
-        this.adyenPal = adyenPal;
+    @Test
+    public void testConvertDateOfBirth() {
+        String dob = "1989-03-15T23:00:00Z";
+        DateTime dateTime = MiraklDataExtractionUtil.formatCustomDateField(dob);
+        org.joda.time.format.DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd");
+        Assertions.assertThat(dateTime.toString(formatter)).isEqualTo("1989-03-15");
     }
 }

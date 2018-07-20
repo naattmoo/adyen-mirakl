@@ -40,8 +40,16 @@ public class MiraklStartupValidator implements ApplicationListener<ContextRefres
 
     private final Logger log = LoggerFactory.getLogger(MiraklStartupValidator.class);
 
+    private static String ADYEN_LEGAL_ENTITY_TYPE_NAME = "adyen-legal-entity-type";
+
     public enum CustomMiraklFields {
-        ADYEN_LEGAL_ENTITY_TYPE("adyen-legal-entity-type");
+        ADYEN_LEGAL_ENTITY_TYPE(ADYEN_LEGAL_ENTITY_TYPE_NAME),
+        ADYEN_BUSINESS_HOUSENUMBER("adyen-business-housenumber"),
+        ADYEN_BUSINESS_REGISTEREDNAME("adyen-business-registeredname"),
+        ADYEN_INDIVIDUAL_HOUSENUMBER("adyen-individual-housenumber"),
+        ADYEN_INDIVIDUAL_DOB("adyen-individual-dob"),
+        ADYEN_INDIVIDUAL_IDNUMBER("adyen-individual-idnumber");
+
 
         private final String name;
 
@@ -71,6 +79,24 @@ public class MiraklStartupValidator implements ApplicationListener<ContextRefres
         }
     }
 
+    public enum RequiredCustomMiraklFields {
+
+        ADYEN_LEGAL_ENTITY_TYPE(ADYEN_LEGAL_ENTITY_TYPE_NAME);
+
+        private final String name;
+
+        RequiredCustomMiraklFields(String s) {
+            name = s;
+        }
+
+        @Override
+        public String toString() {
+            return this.name;
+        }
+
+
+    }
+
     @Resource
     private MiraklMarketplacePlatformOperatorApiClient miraklMarketplacePlatformOperatorApiClient;
     @Resource
@@ -81,12 +107,12 @@ public class MiraklStartupValidator implements ApplicationListener<ContextRefres
         MiraklGetAdditionalFieldRequest miraklGetAdditionalFieldRequest = new MiraklGetAdditionalFieldRequest();
         final List<MiraklFrontOperatorAdditionalField> additionalFields = miraklMarketplacePlatformOperatorApiClient.getAdditionalFields(miraklGetAdditionalFieldRequest);
 
-        for (CustomMiraklFields customMiraklFields : CustomMiraklFields.values()) {
-            boolean startupSuccess = additionalFields.stream().map(AbstractMiraklAdditionalField::getCode).anyMatch(customFieldName -> customMiraklFields.toString().equalsIgnoreCase(customFieldName));
+        for (RequiredCustomMiraklFields requiredCustomMiraklFields : RequiredCustomMiraklFields.values()) {
+            boolean startupSuccess = additionalFields.stream().map(AbstractMiraklAdditionalField::getCode).anyMatch(customFieldName -> requiredCustomMiraklFields.toString().equalsIgnoreCase(customFieldName));
             if (startupSuccess) {
-                log.info(String.format("Startup Mirkal validation succeeded, custom field found: [%s]", customMiraklFields.toString()));
+                log.info(String.format("Startup Mirkal validation succeeded, custom field found: [%s]", requiredCustomMiraklFields.toString()));
             } else {
-                throw new IllegalStateException(String.format("Startup Mirkal validation failed, unable to find custom field: [%s]", customMiraklFields.toString()));
+                throw new IllegalStateException(String.format("Startup Mirkal validation failed, unable to find custom field: [%s]", requiredCustomMiraklFields.toString()));
             }
         }
     }

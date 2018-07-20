@@ -66,7 +66,7 @@ public class MiraklStartupValidatorTest {
     @Test
     public void startupFail() {
         thrown.expect(IllegalStateException.class);
-        thrown.expectMessage("Startup Mirkal validation failed, unable to find custom field: [adyen-legal-entity-type]");
+        thrown.expectMessage("Startup Mirkal validation failed, unable to find custom field: ["+ MiraklStartupValidator.CustomMiraklFields.ADYEN_LEGAL_ENTITY_TYPE.toString() + "]");
 
         when(miraklMarketplacePlatformOperatorApiClientMock.getAdditionalFields(any(com.mirakl.client.mmp.operator.request.additionalfield.MiraklGetAdditionalFieldRequest.class))).thenReturn(ImmutableList.of(miraklFrontOperatorAdditionalFieldMock1, miraklFrontOperatorAdditionalFieldMock2));
         when(miraklFrontOperatorAdditionalFieldMock1.getCode()).thenReturn("nonValidCode");

@@ -69,7 +69,7 @@ dependencyManagement {
 defaultTasks 'bootRun'
 
 group = 'com.adyen.mirakl'
-version = '1.0.0'
+version = '1.0.1'
 
 description = ''
 
@@ -226,7 +226,7 @@ dependencies {
     compile "io.springfox:springfox-bean-validators"
     compile "mysql:mysql-connector-java"
     compile "org.mapstruct:mapstruct-jdk8:${mapstruct_version}"
-    testCompile group: 'joda-time', name: 'joda-time', version: '2.3'
+    compile group: 'joda-time', name: 'joda-time', version: '2.3'
     testCompile "com.jayway.jsonpath:json-path"
     testCompile "info.cukes:cucumber-junit"
     testCompile "info.cukes:cucumber-spring"
@@ -252,7 +252,7 @@ dependencies {
     }
     //jhipster-needle-gradle-dependency - JHipster will add additional dependencies here
 
-    compile "com.adyen:adyen-java-api-library:1.4.1"
+    compile "com.adyen:adyen-java-api-library:1.5.1"
     compile "com.mirakl:mmp-sdk-operator:3.25.23"
     testCompile "com.mirakl:mmp-sdk-front:3.25.23"
 }
