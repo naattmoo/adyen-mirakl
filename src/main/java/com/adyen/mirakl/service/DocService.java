@@ -22,6 +22,19 @@
 
 package com.adyen.mirakl.service;
 
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import javax.annotation.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import com.adyen.mirakl.config.ApplicationProperties;
 import com.adyen.mirakl.config.Constants;
 import com.adyen.mirakl.domain.DocError;
 import com.adyen.mirakl.domain.DocRetry;
@@ -31,7 +44,11 @@ import com.adyen.mirakl.repository.DocRetryRepository;
 import com.adyen.mirakl.repository.ShareholderMappingRepository;
 import com.adyen.mirakl.service.dto.UboDocumentDTO;
 import com.adyen.mirakl.service.util.GetShopDocumentsRequest;
-import com.adyen.model.marketpay.*;
+import com.adyen.model.marketpay.DocumentDetail;
+import com.adyen.model.marketpay.GetAccountHolderRequest;
+import com.adyen.model.marketpay.GetAccountHolderResponse;
+import com.adyen.model.marketpay.UploadDocumentRequest;
+import com.adyen.model.marketpay.UploadDocumentResponse;
 import com.adyen.service.Account;
 import com.adyen.service.exception.ApiException;
 import com.google.common.collect.ImmutableList;
@@ -43,20 +60,6 @@ import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiC
 import com.mirakl.client.mmp.request.shop.document.MiraklDeleteShopDocumentRequest;
 import com.mirakl.client.mmp.request.shop.document.MiraklDownloadShopsDocumentsRequest;
 import com.mirakl.client.mmp.request.shop.document.MiraklGetShopDocumentsRequest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import javax.annotation.Resource;
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import static com.google.common.io.Files.toByteArray;
 
 @Service
@@ -86,6 +89,9 @@ public class DocService {
     @Resource
     private DocErrorRepository docErrorRepository;
 
+    @Resource
+    private ApplicationProperties applicationProperties;
+
     /**
      * Calling S30, S31, GetAccountHolder and UploadDocument to upload bankproof documents to Adyen
      */
@@ -102,7 +108,7 @@ public class DocService {
         for (MiraklShopDocument document : miraklShopDocumentList) {
             if (Constants.BANKPROOF.equals(document.getTypeCode())) {
                 updateDocument(document, DocumentDetail.DocumentTypeEnum.BANK_STATEMENT);
-            }else{
+            } else {
                 unprocessed.add(document);
             }
         }
@@ -117,22 +123,22 @@ public class DocService {
     }
 
     @Async
-    public void retryDocumentsForShop(String shopId){
+    public void retryDocumentsForShop(String shopId) {
         final List<DocRetry> retryDocsByShopId = docRetryRepository.findByShopId(shopId);
-        if(retryDocsByShopId.size() > 0){
+        if (retryDocsByShopId.size() > 0) {
             retryFailedDocuments(retryDocsByShopId);
         }
     }
 
     @Async
-    public void retryFailedDocuments(){
-        final List<DocRetry> docRetries = docRetryRepository.findAll();
-        if(docRetries.size()>0){
+    public void retryFailedDocuments() {
+        final List<DocRetry> docRetries = docRetryRepository.findByTimesFailedLessThanEqual(applicationProperties.getMaxDocRetries());
+        if (docRetries.size() > 0) {
             retryFailedDocuments(docRetries);
         }
     }
 
-    private void retryFailedDocuments(final List<DocRetry> docsToRetry){
+    private void retryFailedDocuments(final List<DocRetry> docsToRetry) {
         final Set<String> shopIds = docsToRetry.stream().map(DocRetry::getShopId).collect(Collectors.toSet());
         final Set<String> docIds = docsToRetry.stream().map(DocRetry::getDocId).collect(Collectors.toSet());
         final List<MiraklShopDocument> shopDocuments = miraklMarketplacePlatformOperatorApiClient.getShopDocuments(new MiraklGetShopDocumentsRequest(shopIds));
@@ -157,12 +163,12 @@ public class DocService {
         }
     }
 
-    private void storeDocumentForRetry(String documentId, String shopId, String error){
+    private void storeDocumentForRetry(String documentId, String shopId, String error) {
         DocRetry docRetry = docRetryRepository.findOneByDocId(documentId).orElse(null);
         Integer timesFailed;
-        if(docRetry != null){
+        if (docRetry != null) {
             timesFailed = docRetry.getTimesFailed() + 1;
-        }else{
+        } else {
             timesFailed = 1;
             docRetry = new DocRetry();
         }
@@ -252,7 +258,8 @@ public class DocService {
     }
 
     public void removeMiraklMediaForShareHolder(final String shareHolderCode) {
-        ShareholderMapping shareholderMapping = shareholderMappingRepository.findOneByAdyenShareholderCode(shareHolderCode).orElseThrow(() -> new IllegalStateException("No shareholder mapping found for shareholder code: "+shareHolderCode));
+        ShareholderMapping shareholderMapping = shareholderMappingRepository.findOneByAdyenShareholderCode(shareHolderCode)
+                                                                            .orElseThrow(() -> new IllegalStateException("No shareholder mapping found for shareholder code: " + shareHolderCode));
         final List<MiraklShopDocument> shopDocuments = miraklMarketplacePlatformOperatorApiClient.getShopDocuments(new MiraklGetShopDocumentsRequest(ImmutableList.of(shareholderMapping.getMiraklShopId())));
         List<String> documentIdsToDelete = extractDocumentsToDelete(shopDocuments, shareholderMapping.getMiraklUboNumber());
 
@@ -263,11 +270,8 @@ public class DocService {
     }
 
     private List<String> extractDocumentsToDelete(final List<MiraklShopDocument> shopDocuments, Integer uboNumber) {
-        String uboStartingTypeCode = "adyen-ubo"+uboNumber;
-        return shopDocuments.stream()
-            .filter(x -> x.getTypeCode().startsWith(uboStartingTypeCode))
-            .map(MiraklShopDocument::getId)
-            .collect(Collectors.toList());
+        String uboStartingTypeCode = "adyen-ubo" + uboNumber;
+        return shopDocuments.stream().filter(x -> x.getTypeCode().startsWith(uboStartingTypeCode)).map(MiraklShopDocument::getId).collect(Collectors.toList());
     }
 
     public void removeMiraklMediaForBankProof(final String accountHolderCode) {
@@ -282,9 +286,6 @@ public class DocService {
     }
 
     private List<String> extractBankProofDocumentsToDelete(final List<MiraklShopDocument> shopDocuments) {
-        return shopDocuments.stream()
-            .filter(x -> x.getTypeCode().contentEquals(Constants.BANKPROOF))
-            .map(MiraklShopDocument::getId)
-            .collect(Collectors.toList());
+        return shopDocuments.stream().filter(x -> x.getTypeCode().contentEquals(Constants.BANKPROOF)).map(MiraklShopDocument::getId).collect(Collectors.toList());
     }
 }
