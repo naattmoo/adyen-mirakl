@@ -22,12 +22,39 @@
 
 package com.adyen.mirakl.service;
 
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import org.assertj.core.api.Assertions;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 import com.adyen.mirakl.MiraklShopFactory;
 import com.adyen.mirakl.startup.MiraklStartupValidator;
 import com.adyen.model.Address;
 import com.adyen.model.Amount;
 import com.adyen.model.Name;
-import com.adyen.model.marketpay.*;
+import com.adyen.model.marketpay.AccountHolderDetails;
+import com.adyen.model.marketpay.BankAccountDetail;
+import com.adyen.model.marketpay.BusinessDetails;
+import com.adyen.model.marketpay.CreateAccountHolderRequest;
+import com.adyen.model.marketpay.CreateAccountHolderResponse;
+import com.adyen.model.marketpay.DeleteBankAccountRequest;
+import com.adyen.model.marketpay.DeleteBankAccountResponse;
+import com.adyen.model.marketpay.GetAccountHolderResponse;
+import com.adyen.model.marketpay.IndividualDetails;
+import com.adyen.model.marketpay.ShareholderContact;
+import com.adyen.model.marketpay.UpdateAccountHolderRequest;
+import com.adyen.model.marketpay.UpdateAccountHolderResponse;
 import com.adyen.model.marketpay.notification.CompensateNegativeBalanceNotificationRecord;
 import com.adyen.service.Account;
 import com.google.common.collect.ImmutableList;
@@ -39,34 +66,24 @@ import com.mirakl.client.mmp.domain.invoice.MiraklInvoice;
 import com.mirakl.client.mmp.domain.shop.MiraklContactInformation;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
 import com.mirakl.client.mmp.domain.shop.MiraklShops;
+import com.mirakl.client.mmp.domain.shop.bank.MiraklAbaBankAccountInformation;
 import com.mirakl.client.mmp.domain.shop.bank.MiraklIbanBankAccountInformation;
 import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
 import com.mirakl.client.mmp.operator.domain.invoice.MiraklCreatedManualAccountingDocumentReturn;
 import com.mirakl.client.mmp.operator.domain.invoice.MiraklCreatedManualAccountingDocuments;
 import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
-import org.assertj.core.api.Assertions;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
-
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-
 import static com.adyen.mirakl.MiraklShopFactory.UBO_FIELDS;
 import static com.adyen.mirakl.MiraklShopFactory.UBO_FIELDS_ENUMS;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ShopServiceTest {
@@ -93,7 +110,7 @@ public class ShopServiceTest {
     @Mock
     private UboService uboServiceMock;
     @Mock
-    private ShareholderContact shareHolderMock1, shareHolderMock2, shareHolderMock3, shareHolderMock4;
+    private ShareholderContact shareHolderMock1, shareHolderMock2, shareHolderMock3, shareHolderMock4, shareHolderMockUS;
     @Mock
     private DocService docServiceMock;
 
@@ -107,12 +124,19 @@ public class ShopServiceTest {
     private ArgumentCaptor<MiraklGetShopsRequest> miraklGetShopsRequestCaptor;
 
     private MiraklShop shop;
+    private MiraklShop miraklShopUS;
+
+    private static final int GENERIC_SHOP_INDEX = 0;
+    private static final int US_SHOP_INDEX = 1;
+
 
     @Before
     public void setup() throws Exception {
         shopService.setHouseNumberPatterns(ImmutableMap.of("NL", Pattern.compile("\\s([a-zA-Z]*\\d+[a-zA-Z]*)$")));
 
         shop = new MiraklShop();
+        miraklShopUS = new MiraklShop();
+
         when(adyenAccountServiceMock.deleteBankAccount(deleteBankAccountRequestCaptor.capture())).thenReturn(new DeleteBankAccountResponse());
     }
 
@@ -165,26 +189,31 @@ public class ShopServiceTest {
         when(getAccountHolderResponseMock.getAccountHolderCode()).thenReturn("");
 
         shopService.processUpdatedShops();
-        CreateAccountHolderRequest request = createAccountHolderRequestCaptor.getValue();
+        List<CreateAccountHolderRequest> requests = createAccountHolderRequestCaptor.getAllValues();
 
-        verify(adyenAccountServiceMock).createAccountHolder(request);
+        assertNotNull(requests);
+        assertEquals(2, requests.size());
+        CreateAccountHolderRequest genericRequest = requests.get(GENERIC_SHOP_INDEX);
+        CreateAccountHolderRequest USRequest = requests.get(US_SHOP_INDEX);
 
-        assertEquals("id", request.getAccountHolderCode());
-        assertEquals(CreateAccountHolderRequest.LegalEntityEnum.INDIVIDUAL, request.getLegalEntity());
-        assertNotNull(request.getAccountHolderDetails().getIndividualDetails());
-        IndividualDetails individualDetails = request.getAccountHolderDetails().getIndividualDetails();
+        verify(adyenAccountServiceMock).createAccountHolder(genericRequest);
+        assertEquals("id", genericRequest.getAccountHolderCode());
+        assertEquals(CreateAccountHolderRequest.LegalEntityEnum.INDIVIDUAL, genericRequest.getLegalEntity());
+        assertNotNull(genericRequest.getAccountHolderDetails().getIndividualDetails());
+        IndividualDetails individualDetails = genericRequest.getAccountHolderDetails().getIndividualDetails();
+
         assertEquals("firstName", individualDetails.getName().getFirstName());
         assertEquals("lastName", individualDetails.getName().getLastName());
         assertEquals(Name.GenderEnum.FEMALE, individualDetails.getName().getGender());
 
-        final Address address = request.getAccountHolderDetails().getAddress();
+        final Address address = genericRequest.getAccountHolderDetails().getAddress();
         Assertions.assertThat(address.getHouseNumberOrName()).isEqualTo("610b");
         Assertions.assertThat(address.getPostalCode()).isEqualTo("zipCode");
         Assertions.assertThat(address.getStreet()).isEqualTo("Kosterpark");
         Assertions.assertThat(address.getCountry()).isEqualTo("NL");
         Assertions.assertThat(address.getCity()).isEqualTo("city");
 
-        final List<BankAccountDetail> bankAccountDetails = request.getAccountHolderDetails().getBankAccountDetails();
+        final List<BankAccountDetail> bankAccountDetails = genericRequest.getAccountHolderDetails().getBankAccountDetails();
         Assertions.assertThat(bankAccountDetails.size()).isEqualTo(1);
         final BankAccountDetail bankDetails = bankAccountDetails.iterator().next();
         Assertions.assertThat(bankDetails.getOwnerPostalCode()).isEqualTo("zipCode");
@@ -197,8 +226,11 @@ public class ShopServiceTest {
         Assertions.assertThat(bankDetails.getCurrencyCode()).isEqualTo("EUR");
         Assertions.assertThat(bankDetails.getBankCity()).isEqualTo("bankCity");
         Assertions.assertThat(individualDetails.getPersonalData().getDateOfBirth()).isEqualTo("1989-03-15");
-    }
 
+        verify(adyenAccountServiceMock).createAccountHolder(USRequest);
+
+        Assertions.assertThat(USRequest.getAccountHolderDetails().getBankAccountDetails().get(0).getAccountNumber()).isEqualTo("1234567890");
+    }
 
     @Test
     public void testRetrieveUpdatedShopsUpdate() throws Exception {
@@ -212,22 +244,36 @@ public class ShopServiceTest {
 
         List<MiraklAdditionalFieldValue> uboFields = MiraklShopFactory.createMiraklAdditionalUboField("1", UBO_FIELDS, UBO_FIELDS_ENUMS);
         final ImmutableList<MiraklAdditionalFieldValue> additionalFields = new ImmutableList.Builder<MiraklAdditionalFieldValue>().add(additionalField).add(additionalFieldDoingBusinessAs).addAll(uboFields).build();
-
         setup(additionalFields);
         when(adyenAccountServiceMock.updateAccountHolder(updateAccountHolderRequestCaptor.capture())).thenReturn(updateAccountHolderResponseMock);
         when(getAccountHolderResponseMock.getAccountHolderCode()).thenReturn("alreadyExisting");
-        when(uboServiceMock.extractUbos(any(), any())).thenReturn(ImmutableList.of(shareHolderMock1, shareHolderMock2, shareHolderMock3, shareHolderMock4));
+        when(uboServiceMock.extractUbos(eq(shop), any())).thenReturn(ImmutableList.of(shareHolderMock1, shareHolderMock2, shareHolderMock3, shareHolderMock4));
+        when(uboServiceMock.extractUbos(eq(miraklShopUS), any())).thenReturn(ImmutableList.of(shareHolderMockUS));
 
         shopService.processUpdatedShops();
 
-        UpdateAccountHolderRequest request = updateAccountHolderRequestCaptor.getValue();
-        verify(adyenAccountServiceMock).updateAccountHolder(request);
+        List<UpdateAccountHolderRequest> requests = updateAccountHolderRequestCaptor.getAllValues();
+        assertEquals(2, requests.size());
+
+        UpdateAccountHolderRequest genericRequest = requests.get(GENERIC_SHOP_INDEX);
+        UpdateAccountHolderRequest USRequest = requests.get(US_SHOP_INDEX);
+
+        verify(adyenAccountServiceMock).updateAccountHolder(genericRequest);
         verify(shareholderMappingService).updateShareholderMapping(updateAccountHolderResponseMock, shop);
+        verify(shareholderMappingService).updateShareholderMapping(updateAccountHolderResponseMock, miraklShopUS);
+
         verify(docServiceMock).retryDocumentsForShop("id");
-        assertEquals("id", request.getAccountHolderCode());
-        assertEquals("Different from legalBusinessName", request.getAccountHolderDetails().getBusinessDetails().getDoingBusinessAs());
-        final List<ShareholderContact> shareholders = request.getAccountHolderDetails().getBusinessDetails().getShareholders();
+        assertEquals("id", genericRequest.getAccountHolderCode());
+        assertEquals("Different from legalBusinessName", genericRequest.getAccountHolderDetails().getBusinessDetails().getDoingBusinessAs());
+        final List<ShareholderContact> shareholders = genericRequest.getAccountHolderDetails().getBusinessDetails().getShareholders();
         Assertions.assertThat(shareholders).containsExactlyInAnyOrder(shareHolderMock1, shareHolderMock2, shareHolderMock3, shareHolderMock4);
+
+        verify(adyenAccountServiceMock).updateAccountHolder(USRequest);
+        verify(docServiceMock).retryDocumentsForShop("1");
+        assertEquals("1", USRequest.getAccountHolderCode());
+        assertEquals("Different from legalBusinessName", USRequest.getAccountHolderDetails().getBusinessDetails().getDoingBusinessAs());
+        final List<ShareholderContact> shareHoldersUS = USRequest.getAccountHolderDetails().getBusinessDetails().getShareholders();
+        Assertions.assertThat(shareHoldersUS).containsExactlyInAnyOrder(shareHolderMockUS);
     }
 
     @Test
@@ -311,6 +357,62 @@ public class ShopServiceTest {
     }
 
     @Test
+    public void testUpdateAccountHolderRequestUS() {
+        miraklShopUS.setId("1");
+        miraklShopUS.setCurrencyIsoCode(MiraklIsoCurrencyCode.USD);
+
+        MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue additionalField = new MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue();
+        additionalField.setCode(String.valueOf(MiraklStartupValidator.CustomMiraklFields.ADYEN_LEGAL_ENTITY_TYPE));
+        additionalField.setValue(MiraklStartupValidator.AdyenLegalEntityType.BUSINESS.toString());
+
+        List<MiraklAdditionalFieldValue> additionalFields = MiraklShopFactory.createMiraklAdditionalUboField("1", UBO_FIELDS, UBO_FIELDS_ENUMS);
+        additionalFields.add(additionalField);
+        miraklShopUS.setAdditionalFieldValues(additionalFields);
+
+        MiraklContactInformation miraklContactInformation = createMiraklContactInformation();
+        miraklShopUS.setContactInformation(miraklContactInformation);
+
+        MiraklAbaBankAccountInformation miraklAbaBankAccountInformation = createMiraklAbaBankAccountInformation();
+        miraklShopUS.setPaymentInformation(miraklAbaBankAccountInformation);
+
+        when(getAccountHolderResponseMock.getAccountHolderCode()).thenReturn(null);
+        when(uboServiceMock.extractUbos(eq(miraklShopUS), any())).thenReturn(ImmutableList.of(shareHolderMockUS));
+
+        UpdateAccountHolderRequest request = shopService.updateAccountHolderRequestFromShop(miraklShopUS, getAccountHolderResponseMock);
+        BankAccountDetail bankAccountDetail = request.getAccountHolderDetails().getBankAccountDetails().get(0);
+
+        assertEquals("1", request.getAccountHolderCode());
+        assertEquals("US", bankAccountDetail.getCountryCode());
+        assertEquals("owner", bankAccountDetail.getOwnerName());
+        assertEquals("1234567890", bankAccountDetail.getAccountNumber());
+        assertEquals("121000358", bankAccountDetail.getBranchCode());
+        assertEquals("Amsterdam", bankAccountDetail.getBankCity());
+        assertEquals("TestBank", bankAccountDetail.getBankName());
+        assertEquals("610b", bankAccountDetail.getOwnerHouseNumberOrName());
+        assertEquals("Kosterpark", bankAccountDetail.getOwnerStreet());
+        assertEquals("state", bankAccountDetail.getOwnerState());
+        assertEquals("NL", bankAccountDetail.getOwnerCountryCode());
+        assertEquals("Amsterdam", bankAccountDetail.getOwnerCity());
+        assertEquals("1111AA", bankAccountDetail.getOwnerPostalCode());
+        assertEquals("USD", bankAccountDetail.getCurrencyCode());
+
+        // Update with the same BankAccountDetails
+        GetAccountHolderResponse getAccountHolderResponse = createGetAccountHolderResponse();
+        getAccountHolderResponse.getAccountHolderDetails().setBankAccountDetails(request.getAccountHolderDetails().getBankAccountDetails());
+        UpdateAccountHolderRequest requestWithoutAccountChange = shopService.updateAccountHolderRequestFromShop(miraklShopUS, getAccountHolderResponse);
+        Assertions.assertThat(requestWithoutAccountChange.getAccountHolderDetails().getBankAccountDetails()).isEmpty();
+
+        // Update with a different AccountNumber
+        getAccountHolderResponse.getAccountHolderDetails().getBankAccountDetails().get(0).setAccountNumber("1234567891");
+        getAccountHolderResponse.getAccountHolderDetails().getBankAccountDetails().get(0).setBranchCode("121000359");
+
+        UpdateAccountHolderRequest requestWithAccountNumberChange = shopService.updateAccountHolderRequestFromShop(miraklShopUS, getAccountHolderResponse);
+        assertEquals(1, requestWithAccountNumberChange.getAccountHolderDetails().getBankAccountDetails().size());
+        assertEquals("1234567890", requestWithAccountNumberChange.getAccountHolderDetails().getBankAccountDetails().get(0).getAccountNumber());
+        assertEquals("121000358", requestWithAccountNumberChange.getAccountHolderDetails().getBankAccountDetails().get(0).getBranchCode());
+    }
+
+    @Test
     public void testCompensateNegativeBalance() throws Exception {
         Amount amount = new Amount();
         String currency = "EUR";
@@ -372,24 +474,26 @@ public class ShopServiceTest {
 
         when(adyenAccountServiceMock.createAccountHolder(createAccountHolderRequestCaptor.capture())).thenReturn(createAccountHolderResponseMock);
         when(getAccountHolderResponseMock.getAccountHolderCode()).thenReturn("");
-        when(uboServiceMock.extractUbos(any(), any())).thenReturn(ImmutableList.of(shareHolderMock1, shareHolderMock2, shareHolderMock3, shareHolderMock4));
+        when(uboServiceMock.extractUbos(eq(shop), any())).thenReturn(ImmutableList.of(shareHolderMock1, shareHolderMock2, shareHolderMock3, shareHolderMock4));
+        when(uboServiceMock.extractUbos(eq(miraklShopUS), any())).thenReturn(ImmutableList.of(shareHolderMockUS));
 
         shopService.processUpdatedShops();
 
         verify(deltaService).updateShopDelta(any(ZonedDateTime.class));
         verify(shareholderMappingService).updateShareholderMapping(createAccountHolderResponseMock, shop);
+        verify(shareholderMappingService).updateShareholderMapping(createAccountHolderResponseMock, miraklShopUS);
 
         List<ShareholderContact> shareHolders = createAccountHolderRequestCaptor.getAllValues()
-            .stream()
-            .map(CreateAccountHolderRequest::getAccountHolderDetails)
-            .map(AccountHolderDetails::getBusinessDetails)
-            .map(BusinessDetails::getShareholders)
-            .flatMap(Collection::stream)
-            .collect(Collectors.toList());
-
-        Assertions.assertThat(shareHolders).containsExactlyInAnyOrder(shareHolderMock1, shareHolderMock2, shareHolderMock3, shareHolderMock4);
+                                                                                .stream()
+                                                                                .map(CreateAccountHolderRequest::getAccountHolderDetails)
+                                                                                .map(AccountHolderDetails::getBusinessDetails)
+                                                                                .map(BusinessDetails::getShareholders)
+                                                                                .flatMap(Collection::stream)
+                                                                                .collect(Collectors.toList());
+        Assertions.assertThat(shareHolders).containsExactlyInAnyOrder(shareHolderMock1, shareHolderMock2, shareHolderMock3, shareHolderMock4, shareHolderMockUS);
 
     }
+
 
     @Test
     public void missingUbos() throws Exception {
@@ -427,6 +531,7 @@ public class ShopServiceTest {
         miraklContactInformation.setCity("Amsterdam");
         miraklContactInformation.setCountry("NLD");
         miraklContactInformation.setCivility("Mrs");
+        miraklContactInformation.setState("state");
         return miraklContactInformation;
     }
 
@@ -434,9 +539,10 @@ public class ShopServiceTest {
         MiraklShops miraklShops = new MiraklShops();
         List<MiraklShop> shops = new ArrayList<>();
         miraklShops.setShops(shops);
-        miraklShops.setTotalCount(1L);
+        miraklShops.setTotalCount(2L);
 
-        shops.add(shop);
+        shops.add(GENERIC_SHOP_INDEX, shop);
+        shops.add(US_SHOP_INDEX, miraklShopUS);
 
         MiraklContactInformation contactInformation = new MiraklContactInformation();
         contactInformation.setEmail("email");
@@ -449,9 +555,7 @@ public class ShopServiceTest {
         contactInformation.setZipCode("zipCode");
         contactInformation.setState("state");
 
-
         shop.setContactInformation(contactInformation);
-
         shop.setAdditionalFieldValues(additionalFields);
         shop.setId("id");
         shop.setCurrencyIsoCode(MiraklIsoCurrencyCode.EUR);
@@ -459,10 +563,26 @@ public class ShopServiceTest {
         MiraklIbanBankAccountInformation miraklIbanBankAccountInformation = createMiraklIbanBankAccountInformation();
         shop.setPaymentInformation(miraklIbanBankAccountInformation);
 
+        miraklShopUS.setContactInformation(contactInformation);
+        miraklShopUS.setAdditionalFieldValues(additionalFields);
+        miraklShopUS.setId("1");
+        miraklShopUS.setCurrencyIsoCode(MiraklIsoCurrencyCode.USD);
+        miraklShopUS.setPaymentInformation(createMiraklAbaBankAccountInformation());
+
         when(miraklMarketplacePlatformOperatorApiClientMock.getShops(any())).thenReturn(miraklShops);
         when(adyenAccountServiceMock.getAccountHolder(any())).thenReturn(getAccountHolderResponseMock);
     }
 
-
+    private MiraklAbaBankAccountInformation createMiraklAbaBankAccountInformation() {
+        MiraklAbaBankAccountInformation miraklAbaBankAccountInformation = new MiraklAbaBankAccountInformation();
+        miraklAbaBankAccountInformation.setBankAccountNumber("1234567890");
+        miraklAbaBankAccountInformation.setRoutingNumber("121000358");
+        miraklAbaBankAccountInformation.setBankCity("Amsterdam");
+        miraklAbaBankAccountInformation.setBankName("TestBank");
+        miraklAbaBankAccountInformation.setBankStreet("street");
+        miraklAbaBankAccountInformation.setBankZip("12345");
+        miraklAbaBankAccountInformation.setOwner("owner");
+        return miraklAbaBankAccountInformation;
+    }
 }
 
