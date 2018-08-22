@@ -125,7 +125,7 @@ public class DocService {
     @Async
     public void retryDocumentsForShop(String shopId) {
         final List<DocRetry> retryDocsByShopId = docRetryRepository.findByShopId(shopId);
-        if (retryDocsByShopId.size() > 0) {
+        if (! retryDocsByShopId.isEmpty()) {
             retryFailedDocuments(retryDocsByShopId);
         }
     }
@@ -133,7 +133,7 @@ public class DocService {
     @Async
     public void retryFailedDocuments() {
         final List<DocRetry> docRetries = docRetryRepository.findByTimesFailedLessThanEqual(applicationProperties.getMaxDocRetries());
-        if (docRetries.size() > 0) {
+        if (! docRetries.isEmpty()) {
             retryFailedDocuments(docRetries);
         }
     }
