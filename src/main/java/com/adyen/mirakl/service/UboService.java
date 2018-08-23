@@ -77,6 +77,8 @@ public class UboService {
     public static final String PHONE_COUNTRY_CODE = "phonecountry";
     public static final String PHONE_TYPE = "phonetype";
     public static final String PHONE_NUMBER = "phonenumber";
+    public static final String SUFFIX_FRONT = "_FRONT";
+    public static final String SUFFIX_BACK = "_BACK";
     public static final String STATE_OR_PROVINCE = "stateorprovince";
     public static final String SUFFIX_FRONT = "_FRONT";
     public static final String SUFFIX_BACK = "_BACK";
