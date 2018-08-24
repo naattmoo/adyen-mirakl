@@ -80,8 +80,6 @@ public class UboService {
     public static final String SUFFIX_FRONT = "_FRONT";
     public static final String SUFFIX_BACK = "_BACK";
     public static final String STATE_OR_PROVINCE = "stateorprovince";
-    public static final String SUFFIX_FRONT = "_FRONT";
-    public static final String SUFFIX_BACK = "_BACK";
 
     public final static Map<String, Name.GenderEnum> CIVILITY_TO_GENDER = ImmutableMap.<String, Name.GenderEnum>builder().put("MR", Name.GenderEnum.MALE)
                                                                                                                          .put("MRS", Name.GenderEnum.FEMALE)
@@ -392,7 +390,7 @@ public class UboService {
                     .put(PHONE_COUNTRY_CODE, ADYEN_UBO + String.valueOf(i) + "-phonecountry")
                     .put(PHONE_TYPE, ADYEN_UBO + String.valueOf(i) + "-phonetype")
                     .put(PHONE_NUMBER, ADYEN_UBO + String.valueOf(i) + "-phonenumber")
-                                                          .put(STATE_OR_PROVINCE, ADYEN_UBO+String.valueOf(i)+"-stateorprovince")
+                    .put(STATE_OR_PROVINCE, ADYEN_UBO+String.valueOf(i)+"-stateorprovince")
                     .build());
             return grouped;
         }).reduce((x, y) -> {
