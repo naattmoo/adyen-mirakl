@@ -100,6 +100,16 @@ public class MiraklShopApi extends MiraklShopProperties {
         return createMiraklShopRequest(client, miraklCreateShopBuilder);
     }
 
+    // used for US shops
+    public MiraklCreatedShops createUSBusinessShopWithFullUboInfo(MiraklMarketplacePlatformOperatorApiClient client, List<Map<String, String>> rows, String legalEntity){
+        MiraklCreateShop miraklCreateShop = new MiraklCreateShop();
+        miraklCreateShop = populateMiraklShopForUS(rows, legalEntity, miraklCreateShop); //lastname, companyname and maxUBOs
+        populateShareHolderDataForUS(legalEntity, rows, miraklCreateShop);
+        populatePaymentInformationForUS(rows, miraklCreateShop);
+        ImmutableList.Builder<MiraklCreateShop> miraklCreateShopBuilder = miraklShopCreateBuilder(miraklCreateShop);
+        return createMiraklShopRequest(client, miraklCreateShopBuilder);
+    }
+
     public MiraklCreatedShops createBusinessShopWithNoUBOs(MiraklMarketplacePlatformOperatorApiClient client, List<Map<String, String>> rows, String legalEntity) {
         MiraklCreateShop miraklCreateShop = new MiraklCreateShop();
         miraklCreateShop = populateMiraklShop(rows, legalEntity, miraklCreateShop);
@@ -119,6 +129,14 @@ public class MiraklShopApi extends MiraklShopProperties {
     // Mandatory for any type of shop creation for Individual
     private MiraklCreateShop populateMiraklShopForNetherlands(List<Map<String, String>> rows, MiraklCreateShop miraklCreateShop){
         populateMiraklAddressForNetherlands(miraklCreateShop);
+        populateMiraklProfessionalInformation(miraklCreateShop);
+        populateUserEmailAndShopName(miraklCreateShop, rows);
+        return miraklCreateShop;
+    }
+
+    // Mandatory for any type of shop creation for US business shop
+    private MiraklCreateShop populateMiraklShopForUS(List<Map<String, String>> rows, String legalEntity, MiraklCreateShop miraklCreateShop){
+        populateMiraklAddressForUS(miraklCreateShop);
         populateMiraklProfessionalInformation(miraklCreateShop);
         populateUserEmailAndShopName(miraklCreateShop, rows);
         return miraklCreateShop;

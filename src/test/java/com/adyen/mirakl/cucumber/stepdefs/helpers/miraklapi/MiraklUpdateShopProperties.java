@@ -33,6 +33,7 @@ import com.mirakl.client.mmp.domain.shop.MiraklProfessionalInformation;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
 import com.mirakl.client.mmp.domain.shop.MiraklShopAddress;
 import com.mirakl.client.mmp.domain.shop.MiraklShopState;
+import com.mirakl.client.mmp.domain.shop.bank.MiraklAbaBankAccountInformation;
 import com.mirakl.client.mmp.domain.shop.bank.MiraklIbanBankAccountInformation;
 import com.mirakl.client.mmp.domain.shop.bank.MiraklPaymentInformation;
 import com.mirakl.client.mmp.operator.domain.shop.update.MiraklUpdateShop;
@@ -204,6 +205,21 @@ class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperties {
         return paymentInformation;
     }
 
+    MiraklAbaBankAccountInformation updateNewMiraklBankAccountNumberOnly(MiraklShop miraklShop, List<Map<String, String>> rows) {
+        MiraklAbaBankAccountInformation paymentInformation = new MiraklAbaBankAccountInformation();
+        MiraklPaymentInformation miraklPaymentInformation = miraklShop.getPaymentInformation();
+        if (miraklPaymentInformation instanceof MiraklAbaBankAccountInformation) {
+            paymentInformation.setBankAccountNumber(rows.get(0).get("bankAccountNumber"));
+            paymentInformation.setOwner(miraklPaymentInformation.getOwner());
+            paymentInformation.setBankCity(((MiraklAbaBankAccountInformation) miraklPaymentInformation).getBankCity());
+            paymentInformation.setBankZip(((MiraklAbaBankAccountInformation) miraklPaymentInformation).getBankZip());
+            paymentInformation.setBankStreet(((MiraklAbaBankAccountInformation) miraklPaymentInformation).getBankStreet());
+            paymentInformation.setBankName(((MiraklAbaBankAccountInformation) miraklPaymentInformation).getBankName());
+            paymentInformation.setRoutingNumber(((MiraklAbaBankAccountInformation) miraklPaymentInformation).getRoutingNumber());
+        }
+        return paymentInformation;
+    }
+
     MiraklShopAddress updateMiraklShopAddress(MiraklShop miraklShop, Map<String, String> row) {
         MiraklShopAddress address = new MiraklShopAddress();
         if (row.get("firstName") != null) {
@@ -295,6 +311,22 @@ class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperties {
     }
 
     // Mandatory for shop update
+    MiraklShopAddress populateMiraklShopAddressForUS(MiraklShop miraklShop) {
+        MiraklShopAddress address = new MiraklShopAddress();
+            address.setCity("PASSED");
+            address.setCivility(civility());
+            address.setCountry("USA");
+            address.setState("CA");
+            address.setFirstname(FAKERUS.name().firstName());
+            address.setLastname(FAKERUS.name().lastName());
+            address.setStreet1(FAKERUS.address().streetAddress());
+            address.setZipCode(FAKERUS.address().zipCodeByState("CA"));
+
+        return address;
+    }
+
+
+    // Mandatory for shop update
     MiraklIbanBankAccountInformation populateMiraklIbanBankAccountInformation(MiraklShop miraklShop) {
         MiraklIbanBankAccountInformation paymentInformation = new MiraklIbanBankAccountInformation();
 
@@ -314,6 +346,29 @@ class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperties {
             paymentInformation.setOwner(FAKER.name().firstName() + " " + FAKER.name().lastName());
             paymentInformation.setBankName("RBS");
             paymentInformation.setBankCity("PASSED");
+        }
+        return paymentInformation;
+    }
+
+    // Mandatory for shop update
+    MiraklAbaBankAccountInformation populateMiraklBankAccountInformationForUS(MiraklShop miraklShop) {
+        MiraklAbaBankAccountInformation paymentInformation = new MiraklAbaBankAccountInformation();
+
+        if (miraklShop.getPaymentInformation() != null) {
+            if (miraklShop.getPaymentInformation() instanceof MiraklAbaBankAccountInformation) {
+                MiraklAbaBankAccountInformation abaBankAccountInformation = (MiraklAbaBankAccountInformation) miraklShop.getPaymentInformation();
+                paymentInformation.setBankAccountNumber(abaBankAccountInformation.getBankAccountNumber());
+                paymentInformation.setOwner(abaBankAccountInformation.getOwner());
+                paymentInformation.setBankName(abaBankAccountInformation.getBankName());
+                paymentInformation.setBankCity(abaBankAccountInformation.getBankCity());
+                paymentInformation.setRoutingNumber(abaBankAccountInformation.getRoutingNumber());
+            }
+        } else {
+            paymentInformation.setBankAccountNumber("123456789");
+            paymentInformation.setOwner(FAKER.name().firstName() + " " + FAKER.name().lastName());
+            paymentInformation.setBankName("RBS");
+            paymentInformation.setBankCity("PASSED");
+            paymentInformation.setRoutingNumber("121000358");
         }
         return paymentInformation;
     }

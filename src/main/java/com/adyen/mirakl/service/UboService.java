@@ -77,6 +77,7 @@ public class UboService {
     public static final String PHONE_COUNTRY_CODE = "phonecountry";
     public static final String PHONE_TYPE = "phonetype";
     public static final String PHONE_NUMBER = "phonenumber";
+    public static final String STATE_OR_PROVINCE = "stateorprovince";
     public static final String SUFFIX_FRONT = "_FRONT";
     public static final String SUFFIX_BACK = "_BACK";
 
@@ -123,6 +124,7 @@ public class UboService {
             String phoneCountryCode = extractedKeysFromMirakl.getOrDefault(uboKeys.get(PHONE_COUNTRY_CODE), null);
             String phoneType = extractedKeysFromMirakl.getOrDefault(uboKeys.get(PHONE_TYPE), null);
             String phoneNumber = extractedKeysFromMirakl.getOrDefault(uboKeys.get(PHONE_NUMBER), null);
+            String stateOrProvince = extractedKeysFromMirakl.getOrDefault(uboKeys.get(STATE_OR_PROVINCE), null);
 
             //do nothing if mandatory fields are missing
             if (allMandatoryDataIsAvailable(civility, firstName, lastName, email)) {
@@ -131,7 +133,7 @@ public class UboService {
                 addMandatoryData(civility, firstName, lastName, email, shareholderContact);
                 addPersonalData(uboNumber, dateOfBirth, nationality, idNumber, shareholderContact);
                 String shopCountry = shop.getContactInformation().getCountry();
-                addAddressData(uboNumber, houseNumberOrName, street, city, postalCode, country, shareholderContact, shopCountry);
+                addAddressData(uboNumber, houseNumberOrName, street, city, postalCode, country, stateOrProvince, shareholderContact, shopCountry);
                 addPhoneData(uboNumber, phoneCountryCode, phoneType, phoneNumber, shareholderContact);
                 builder.add(shareholderContact);
             }
@@ -324,6 +326,7 @@ public class UboService {
                                 final String city,
                                 final String postalCode,
                                 final String country,
+                                final String stateOrProvince,
                                 final ShareholderContact shareholderContact,
                                 final String contactCountry) {
         if (country != null || street != null || houseNumberOrName != null || city != null || postalCode != null) {
@@ -337,6 +340,7 @@ public class UboService {
             Optional.ofNullable(city).ifPresent(address::setCity);
             Optional.ofNullable(postalCode).ifPresent(address::setPostalCode);
             Optional.ofNullable(country).ifPresent(address::setCountry);
+            Optional.ofNullable(stateOrProvince).ifPresent(address::setStateOrProvince);
             shareholderContact.setAddress(address);
         } else {
             log.warn("Unable to populate any address data for share holder {}", uboNumber);
@@ -386,6 +390,7 @@ public class UboService {
                     .put(PHONE_COUNTRY_CODE, ADYEN_UBO + String.valueOf(i) + "-phonecountry")
                     .put(PHONE_TYPE, ADYEN_UBO + String.valueOf(i) + "-phonetype")
                     .put(PHONE_NUMBER, ADYEN_UBO + String.valueOf(i) + "-phonenumber")
+                                                          .put(STATE_OR_PROVINCE, ADYEN_UBO+String.valueOf(i)+"-stateorprovince")
                     .build());
             return grouped;
         }).reduce((x, y) -> {

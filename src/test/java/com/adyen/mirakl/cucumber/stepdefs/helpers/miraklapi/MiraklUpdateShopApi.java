@@ -27,6 +27,7 @@ import com.mirakl.client.mmp.domain.common.document.MiraklDocumentsUploadResult;
 import com.mirakl.client.mmp.domain.shop.MiraklProfessionalInformation;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
 import com.mirakl.client.mmp.domain.shop.MiraklShopAddress;
+import com.mirakl.client.mmp.domain.shop.bank.MiraklAbaBankAccountInformation;
 import com.mirakl.client.mmp.domain.shop.bank.MiraklIbanBankAccountInformation;
 import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
 import com.mirakl.client.mmp.operator.domain.shop.update.MiraklUpdateShop;
@@ -170,6 +171,18 @@ public class MiraklUpdateShopApi extends MiraklUpdateShopProperties {
         return updateMiraklRequest(client, miraklUpdateShopBuilder);
     }
 
+    public MiraklShop updateShopsBankAccountNumberOnly(MiraklShop miraklShop, String shopId, MiraklMarketplacePlatformOperatorApiClient client, List<Map<String, String>> rows) {
+        MiraklUpdateShop miraklUpdateShop = new MiraklUpdateShop();
+        miraklUpdateShop = populateAllMandatoryFieldsForUS(miraklShop, shopId, miraklUpdateShop);
+
+        // update new bank account number only:
+        MiraklAbaBankAccountInformation paymentInformation = updateNewMiraklBankAccountNumberOnly(miraklShop, rows);
+        miraklUpdateShop.setPaymentInformation(paymentInformation);
+
+        ImmutableList.Builder<MiraklUpdateShop> miraklUpdateShopBuilder = miraklUpdateShopBuilder(miraklUpdateShop);
+        return updateMiraklRequest(client, miraklUpdateShopBuilder);
+    }
+
     public void uploadBankStatementToExistingShop(String shopId, MiraklMarketplacePlatformOperatorApiClient client) {
         MiraklUpdateShop miraklUpdateShop = new MiraklUpdateShop();
         miraklUpdateShopBuilder(miraklUpdateShop);
@@ -204,6 +217,24 @@ public class MiraklUpdateShopApi extends MiraklUpdateShopProperties {
         populateMiraklAdditionalFields(miraklUpdateShop, miraklShop, fieldsToUpdate.build());
         return miraklUpdateShop;
     }
+
+    // required for any update we do to Mirakl
+    private MiraklUpdateShop populateAllMandatoryFieldsForUS(MiraklShop miraklShop, String shopId, MiraklUpdateShop miraklUpdateShop) {
+        miraklUpdateShop.setShopId(Long.valueOf(shopId));
+        MiraklAbaBankAccountInformation paymentInformation = populateMiraklBankAccountInformationForUS(miraklShop);
+        miraklUpdateShop.setPaymentInformation(paymentInformation);
+        MiraklShopAddress address = populateMiraklShopAddressForUS(miraklShop);
+        miraklUpdateShop.setAddress(address);
+        populateShopNameAndEmail(miraklShop, miraklUpdateShop);
+        populateMiraklChannel(miraklShop, miraklUpdateShop);
+        populateMiraklShopPremiumSuspendAndPaymentBlockedStatus(miraklShop, miraklUpdateShop);
+
+        // List will be used to define additional fields that require updates/changes
+        ImmutableList.Builder<MiraklSimpleRequestAdditionalFieldValue> fieldsToUpdate = new ImmutableList.Builder<>();
+        populateMiraklAdditionalFields(miraklUpdateShop, miraklShop, fieldsToUpdate.build());
+        return miraklUpdateShop;
+    }
+
 
     private MiraklShop updateMiraklRequest(MiraklMarketplacePlatformOperatorApiClient client, ImmutableList.Builder<MiraklUpdateShop> builder) {
         MiraklUpdateShopsRequest request = new MiraklUpdateShopsRequest(builder.build());
