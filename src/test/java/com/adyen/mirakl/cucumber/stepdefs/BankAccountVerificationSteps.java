@@ -24,7 +24,29 @@ package com.adyen.mirakl.cucumber.stepdefs;
 
 import java.util.List;
 import java.util.Map;
+
+import com.adyen.mirakl.repository.AdyenNotificationRepository;
+import com.adyen.mirakl.web.rest.AdyenNotificationResource;
+import com.adyen.mirakl.web.rest.TestUtil;
+import com.jayway.jsonpath.DocumentContext;
+import com.mirakl.client.mmp.domain.shop.document.MiraklShopDocument;
+import com.mirakl.client.mmp.request.shop.document.MiraklGetShopDocumentsRequest;
+import cucumber.api.java.Before;
 import org.assertj.core.api.Assertions;
+import com.adyen.mirakl.cucumber.stepdefs.helpers.stepshelper.StepDefsHelper;
+import com.adyen.model.marketpay.DocumentDetail;
+import com.adyen.model.marketpay.GetAccountHolderResponse;
+import com.adyen.model.marketpay.GetUploadedDocumentsRequest;
+import com.adyen.model.marketpay.GetUploadedDocumentsResponse;
+import com.google.common.collect.ImmutableList;
+import com.jayway.jsonpath.JsonPath;
+import com.mirakl.client.mmp.domain.shop.MiraklShop;
+import com.mirakl.client.mmp.operator.domain.shop.create.MiraklCreatedShops;
+import cucumber.api.DataTable;
+import cucumber.api.java.en.And;
+import cucumber.api.java.en.Given;
+import cucumber.api.java.en.Then;
+import cucumber.api.java.en.When;
 import org.awaitility.Awaitility;
 import org.awaitility.Duration;
 import org.slf4j.Logger;
@@ -32,27 +54,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import com.adyen.mirakl.cucumber.stepdefs.helpers.stepshelper.StepDefsHelper;
-import com.adyen.mirakl.repository.AdyenNotificationRepository;
-import com.adyen.mirakl.web.rest.AdyenNotificationResource;
-import com.adyen.mirakl.web.rest.TestUtil;
-import com.adyen.model.marketpay.DocumentDetail;
-import com.adyen.model.marketpay.GetAccountHolderResponse;
-import com.adyen.model.marketpay.GetUploadedDocumentsRequest;
-import com.adyen.model.marketpay.GetUploadedDocumentsResponse;
-import com.google.common.collect.ImmutableList;
-import com.jayway.jsonpath.DocumentContext;
-import com.jayway.jsonpath.JsonPath;
-import com.mirakl.client.mmp.domain.shop.MiraklShop;
-import com.mirakl.client.mmp.domain.shop.document.MiraklShopDocument;
-import com.mirakl.client.mmp.operator.domain.shop.create.MiraklCreatedShops;
-import com.mirakl.client.mmp.request.shop.document.MiraklGetShopDocumentsRequest;
-import cucumber.api.DataTable;
-import cucumber.api.java.Before;
-import cucumber.api.java.en.And;
-import cucumber.api.java.en.Given;
-import cucumber.api.java.en.Then;
-import cucumber.api.java.en.When;
+
 import static org.awaitility.Awaitility.await;
 import static org.awaitility.pollinterval.FibonacciPollInterval.fibonacci;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -85,13 +87,6 @@ public class BankAccountVerificationSteps extends StepDefsHelper {
     public void aShopHasBeenCreatedInMiraklForAnIndividualWithBankInformation(String legalEntity, DataTable table) {
         List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
         MiraklCreatedShops shops = miraklShopApi.createShopForIndividualWithBankDetails(miraklMarketplacePlatformOperatorApiClient, cucumberTable, legalEntity);
-        this.shop = retrieveCreatedShop(shops);
-    }
-
-    @Given("^a shop has been created in Mirakl for a (.*) with US Bank Information$")
-    public void aShopHasBeenCreatedInMiraklForABusinessWithUSBankInformation(String legalEntity, DataTable table) {
-        List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
-        MiraklCreatedShops shops = miraklShopApi.createUSBusinessShopWithFullUboInfo(miraklMarketplacePlatformOperatorApiClient, cucumberTable, legalEntity);
         this.shop = retrieveCreatedShop(shops);
     }
 
@@ -137,6 +132,13 @@ public class BankAccountVerificationSteps extends StepDefsHelper {
         });
     }
 
+    @Given("^a shop has been created in Mirakl for a (.*) with US Bank Information$")
+    public void aShopHasBeenCreatedInMiraklForABusinessWithUSBankInformation(String legalEntity, DataTable table) {
+        List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
+        MiraklCreatedShops shops = miraklShopApi.createBusinessShopForUSWithUBOs(miraklMarketplacePlatformOperatorApiClient, cucumberTable, legalEntity);
+        this.shop = retrieveCreatedShop(shops);
+        System.out.println(this.shop.toString());
+    }
 
     @Then("^a new bankAccountDetail will be created for the existing Account Holder$")
     public void aNewBankAccountDetailWillBeCreatedForTheExistingAccountHolder(DataTable table) {
@@ -188,7 +190,7 @@ public class BankAccountVerificationSteps extends StepDefsHelper {
         boolean documentTypeAndFilenameMatch = uploadedDocuments.getDocumentDetails()
                                                                 .stream()
                                                                 .anyMatch(doc -> DocumentDetail.DocumentTypeEnum.valueOf(cucumberTable.get(0).get("documentType")).equals(doc.getDocumentType())
-                                                                        && cucumberTable.get(0).get("filename").equals(doc.getFilename()));
+                                                                    && cucumberTable.get(0).get("filename").equals(doc.getFilename()));
         String uploadedDocResponse = uploadedDocuments.getDocumentDetails().toString();
         Assertions.assertThat(documentTypeAndFilenameMatch).withFailMessage(String.format("Document upload response:[%s]", JsonPath.parse(uploadedDocResponse).toString())).isTrue();
     }
@@ -207,7 +209,7 @@ public class BankAccountVerificationSteps extends StepDefsHelper {
 
     @And("^the ACCOUNT_HOLDER_VERIFICATION notification is sent to the Connector$")
     public void theACCOUNT_HOLDER_VERIFICATIONNotificationIsSentToTheConnector() throws Exception {
-        DocumentContext content = JsonPath.parse(adyenNotificationBody);
+        DocumentContext content  = JsonPath.parse(adyenNotificationBody);
         restAdyenNotificationMockMvc.perform(post("/api/adyen-notifications").contentType(TestUtil.APPLICATION_JSON_UTF8).content(content.jsonString())).andExpect(status().is(201));
         log.info("Notification posted to Connector: [{}]", content.jsonString());
     }

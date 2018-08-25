@@ -109,7 +109,7 @@ jhipster:
 # ===================================================================
 
 application:
-    miraklPullCron: "0 * * * * ?"
+    miraklPullCron: "0 */1 * * * ?"
     emailRetryCron: "0 */10 * * * ?"
     removeSentEmailsCron: "0 0 2 * * ?"
     payoutRetryCron: "30 1 * * * ?"

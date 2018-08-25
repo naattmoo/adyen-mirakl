@@ -101,7 +101,7 @@ public class MiraklShopApi extends MiraklShopProperties {
     }
 
     // used for US shops
-    public MiraklCreatedShops createUSBusinessShopWithFullUboInfo(MiraklMarketplacePlatformOperatorApiClient client, List<Map<String, String>> rows, String legalEntity){
+    public MiraklCreatedShops createBusinessShopForUSWithUBOs(MiraklMarketplacePlatformOperatorApiClient client, List<Map<String, String>> rows, String legalEntity){
         MiraklCreateShop miraklCreateShop = new MiraklCreateShop();
         miraklCreateShop = populateMiraklShopForUS(rows, legalEntity, miraklCreateShop); //lastname, companyname and maxUBOs
         populateShareHolderDataForUS(legalEntity, rows, miraklCreateShop);

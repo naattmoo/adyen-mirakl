@@ -176,12 +176,13 @@ public class MiraklUpdateShopApi extends MiraklUpdateShopProperties {
         miraklUpdateShop = populateAllMandatoryFieldsForUS(miraklShop, shopId, miraklUpdateShop);
 
         // update new bank account number only:
-        MiraklAbaBankAccountInformation paymentInformation = updateNewMiraklBankAccountNumberOnly(miraklShop, rows);
+        MiraklAbaBankAccountInformation paymentInformation = updateMiraklBankAccountNumberOnly(miraklShop, rows);
         miraklUpdateShop.setPaymentInformation(paymentInformation);
 
         ImmutableList.Builder<MiraklUpdateShop> miraklUpdateShopBuilder = miraklUpdateShopBuilder(miraklUpdateShop);
         return updateMiraklRequest(client, miraklUpdateShopBuilder);
     }
+
 
     public void uploadBankStatementToExistingShop(String shopId, MiraklMarketplacePlatformOperatorApiClient client) {
         MiraklUpdateShop miraklUpdateShop = new MiraklUpdateShop();
@@ -234,7 +235,6 @@ public class MiraklUpdateShopApi extends MiraklUpdateShopProperties {
         populateMiraklAdditionalFields(miraklUpdateShop, miraklShop, fieldsToUpdate.build());
         return miraklUpdateShop;
     }
-
 
     private MiraklShop updateMiraklRequest(MiraklMarketplacePlatformOperatorApiClient client, ImmutableList.Builder<MiraklUpdateShop> builder) {
         MiraklUpdateShopsRequest request = new MiraklUpdateShopsRequest(builder.build());

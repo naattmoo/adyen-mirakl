@@ -22,11 +22,6 @@
 
 package com.adyen.mirakl.cucumber.stepdefs;
 
-import java.util.List;
-import java.util.Map;
-import org.assertj.core.api.Assertions;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.stepshelper.StepDefsHelper;
 import com.adyen.model.marketpay.GetAccountHolderRequest;
 import com.adyen.model.marketpay.GetAccountHolderResponse;
@@ -41,6 +36,13 @@ import cucumber.api.java.en.And;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
+import org.assertj.core.api.Assertions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.List;
+import java.util.Map;
+
 import static org.awaitility.Awaitility.await;
 
 public class AccountCreatedAndUpdatedSteps extends StepDefsHelper {
@@ -87,14 +89,15 @@ public class AccountCreatedAndUpdatedSteps extends StepDefsHelper {
     @Given("^a US seller creates a (.*) shop in Mirakl with UBO data and a bankAccount$")
     public void aUSSellerCreatedABusinessShopInMiraklWithUBODataAndABankAccount(String legalEntity, DataTable table) {
         List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
-        MiraklCreatedShops shops = miraklShopApi.createUSBusinessShopWithFullUboInfo(miraklMarketplacePlatformOperatorApiClient, cucumberTable, legalEntity);
+        MiraklCreatedShops shops = miraklShopApi.createBusinessShopForUSWithUBOs(miraklMarketplacePlatformOperatorApiClient, cucumberTable, legalEntity);
         shop = retrieveCreatedShop(shops);
     }
 
     @When("^we update the shop by adding more shareholder data$")
     public void weUpdateTheShopByAddingMoreShareholderData(DataTable table) {
         List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
-        shop = miraklUpdateShopApi.addMoreUbosToShop(shop, shop.getId(), miraklMarketplacePlatformOperatorApiClient, cucumberTable);
+        shop = miraklUpdateShopApi
+            .addMoreUbosToShop(shop, shop.getId(), miraklMarketplacePlatformOperatorApiClient, cucumberTable);
     }
 
     @And("^an AccountHolder will be created in Adyen with status Active$")
@@ -119,8 +122,10 @@ public class AccountCreatedAndUpdatedSteps extends StepDefsHelper {
             Map<String, Object> mappedAdyenNotificationResponse = retrieveAdyenNotificationBody(notification, shop.getId());
             Assertions.assertThat(mappedAdyenNotificationResponse).isNotNull();
             this.notificationResponse = JsonPath.parse(mappedAdyenNotificationResponse);
-            Assertions.assertThat(notificationResponse.read("content.accountHolderCode").toString()).isEqualTo(shop.getId());
-            Assertions.assertThat(notificationResponse.read("eventType").toString()).isEqualTo(notification);
+            Assertions.assertThat(notificationResponse.read("content.accountHolderCode").toString())
+                .isEqualTo(shop.getId());
+            Assertions.assertThat(notificationResponse.read("eventType").toString())
+                .isEqualTo(notification);
         });
     }
 
@@ -142,7 +147,8 @@ public class AccountCreatedAndUpdatedSteps extends StepDefsHelper {
 
     @And("^the account holder is created in Adyen with status Active$")
     public void theAccountHolderIsCreatedInAdyenWithStatusActive() {
-        Assertions.assertThat(notificationResponse.read("content.accountHolderStatus.status").toString()).isEqualTo("Active");
+        Assertions.assertThat(notificationResponse.read("content.accountHolderStatus.status").toString())
+            .isEqualTo("Active");
     }
 
     @Then("^no account holder is created in Adyen$")
@@ -150,22 +156,31 @@ public class AccountCreatedAndUpdatedSteps extends StepDefsHelper {
         try {
             retrieveAccountHolderResponse(shop.getId());
         } catch (ApiException e) {
-            Assertions.assertThat(e.getError().getErrorCode()).isEqualTo("10_035");
+            Assertions
+                .assertThat(e.getError().getErrorCode())
+                .isEqualTo("10_035");
         }
     }
 
     @And("^the Adyen bankAccountDetails will posses the correct street data$")
     public void theAdyenBankAccountDetailsWillPossesTheCorrectStreetData() {
-        String ownerStreet = notificationResponse.read("content.accountHolderDetails.bankAccountDetails[0]BankAccountDetail.ownerStreet").toString();
-        String ownerHouseNumberOrName = notificationResponse.read("content.accountHolderDetails.bankAccountDetails[0]BankAccountDetail.ownerHouseNumberOrName").toString();
+        String ownerStreet = notificationResponse
+            .read("content.accountHolderDetails.bankAccountDetails[0]BankAccountDetail.ownerStreet").toString();
+        String ownerHouseNumberOrName = notificationResponse
+            .read("content.accountHolderDetails.bankAccountDetails[0]BankAccountDetail.ownerHouseNumberOrName").toString();
 
-        Assertions.assertThat(ownerStreet + " " + ownerHouseNumberOrName).contains(shop.getContactInformation().getStreet1());
+        Assertions
+            .assertThat(ownerStreet+" "+ownerHouseNumberOrName)
+            .contains(shop.getContactInformation().getStreet1());
     }
 
     @When("^the Mirakl Shop Details have been updated$")
     public void theMiraklShopDetailsHaveBeenUpdated(DataTable table) {
         List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
-        cucumberTable.forEach(row -> shop = miraklUpdateShopApi.updateExistingShopsContactInfoWithTableData(shop, shop.getId(), miraklMarketplacePlatformOperatorApiClient, row));
+        cucumberTable.forEach(row ->
+            shop = miraklUpdateShopApi
+                .updateExistingShopsContactInfoWithTableData(shop, shop.getId(), miraklMarketplacePlatformOperatorApiClient, row)
+        );
     }
 
     @When("^the Mirakl Shop is updated by adding more shareholder data$")

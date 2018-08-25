@@ -22,39 +22,12 @@
 
 package com.adyen.mirakl.service;
 
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import org.assertj.core.api.Assertions;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
 import com.adyen.mirakl.MiraklShopFactory;
 import com.adyen.mirakl.startup.MiraklStartupValidator;
 import com.adyen.model.Address;
 import com.adyen.model.Amount;
 import com.adyen.model.Name;
-import com.adyen.model.marketpay.AccountHolderDetails;
-import com.adyen.model.marketpay.BankAccountDetail;
-import com.adyen.model.marketpay.BusinessDetails;
-import com.adyen.model.marketpay.CreateAccountHolderRequest;
-import com.adyen.model.marketpay.CreateAccountHolderResponse;
-import com.adyen.model.marketpay.DeleteBankAccountRequest;
-import com.adyen.model.marketpay.DeleteBankAccountResponse;
-import com.adyen.model.marketpay.GetAccountHolderResponse;
-import com.adyen.model.marketpay.IndividualDetails;
-import com.adyen.model.marketpay.ShareholderContact;
-import com.adyen.model.marketpay.UpdateAccountHolderRequest;
-import com.adyen.model.marketpay.UpdateAccountHolderResponse;
+import com.adyen.model.marketpay.*;
 import com.adyen.model.marketpay.notification.CompensateNegativeBalanceNotificationRecord;
 import com.adyen.service.Account;
 import com.google.common.collect.ImmutableList;
@@ -72,18 +45,29 @@ import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiC
 import com.mirakl.client.mmp.operator.domain.invoice.MiraklCreatedManualAccountingDocumentReturn;
 import com.mirakl.client.mmp.operator.domain.invoice.MiraklCreatedManualAccountingDocuments;
 import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
+import org.assertj.core.api.Assertions;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
+
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
 import static com.adyen.mirakl.MiraklShopFactory.UBO_FIELDS;
 import static com.adyen.mirakl.MiraklShopFactory.UBO_FIELDS_ENUMS;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ShopServiceTest {
@@ -244,6 +228,7 @@ public class ShopServiceTest {
 
         List<MiraklAdditionalFieldValue> uboFields = MiraklShopFactory.createMiraklAdditionalUboField("1", UBO_FIELDS, UBO_FIELDS_ENUMS);
         final ImmutableList<MiraklAdditionalFieldValue> additionalFields = new ImmutableList.Builder<MiraklAdditionalFieldValue>().add(additionalField).add(additionalFieldDoingBusinessAs).addAll(uboFields).build();
+
         setup(additionalFields);
         when(adyenAccountServiceMock.updateAccountHolder(updateAccountHolderRequestCaptor.capture())).thenReturn(updateAccountHolderResponseMock);
         when(getAccountHolderResponseMock.getAccountHolderCode()).thenReturn("alreadyExisting");
@@ -484,16 +469,15 @@ public class ShopServiceTest {
         verify(shareholderMappingService).updateShareholderMapping(createAccountHolderResponseMock, miraklShopUS);
 
         List<ShareholderContact> shareHolders = createAccountHolderRequestCaptor.getAllValues()
-                                                                                .stream()
-                                                                                .map(CreateAccountHolderRequest::getAccountHolderDetails)
-                                                                                .map(AccountHolderDetails::getBusinessDetails)
-                                                                                .map(BusinessDetails::getShareholders)
-                                                                                .flatMap(Collection::stream)
-                                                                                .collect(Collectors.toList());
+                .stream()
+                .map(CreateAccountHolderRequest::getAccountHolderDetails)
+                .map(AccountHolderDetails::getBusinessDetails)
+                .map(BusinessDetails::getShareholders)
+                .flatMap(Collection::stream)
+                .collect(Collectors.toList());
         Assertions.assertThat(shareHolders).containsExactlyInAnyOrder(shareHolderMock1, shareHolderMock2, shareHolderMock3, shareHolderMock4, shareHolderMockUS);
 
     }
-
 
     @Test
     public void missingUbos() throws Exception {

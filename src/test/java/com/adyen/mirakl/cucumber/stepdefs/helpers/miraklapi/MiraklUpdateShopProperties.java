@@ -205,7 +205,7 @@ class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperties {
         return paymentInformation;
     }
 
-    MiraklAbaBankAccountInformation updateNewMiraklBankAccountNumberOnly(MiraklShop miraklShop, List<Map<String, String>> rows) {
+    MiraklAbaBankAccountInformation updateMiraklBankAccountNumberOnly(MiraklShop miraklShop, List<Map<String, String>> rows) {
         MiraklAbaBankAccountInformation paymentInformation = new MiraklAbaBankAccountInformation();
         MiraklPaymentInformation miraklPaymentInformation = miraklShop.getPaymentInformation();
         if (miraklPaymentInformation instanceof MiraklAbaBankAccountInformation) {
@@ -313,18 +313,17 @@ class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperties {
     // Mandatory for shop update
     MiraklShopAddress populateMiraklShopAddressForUS(MiraklShop miraklShop) {
         MiraklShopAddress address = new MiraklShopAddress();
-            address.setCity("PASSED");
-            address.setCivility(civility());
-            address.setCountry("USA");
-            address.setState("CA");
-            address.setFirstname(FAKERUS.name().firstName());
-            address.setLastname(FAKERUS.name().lastName());
-            address.setStreet1(FAKERUS.address().streetAddress());
-            address.setZipCode(FAKERUS.address().zipCodeByState("CA"));
+        address.setCity("PASSED");
+        address.setCivility(civility());
+        address.setCountry("USA");
+        address.setState("CA");
+        address.setFirstname(FAKERUS.name().firstName());
+        address.setLastname(FAKERUS.name().lastName());
+        address.setStreet1(FAKERUS.address().streetAddress());
+        address.setZipCode(FAKERUS.address().zipCodeByState("CA"));
 
         return address;
     }
-
 
     // Mandatory for shop update
     MiraklIbanBankAccountInformation populateMiraklIbanBankAccountInformation(MiraklShop miraklShop) {
@@ -350,7 +349,6 @@ class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperties {
         return paymentInformation;
     }
 
-    // Mandatory for shop update
     MiraklAbaBankAccountInformation populateMiraklBankAccountInformationForUS(MiraklShop miraklShop) {
         MiraklAbaBankAccountInformation paymentInformation = new MiraklAbaBankAccountInformation();
 

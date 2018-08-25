@@ -39,7 +39,9 @@ Feature: Account Holder Updated notification upon Mirakl shop changes
             | bankAccountNumber |
             | 987654321         |
         And the connector processes the data and pushes to Adyen
-        And a new bankAccountDetail will be created for the existing Account Holder
+        And a new US bankAccountDetail will be created for the existing Account Holder
             | eventType              | bankAccountNumber    |
             | ACCOUNT_HOLDER_UPDATED | 987654321            |
         And the previous BankAccountDetail will be removed
+
+

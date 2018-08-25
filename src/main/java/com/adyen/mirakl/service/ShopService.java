@@ -22,24 +22,6 @@
 
 package com.adyen.mirakl.service;
 
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import javax.annotation.Resource;
-import org.apache.commons.lang3.StringUtils;
-import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormat;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 import com.adyen.mirakl.domain.StreetDetails;
 import com.adyen.mirakl.service.util.IsoUtil;
 import com.adyen.mirakl.service.util.MiraklDataExtractionUtil;
@@ -47,22 +29,8 @@ import com.adyen.mirakl.startup.MiraklStartupValidator;
 import com.adyen.model.Address;
 import com.adyen.model.Amount;
 import com.adyen.model.Name;
-import com.adyen.model.marketpay.AccountHolderDetails;
-import com.adyen.model.marketpay.BankAccountDetail;
-import com.adyen.model.marketpay.BusinessDetails;
-import com.adyen.model.marketpay.CreateAccountHolderRequest;
+import com.adyen.model.marketpay.*;
 import com.adyen.model.marketpay.CreateAccountHolderRequest.LegalEntityEnum;
-import com.adyen.model.marketpay.CreateAccountHolderResponse;
-import com.adyen.model.marketpay.DeleteBankAccountRequest;
-import com.adyen.model.marketpay.DeleteBankAccountResponse;
-import com.adyen.model.marketpay.ErrorFieldType;
-import com.adyen.model.marketpay.GetAccountHolderRequest;
-import com.adyen.model.marketpay.GetAccountHolderResponse;
-import com.adyen.model.marketpay.IndividualDetails;
-import com.adyen.model.marketpay.PersonalData;
-import com.adyen.model.marketpay.ShareholderContact;
-import com.adyen.model.marketpay.UpdateAccountHolderRequest;
-import com.adyen.model.marketpay.UpdateAccountHolderResponse;
 import com.adyen.model.marketpay.notification.CompensateNegativeBalanceNotificationRecord;
 import com.adyen.service.Account;
 import com.adyen.service.exception.ApiException;
@@ -80,6 +48,21 @@ import com.mirakl.client.mmp.operator.domain.invoice.MiraklManualAccountingDocum
 import com.mirakl.client.mmp.operator.domain.invoice.MiraklManualAccountingDocumentType;
 import com.mirakl.client.mmp.operator.request.payment.invoice.MiraklCreateManualAccountingDocumentRequest;
 import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
+import org.apache.commons.lang3.StringUtils;
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
+
+import javax.annotation.Resource;
+import java.time.ZonedDateTime;
+import java.util.*;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -174,16 +157,17 @@ public class ShopService {
 
         String existingBankAccountDetailUuid = getBankAccountDetailFromShop(getAccountHolderResponse.getAccountHolderDetails(), shop).map(BankAccountDetail::getBankAccountUUID).orElse(null);
         List<String> uuids = getAccountHolderResponse.getAccountHolderDetails()
-                                                     .getBankAccountDetails()
-                                                     .stream()
-                                                     .filter(b -> !b.getBankAccountUUID().equals(existingBankAccountDetailUuid))
-                                                     .map(BankAccountDetail::getBankAccountUUID)
-                                                     .collect(Collectors.toList());
+            .getBankAccountDetails()
+            .stream()
+            .filter(b -> !b.getBankAccountUUID().equals(existingBankAccountDetailUuid))
+            .map(BankAccountDetail::getBankAccountUUID)
+            .collect(Collectors.toList());
 
         if (!uuids.isEmpty()) {
             DeleteBankAccountResponse deleteBankAccountResponse = adyenAccountService.deleteBankAccount(deleteBankAccountRequest(getAccountHolderResponse.getAccountHolderCode(), uuids));
             log.debug("DeleteBankAccountResponse: {}", deleteBankAccountResponse);
         }
+
         return !uuids.isEmpty();
     }
 
@@ -258,8 +242,8 @@ public class ShopService {
             address.setCity(contactInformation.getCity());
 
             StreetDetails streetDetails = StreetDetails.createStreetDetailsFromSingleLine(StreetDetails.extractHouseNumberOrNameFromAdditionalFields(shop.getAdditionalFieldValues()),
-                                                                                          contactInformation.getStreet1(),
-                                                                                          houseNumberPatterns.get(IsoUtil.getIso2CountryCodeFromIso3(shop.getContactInformation().getCountry())));
+                contactInformation.getStreet1(),
+                houseNumberPatterns.get(IsoUtil.getIso2CountryCodeFromIso3(shop.getContactInformation().getCountry())));
             address.setStreet(streetDetails.getStreetName());
             address.setHouseNumberOrName(streetDetails.getHouseNumberOrName());
             address.setStateOrProvince(contactInformation.getState());
@@ -350,6 +334,7 @@ public class ShopService {
             // account does not exists yet
             log.debug("MarketPay Api Exception: {}. Shop ", e.getError());
         }
+
         return null;
     }
 
@@ -421,7 +406,9 @@ public class ShopService {
                 accountHolderDetails.addBankAccountDetail(bankAccountDetail.get());
             }
         }
+
         updateDetailsFromShop(accountHolderDetails, shop, existingAccountHolder);
+
         return updateAccountHolderRequest;
     }
 
@@ -432,7 +419,6 @@ public class ShopService {
             IndividualDetails individualDetails = createIndividualDetailsFromShop(shop);
             accountHolderDetails.setIndividualDetails(individualDetails);
         } else if (LegalEntityEnum.BUSINESS == legalEntity) {
-
             BusinessDetails businessDetails = addBusinessDetailsFromShop(shop, existingAccountHolder);
             accountHolderDetails.setBusinessDetails(businessDetails);
         } else {
@@ -449,44 +435,48 @@ public class ShopService {
             log.info("No Mirakl Bank Account Information found for shop: {}", shop.getId());
             return Optional.empty();
         }
+
         // create AcountHolderDetails
         AccountHolderDetails accountHolderDetails = new AccountHolderDetails();
+
         // set BankAccountDetails
         BankAccountDetail bankAccountDetail = new BankAccountDetail();
-
-        if ((shop.getPaymentInformation() instanceof MiraklIbanBankAccountInformation)) {
+        if (shop.getPaymentInformation() instanceof MiraklIbanBankAccountInformation) {
             MiraklIbanBankAccountInformation miraklIbanBankAccountInformation = (MiraklIbanBankAccountInformation) shop.getPaymentInformation();
 
             if (miraklIbanBankAccountInformation.getIban().isEmpty() || shop.getCurrencyIsoCode() == null) {
                 log.info("Empty IBAN or currency for shop: {}", shop.getId());
                 return Optional.empty();
             }
-            // check if PaymentInformation is object MiraklIbanBankAccountInformation
-            miraklIbanBankAccountInformation.getIban();
-            bankAccountDetail.setIban(miraklIbanBankAccountInformation.getIban());
-            bankAccountDetail.setBankCity(miraklIbanBankAccountInformation.getBankCity());
-            bankAccountDetail.setBankBicSwift(miraklIbanBankAccountInformation.getBic());
-            bankAccountDetail.setCountryCode(getBankCountryFromIban(miraklIbanBankAccountInformation.getIban())); // required field
-            bankAccountDetail.setCurrencyCode(shop.getCurrencyIsoCode().toString());
 
-            if (shop.getContactInformation() != null) {
-                StreetDetails streetDetails = StreetDetails.createStreetDetailsFromSingleLine(StreetDetails.extractHouseNumberOrNameFromAdditionalFields(shop.getAdditionalFieldValues()),
-                                                                                              shop.getContactInformation().getStreet1(),
-                                                                                              houseNumberPatterns.get(IsoUtil.getIso2CountryCodeFromIso3(shop.getContactInformation().getCountry())));
-                bankAccountDetail.setOwnerStreet(streetDetails.getStreetName());
-                bankAccountDetail.setOwnerHouseNumberOrName(streetDetails.getHouseNumberOrName());
-                bankAccountDetail.setOwnerPostalCode(shop.getContactInformation().getZipCode());
-                bankAccountDetail.setOwnerCity(shop.getContactInformation().getCity());
-                bankAccountDetail.setOwnerName(shop.getPaymentInformation().getOwner());
-            }
-            bankAccountDetail.setPrimaryAccount(true);
-            accountHolderDetails.addBankAccountDetail(bankAccountDetail);
+        // check if PaymentInformation is object MiraklIbanBankAccountInformation
+        miraklIbanBankAccountInformation.getIban();
+        bankAccountDetail.setIban(miraklIbanBankAccountInformation.getIban());
+        bankAccountDetail.setBankCity(miraklIbanBankAccountInformation.getBankCity());
+        bankAccountDetail.setBankBicSwift(miraklIbanBankAccountInformation.getBic());
+        bankAccountDetail.setCountryCode(getBankCountryFromIban(miraklIbanBankAccountInformation.getIban())); // required field
+        bankAccountDetail.setCurrencyCode(shop.getCurrencyIsoCode().toString());
+
+        if (shop.getContactInformation() != null) {
+            StreetDetails streetDetails = StreetDetails.createStreetDetailsFromSingleLine(StreetDetails.extractHouseNumberOrNameFromAdditionalFields(shop.getAdditionalFieldValues()),
+                shop.getContactInformation().getStreet1(),
+                houseNumberPatterns.get(IsoUtil.getIso2CountryCodeFromIso3(shop.getContactInformation().getCountry())));
+            bankAccountDetail.setOwnerStreet(streetDetails.getStreetName());
+            bankAccountDetail.setOwnerHouseNumberOrName(streetDetails.getHouseNumberOrName());
+
+            bankAccountDetail.setOwnerPostalCode(shop.getContactInformation().getZipCode());
+            bankAccountDetail.setOwnerCity(shop.getContactInformation().getCity());
+            bankAccountDetail.setOwnerName(shop.getPaymentInformation().getOwner());
         }
-        if ((shop.getPaymentInformation() instanceof MiraklAbaBankAccountInformation)) {
+
+        bankAccountDetail.setPrimaryAccount(true);
+        accountHolderDetails.addBankAccountDetail(bankAccountDetail);
+        }
+        if (shop.getPaymentInformation() instanceof MiraklAbaBankAccountInformation) {
 
             MiraklAbaBankAccountInformation miraklAbaBankAccountInformation = (MiraklAbaBankAccountInformation) shop.getPaymentInformation();
 
-            if (miraklAbaBankAccountInformation.getRoutingNumber().isEmpty() || miraklAbaBankAccountInformation.getBankAccountNumber().isEmpty() || shop.getCurrencyIsoCode() == null) {
+            if (StringUtils.isEmpty(miraklAbaBankAccountInformation.getRoutingNumber()) || StringUtils.isEmpty(miraklAbaBankAccountInformation.getBankAccountNumber()) || shop.getCurrencyIsoCode() == null) {
                 log.info("Empty branch code or account number or currency for shop: {}", shop.getId());
                 return Optional.empty();
             }
@@ -500,8 +490,8 @@ public class ShopService {
             if (shop.getContactInformation() != null) {
 
                 StreetDetails streetDetails = StreetDetails.createStreetDetailsFromSingleLine(StreetDetails.extractHouseNumberOrNameFromAdditionalFields(shop.getAdditionalFieldValues()),
-                                                                                              shop.getContactInformation().getStreet1(),
-                                                                                              houseNumberPatterns.get(IsoUtil.getIso2CountryCodeFromIso3(shop.getContactInformation().getCountry())));
+                        shop.getContactInformation().getStreet1(),
+                        houseNumberPatterns.get(IsoUtil.getIso2CountryCodeFromIso3(shop.getContactInformation().getCountry())));
 
                 bankAccountDetail.setOwnerState(shop.getContactInformation().getState());
                 bankAccountDetail.setOwnerCountryCode(IsoUtil.getIso2CountryCodeFromIso3(shop.getContactInformation().getCountry()));
@@ -513,8 +503,10 @@ public class ShopService {
             }
             bankAccountDetail.setPrimaryAccount(true);
         }
+
         return Optional.of(bankAccountDetail);
     }
+
 
     /**
      * First two digits of IBAN holds ISO country code
@@ -530,8 +522,7 @@ public class ShopService {
     /**
      * IV03: Create a manual accounting document
      */
-    public MiraklCreatedManualAccountingDocuments processCompensateNegativeBalance(CompensateNegativeBalanceNotificationRecord compensateNegativeBalanceNotificationRecord,
-                                                                                   String pspReference) throws Exception {
+    public MiraklCreatedManualAccountingDocuments processCompensateNegativeBalance(CompensateNegativeBalanceNotificationRecord compensateNegativeBalanceNotificationRecord, String pspReference) throws Exception {
         final String accountCode = compensateNegativeBalanceNotificationRecord.getAccountCode();
         Amount amount = compensateNegativeBalanceNotificationRecord.getAmount();
         Date transferDate = compensateNegativeBalanceNotificationRecord.getTransferDate();
@@ -557,6 +548,7 @@ public class ShopService {
 
         List<MiraklCreateManualAccountingDocument> miraklCreateManualAccountingDocumentList = new ArrayList<>();
         miraklCreateManualAccountingDocumentList.add(miraklCreateManualAccountingDocument);
+
         MiraklCreateManualAccountingDocumentRequest request = new MiraklCreateManualAccountingDocumentRequest(miraklCreateManualAccountingDocumentList);
 
         return miraklMarketplacePlatformOperatorApiClient.createManualAccountingDocument(request);
