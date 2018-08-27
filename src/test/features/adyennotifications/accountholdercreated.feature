@@ -74,3 +74,16 @@ Feature: Seller Account Management
             | maxUbos |
             | 4       |
         And the Adyen bankAccountDetails will posses the correct street data
+
+    @PW-513
+    Scenario: The connector will strip out the house name or number for US addresses
+        Given a US seller creates a Business shop in Mirakl with UBO data and a bankAccount
+            | city   | bank name | bankAccountNumber    | routingNumber |bankOwnerName | lastName | maxUbos | currency  | street                | state | zip   |
+            | PASSED | testBank  | 123456789            | 121000358     |TestData      | TestData | 4       | USD       | 420 Montgomery Street |   CA  | 94104 |
+        When the connector processes the data and pushes to Adyen
+        Then an AccountHolder will be created in Adyen with status Active
+        And a notification will be sent pertaining to ACCOUNT_HOLDER_CREATED
+        And the shop data is correctly mapped to the Adyen Business Account
+            | maxUbos |
+            | 4       |
+        And the Adyen bankAccountDetails will posses the correct street data

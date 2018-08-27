@@ -64,6 +64,7 @@ public class BankAccountVerificationSteps extends StepDefsHelper {
 
     private MiraklShop shop;
     private String lastIban;
+    private String lastBankAccountNumber;
     private Map<String, Object> adyenNotificationBody;
 
     @Autowired
@@ -103,6 +104,13 @@ public class BankAccountVerificationSteps extends StepDefsHelper {
         this.lastIban = cucumberTable.get(0).get("iban");
     }
 
+    @When("^the Bank Account Number has been modified in Mirakl$")
+    public void theBankAccountNumberHasBeenModifiedInMirakl(DataTable table) {
+        List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
+        this.shop = miraklUpdateShopApi.updateShopsBankAccountNumberOnly(this.shop, this.shop.getId(), miraklMarketplacePlatformOperatorApiClient, cucumberTable);
+        this.lastBankAccountNumber = cucumberTable.get(0).get("bankAccountNumber");
+    }
+
     @And("^a new IBAN has been provided by the seller in Mirakl and the mandatory IBAN fields have been provided$")
     public void aNewIBANHasBeenProvidedByTheSellerInMiraklAndTheMandatoryIBANFieldsHaveBeenProvided() {
         this.shop = miraklUpdateShopApi.updateShopToAddBankDetails(this.shop, this.shop.getId(), miraklMarketplacePlatformOperatorApiClient);
@@ -124,7 +132,12 @@ public class BankAccountVerificationSteps extends StepDefsHelper {
         });
     }
 
-
+    @Given("^a shop has been created in Mirakl for a (.*) with US Bank Information$")
+    public void aShopHasBeenCreatedInMiraklForABusinessWithUSBankInformation(String legalEntity, DataTable table) {
+        List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
+        MiraklCreatedShops shops = miraklShopApi.createBusinessShopForUSWithUBOs(miraklMarketplacePlatformOperatorApiClient, cucumberTable, legalEntity);
+        this.shop = retrieveCreatedShop(shops);
+    }
 
     @Then("^a new bankAccountDetail will be created for the existing Account Holder$")
     public void aNewBankAccountDetailWillBeCreatedForTheExistingAccountHolder(DataTable table) {
@@ -142,11 +155,29 @@ public class BankAccountVerificationSteps extends StepDefsHelper {
         });
     }
 
+    @Then("^a new US bankAccountDetail will be created for the existing Account Holder$")
+    public void aNewUSBankAccountDetailWillBeCreatedForTheExistingAccountHolder(DataTable table) {
+        List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
+        waitForNotification();
+        await().untilAsserted(() -> {
+            String eventType = cucumberTable.get(0).get("eventType");
+            Map<String, Object> adyenNotificationBody = retrieveAdyenNotificationBody(eventType, shop.getId());
+            List<Map<Object, Object>> bankAccountDetails = JsonPath.parse(adyenNotificationBody.get("content")).read("accountHolderDetails.bankAccountDetails");
+            ImmutableList<String> miraklBankAccountDetail = assertionHelper.miraklBankAccountInformation(shop).build();
+            ImmutableList<String> adyenBankAccountDetail = assertionHelper.adyenUSBankAccountDetail(bankAccountDetails, cucumberTable).build();
+            Assertions.assertThat(miraklBankAccountDetail).containsAll(adyenBankAccountDetail);
+            Assertions.assertThat(assertionHelper.getParsedBankAccountDetail().read("primaryAccount").toString()).isEqualTo("true");
+            Assertions.assertThat(assertionHelper.getParsedBankAccountDetail().read("bankAccountUUID").toString()).isNotEmpty();
+            Assertions.assertThat(assertionHelper.getParsedBankAccountDetail().read("accountNumber").toString()).isEqualTo(cucumberTable.get(0).get("bankAccountNumber"));
+        });
+    }
+
     @And("^the previous BankAccountDetail will be removed$")
     public void thePreviousBankAccountDetailWillBeRemoved() throws Exception {
         GetAccountHolderResponse response = getGetAccountHolderResponse(shop);
         Assertions.assertThat(response.getAccountHolderDetails().getBankAccountDetails().size()).isEqualTo(1);
         Assertions.assertThat(response.getAccountHolderDetails().getBankAccountDetails().get(0).getIban()).isEqualTo(this.lastIban);
+        Assertions.assertThat(response.getAccountHolderDetails().getBankAccountDetails().get(0).getAccountNumber()).isEqualTo(this.lastBankAccountNumber);
     }
 
     @And("^the document is successfully uploaded to Adyen$")
