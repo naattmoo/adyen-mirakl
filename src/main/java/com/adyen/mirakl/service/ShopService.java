@@ -432,6 +432,7 @@ public class ShopService {
     }
 
     private Optional<BankAccountDetail> createBankAccountDetail(MiraklShop shop) {
+        boolean isAccountTypeAba = false;
         if (shop.getPaymentInformation() == null) {
             log.info("No Mirakl Bank Account Information found for shop: {}", shop.getId());
             return Optional.empty();
@@ -458,22 +459,9 @@ public class ShopService {
         bankAccountDetail.setCountryCode(getBankCountryFromIban(miraklIbanBankAccountInformation.getIban())); // required field
         bankAccountDetail.setCurrencyCode(shop.getCurrencyIsoCode().toString());
 
-        if (shop.getContactInformation() != null) {
-            StreetDetails streetDetails = StreetDetails.createStreetDetailsFromSingleLine(StreetDetails.extractHouseNumberOrNameFromAdditionalFields(shop.getAdditionalFieldValues()),
-                shop.getContactInformation().getStreet1(),
-                houseNumberPatterns.get(IsoUtil.getIso2CountryCodeFromIso3(shop.getContactInformation().getCountry())));
-            bankAccountDetail.setOwnerStreet(streetDetails.getStreetName());
-            bankAccountDetail.setOwnerHouseNumberOrName(streetDetails.getHouseNumberOrName());
-
-            bankAccountDetail.setOwnerPostalCode(shop.getContactInformation().getZipCode());
-            bankAccountDetail.setOwnerCity(shop.getContactInformation().getCity());
-            bankAccountDetail.setOwnerName(shop.getPaymentInformation().getOwner());
-        }
-
-        bankAccountDetail.setPrimaryAccount(true);
-        accountHolderDetails.addBankAccountDetail(bankAccountDetail);
         }
         if (shop.getPaymentInformation() instanceof MiraklAbaBankAccountInformation) {
+            isAccountTypeAba = true;
 
             MiraklAbaBankAccountInformation miraklAbaBankAccountInformation = (MiraklAbaBankAccountInformation) shop.getPaymentInformation();
 
@@ -487,23 +475,25 @@ public class ShopService {
             bankAccountDetail.setAccountNumber(miraklAbaBankAccountInformation.getBankAccountNumber());
             bankAccountDetail.setBankName(miraklAbaBankAccountInformation.getBankName());
             bankAccountDetail.setBankCity(miraklAbaBankAccountInformation.getBankCity());
+        }
 
-            if (shop.getContactInformation() != null) {
+        if (shop.getContactInformation() != null) {
+            StreetDetails streetDetails = StreetDetails.createStreetDetailsFromSingleLine(StreetDetails.extractHouseNumberOrNameFromAdditionalFields(shop.getAdditionalFieldValues()),
+                shop.getContactInformation().getStreet1(),
+                houseNumberPatterns.get(IsoUtil.getIso2CountryCodeFromIso3(shop.getContactInformation().getCountry())));
+            bankAccountDetail.setOwnerStreet(streetDetails.getStreetName());
+            bankAccountDetail.setOwnerHouseNumberOrName(streetDetails.getHouseNumberOrName());
 
-                StreetDetails streetDetails = StreetDetails.createStreetDetailsFromSingleLine(StreetDetails.extractHouseNumberOrNameFromAdditionalFields(shop.getAdditionalFieldValues()),
-                        shop.getContactInformation().getStreet1(),
-                        houseNumberPatterns.get(IsoUtil.getIso2CountryCodeFromIso3(shop.getContactInformation().getCountry())));
-
+            bankAccountDetail.setOwnerPostalCode(shop.getContactInformation().getZipCode());
+            bankAccountDetail.setOwnerCity(shop.getContactInformation().getCity());
+            bankAccountDetail.setOwnerName(shop.getPaymentInformation().getOwner());
+            if (isAccountTypeAba) {
                 bankAccountDetail.setOwnerState(shop.getContactInformation().getState());
                 bankAccountDetail.setOwnerCountryCode(IsoUtil.getIso2CountryCodeFromIso3(shop.getContactInformation().getCountry()));
-                bankAccountDetail.setOwnerStreet(streetDetails.getStreetName());
-                bankAccountDetail.setOwnerCity(shop.getContactInformation().getCity());
-                bankAccountDetail.setOwnerPostalCode(shop.getContactInformation().getZipCode());
-                bankAccountDetail.setOwnerHouseNumberOrName(streetDetails.getHouseNumberOrName());
-                bankAccountDetail.setOwnerName(shop.getPaymentInformation().getOwner());
             }
-            bankAccountDetail.setPrimaryAccount(true);
         }
+        bankAccountDetail.setPrimaryAccount(true);
+        accountHolderDetails.addBankAccountDetail(bankAccountDetail);
 
         return Optional.of(bankAccountDetail);
     }

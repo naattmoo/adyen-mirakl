@@ -137,7 +137,6 @@ public class BankAccountVerificationSteps extends StepDefsHelper {
         List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
         MiraklCreatedShops shops = miraklShopApi.createBusinessShopForUSWithUBOs(miraklMarketplacePlatformOperatorApiClient, cucumberTable, legalEntity);
         this.shop = retrieveCreatedShop(shops);
-        System.out.println(this.shop.toString());
     }
 
     @Then("^a new bankAccountDetail will be created for the existing Account Holder$")
