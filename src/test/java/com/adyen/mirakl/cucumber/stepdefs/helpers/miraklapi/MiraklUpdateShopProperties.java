@@ -22,6 +22,19 @@
 
 package com.adyen.mirakl.cucumber.stepdefs.helpers.miraklapi;
 
+import java.io.File;
+import java.net.URL;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import javax.annotation.Resource;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.assertj.core.api.Assertions;
 import com.adyen.mirakl.service.UboService;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
@@ -43,14 +56,6 @@ import com.mirakl.client.mmp.request.additionalfield.MiraklRequestAdditionalFiel
 import com.mirakl.client.mmp.request.additionalfield.MiraklRequestAdditionalFieldValue.MiraklSimpleRequestAdditionalFieldValue;
 import com.mirakl.client.mmp.request.common.document.MiraklUploadDocument;
 import com.mirakl.client.mmp.request.shop.document.MiraklUploadShopDocumentsRequest;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.assertj.core.api.Assertions;
-
-import javax.annotation.Resource;
-import java.io.File;
-import java.net.URL;
-import java.util.*;
-import java.util.stream.Collectors;
 
 class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperties {
 
@@ -267,8 +272,7 @@ class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperties {
     }
 
     // Mandatory for shop update
-    void populateMiraklShopPremiumSuspendAndPaymentBlockedStatus(MiraklShop miraklShop,
-                                                                 MiraklUpdateShop miraklUpdateShop) {
+    void populateMiraklShopPremiumSuspendAndPaymentBlockedStatus(MiraklShop miraklShop, MiraklUpdateShop miraklUpdateShop) {
 
         // will keep setSuspend false unless returned enum = SUSPEND
         boolean setSuspend;
@@ -371,17 +375,17 @@ class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperties {
         return paymentInformation;
     }
 
-    void populateMiraklAdditionalFields(MiraklUpdateShop miraklUpdateShop, MiraklShop miraklShop,
-                                        ImmutableList<MiraklSimpleRequestAdditionalFieldValue> fieldsToUpdate) {
+    void populateMiraklAdditionalFields(MiraklUpdateShop miraklUpdateShop, MiraklShop miraklShop, ImmutableList<MiraklSimpleRequestAdditionalFieldValue> fieldsToUpdate) {
 
         final List<MiraklAdditionalFieldValue> addFields = new LinkedList<>(miraklShop.getAdditionalFieldValues());
         final ImmutableList.Builder<MiraklRequestAdditionalFieldValue> updatedFields = new ImmutableList.Builder<>();
 
         for (MiraklSimpleRequestAdditionalFieldValue additionalFieldVal : fieldsToUpdate) {
             Optional<MiraklAdditionalFieldValue.MiraklStringAdditionalFieldValue> additionalField = addFields.stream()
-                .filter(x -> additionalFieldVal.getCode().equals(x.getCode()))
-                .filter(MiraklAdditionalFieldValue.MiraklStringAdditionalFieldValue.class::isInstance)
-                .map(MiraklAdditionalFieldValue.MiraklStringAdditionalFieldValue.class::cast).findAny();
+                                                                                                             .filter(x -> additionalFieldVal.getCode().equals(x.getCode()))
+                                                                                                             .filter(MiraklAdditionalFieldValue.MiraklStringAdditionalFieldValue.class::isInstance)
+                                                                                                             .map(MiraklAdditionalFieldValue.MiraklStringAdditionalFieldValue.class::cast)
+                                                                                                             .findAny();
 
             // if fields are present then update them
             // else create them
@@ -399,10 +403,11 @@ class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperties {
         for (MiraklAdditionalFieldValue field : addFields) {
             if (field instanceof MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithMultipleValues) {
                 patchedUpdatedFields.add(new MiraklRequestAdditionalFieldValue.MiraklMultipleRequestAdditionalFieldValue(field.getCode(),
-                    ((MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithMultipleValues) field).getValues()));
+                                                                                                                         ((MiraklAdditionalFieldValue
+                                                                                                                                 .MiraklAbstractAdditionalFieldWithMultipleValues) field)
+                                                                                                                                 .getValues()));
             } else if (field instanceof MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithSingleValue) {
-                patchedUpdatedFields.add(new MiraklSimpleRequestAdditionalFieldValue(field.getCode(),
-                    ((MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithSingleValue) field).getValue()));
+                patchedUpdatedFields.add(new MiraklSimpleRequestAdditionalFieldValue(field.getCode(), ((MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithSingleValue) field).getValue()));
             } else {
                 Assertions.fail("unexpected additional field type {0} ", field.getClass());
             }
@@ -412,19 +417,18 @@ class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperties {
     }
 
     void throwErrorIfShopFailedToUpdate(MiraklUpdatedShops miraklUpdatedShopsResponse) {
-        final List<Set<ErrorBean>> errors = miraklUpdatedShopsResponse.getShopReturns().stream()
-            .map(MiraklUpdatedShopReturn::getShopError)
-            .filter(Objects::nonNull)
-            .map(InputWithErrors::getErrors)
-            .collect(Collectors.toList());
+        final List<Set<ErrorBean>> errors = miraklUpdatedShopsResponse.getShopReturns()
+                                                                      .stream()
+                                                                      .map(MiraklUpdatedShopReturn::getShopError)
+                                                                      .filter(Objects::nonNull)
+                                                                      .map(InputWithErrors::getErrors)
+                                                                      .collect(Collectors.toList());
 
         Assertions.assertThat(errors.size()).withFailMessage("errors on update: " + GSON.toJson(errors)).isZero();
     }
 
     void throwDocumentUploadError(MiraklDocumentsUploadResult uploadResult) {
-        List<Set<ErrorBean>> errors = uploadResult.getDocuments().stream()
-            .map(InputWithErrors::getErrors)
-            .collect(Collectors.toList());
+        List<Set<ErrorBean>> errors = uploadResult.getDocuments().stream().map(InputWithErrors::getErrors).collect(Collectors.toList());
         Assertions.assertThat(errors.size()).withFailMessage("errors on update: " + GSON.toJson(errors)).isZero();
     }
 }

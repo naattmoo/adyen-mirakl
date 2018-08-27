@@ -22,6 +22,14 @@
 
 package com.adyen.mirakl.cucumber.stepdefs.helpers.miraklapi;
 
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import javax.annotation.Resource;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.adyen.mirakl.service.UboService;
 import com.adyen.mirakl.startup.MiraklStartupValidator;
 import com.google.common.collect.ImmutableList;
@@ -35,15 +43,6 @@ import com.mirakl.client.mmp.operator.domain.shop.create.MiraklCreateShopNewUser
 import com.mirakl.client.mmp.operator.domain.shop.create.MiraklCreatedShopReturn;
 import com.mirakl.client.mmp.operator.domain.shop.create.MiraklCreatedShops;
 import com.mirakl.client.mmp.request.additionalfield.MiraklRequestAdditionalFieldValue;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.annotation.Resource;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 
 class MiraklShopProperties extends AbstractMiraklShopSharedProperties {
 
@@ -151,7 +150,7 @@ class MiraklShopProperties extends AbstractMiraklShopSharedProperties {
                     Map<Integer, Map<String, String>> uboKeys = uboService.generateMiraklUboKeys(Integer.valueOf(maxUbos));
                     buildShareHolderMinimumData(builder, i, uboKeys, civility());
                     builder.add(createAdditionalField(uboKeys.get(i).get(UboService.COUNTRY), "NL"));
-                    builder.add(createAdditionalField(uboKeys.get(i).get(UboService.STREET), FAKERNL.address().streetName()+" "+FAKERNL.address().streetAddressNumber()));
+                    builder.add(createAdditionalField(uboKeys.get(i).get(UboService.STREET), FAKERNL.address().streetName() + " " + FAKERNL.address().streetAddressNumber()));
                     builder.add(createAdditionalField(uboKeys.get(i).get(UboService.CITY), FAKERNL.address().city()));
                     builder.add(createAdditionalField(uboKeys.get(i).get(UboService.POSTAL_CODE), FAKERNL.address().zipCode()));
                     builder.add(createAdditionalField(uboKeys.get(i).get(UboService.PHONE_COUNTRY_CODE), "NL"));
@@ -228,12 +227,11 @@ class MiraklShopProperties extends AbstractMiraklShopSharedProperties {
 
     void populateAddFieldsLegalAndHouseNumber(String legalEntity, MiraklCreateShop createShop) {
 
-        createShop.setAdditionalFieldValues(ImmutableList.of(
-            createAdditionalField(MiraklStartupValidator.CustomMiraklFields.ADYEN_INDIVIDUAL_HOUSENUMBER.toString(), FAKER.address().streetAddressNumber()),
-            createAdditionalField(MiraklStartupValidator.CustomMiraklFields.ADYEN_LEGAL_ENTITY_TYPE.toString(), legalEntity),
-            createAdditionalField(MiraklStartupValidator.CustomMiraklFields.ADYEN_INDIVIDUAL_DOB.toString(), dateOfBirth()),
-            createAdditionalField(MiraklStartupValidator.CustomMiraklFields.ADYEN_INDIVIDUAL_IDNUMBER.toString(), "01234567890")
-        ));
+        createShop.setAdditionalFieldValues(ImmutableList.of(createAdditionalField(MiraklStartupValidator.CustomMiraklFields.ADYEN_INDIVIDUAL_HOUSENUMBER.toString(),
+                                                                                   FAKER.address().streetAddressNumber()),
+                                                             createAdditionalField(MiraklStartupValidator.CustomMiraklFields.ADYEN_LEGAL_ENTITY_TYPE.toString(), legalEntity),
+                                                             createAdditionalField(MiraklStartupValidator.CustomMiraklFields.ADYEN_INDIVIDUAL_DOB.toString(), dateOfBirth()),
+                                                             createAdditionalField(MiraklStartupValidator.CustomMiraklFields.ADYEN_INDIVIDUAL_IDNUMBER.toString(), "01234567890")));
     }
 
     void populateUserEmailAndShopName(MiraklCreateShop createShop, List<Map<String, String>> rows) {
@@ -314,10 +312,7 @@ class MiraklShopProperties extends AbstractMiraklShopSharedProperties {
 
 
     void throwErrorIfShopIsNotCreated(MiraklCreatedShops shops) {
-        MiraklCreatedShopReturn miraklCreatedShopReturn = shops.getShopReturns()
-            .stream()
-            .findAny()
-            .orElseThrow(() -> new IllegalStateException("No Shop found"));
+        MiraklCreatedShopReturn miraklCreatedShopReturn = shops.getShopReturns().stream().findAny().orElseThrow(() -> new IllegalStateException("No Shop found"));
 
         if (miraklCreatedShopReturn.getShopCreated() == null) {
             throw new IllegalStateException(miraklCreatedShopReturn.getShopError().getErrors().toString());

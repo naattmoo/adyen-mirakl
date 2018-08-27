@@ -22,6 +22,9 @@
 
 package com.adyen.mirakl.cucumber.stepdefs.helpers.miraklapi;
 
+import java.util.List;
+import java.util.Map;
+import org.springframework.stereotype.Service;
 import com.google.common.collect.ImmutableList;
 import com.mirakl.client.mmp.domain.common.document.MiraklDocumentsUploadResult;
 import com.mirakl.client.mmp.domain.shop.MiraklProfessionalInformation;
@@ -36,10 +39,6 @@ import com.mirakl.client.mmp.operator.domain.shop.update.MiraklUpdatedShops;
 import com.mirakl.client.mmp.operator.request.shop.MiraklUpdateShopsRequest;
 import com.mirakl.client.mmp.request.additionalfield.MiraklRequestAdditionalFieldValue.MiraklSimpleRequestAdditionalFieldValue;
 import com.mirakl.client.mmp.request.shop.document.MiraklUploadShopDocumentsRequest;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.Map;
 
 @Service
 public class MiraklUpdateShopApi extends MiraklUpdateShopProperties {
@@ -70,7 +69,7 @@ public class MiraklUpdateShopApi extends MiraklUpdateShopProperties {
         return updateMiraklRequest(client, miraklUpdateShopBuilder);
     }
 
-    public MiraklShop updateUboData(MiraklShop miraklShop, String shopId, MiraklMarketplacePlatformOperatorApiClient client, List<Map<String, String>> rows){
+    public MiraklShop updateUboData(MiraklShop miraklShop, String shopId, MiraklMarketplacePlatformOperatorApiClient client, List<Map<String, String>> rows) {
         MiraklUpdateShop miraklUpdateShop = new MiraklUpdateShop();
         miraklUpdateShop = populateAllMandatoryFields(miraklShop, shopId, miraklUpdateShop);
 
@@ -82,7 +81,7 @@ public class MiraklUpdateShopApi extends MiraklUpdateShopProperties {
         return updateMiraklRequest(client, miraklUpdateShopBuilder);
     }
 
-    public MiraklShop addSpecificUBOWithData(MiraklShop miraklShop, String shopId, MiraklMarketplacePlatformOperatorApiClient client, List<Map<String, String>> rows){
+    public MiraklShop addSpecificUBOWithData(MiraklShop miraklShop, String shopId, MiraklMarketplacePlatformOperatorApiClient client, List<Map<String, String>> rows) {
         MiraklUpdateShop miraklUpdateShop = new MiraklUpdateShop();
         miraklUpdateShop = populateAllMandatoryFields(miraklShop, shopId, miraklUpdateShop);
 
@@ -94,7 +93,7 @@ public class MiraklUpdateShopApi extends MiraklUpdateShopProperties {
         return updateMiraklRequest(client, miraklUpdateShopBuilder);
     }
 
-    public MiraklShop updateUboDataWithInvalidData(MiraklShop miraklShop, String shopId, MiraklMarketplacePlatformOperatorApiClient client, List<Map<String, String>> rows){
+    public MiraklShop updateUboDataWithInvalidData(MiraklShop miraklShop, String shopId, MiraklMarketplacePlatformOperatorApiClient client, List<Map<String, String>> rows) {
         MiraklUpdateShop miraklUpdateShop = new MiraklUpdateShop();
         miraklUpdateShop = populateAllMandatoryFields(miraklShop, shopId, miraklUpdateShop);
 

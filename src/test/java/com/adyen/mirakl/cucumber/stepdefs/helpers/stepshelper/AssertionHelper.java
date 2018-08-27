@@ -22,6 +22,11 @@
 
 package com.adyen.mirakl.cucumber.stepdefs.helpers.stepshelper;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import org.springframework.stereotype.Service;
 import com.adyen.mirakl.startup.MiraklStartupValidator;
 import com.adyen.model.marketpay.GetAccountHolderResponse;
 import com.google.common.collect.ImmutableList;
@@ -34,9 +39,6 @@ import com.mirakl.client.mmp.domain.shop.bank.MiraklAbaBankAccountInformation;
 import com.mirakl.client.mmp.domain.shop.bank.MiraklIbanBankAccountInformation;
 import com.mirakl.client.mmp.domain.shop.bank.MiraklPaymentInformation;
 import net.minidev.json.JSONArray;
-import org.springframework.stereotype.Service;
-
-import java.util.*;
 
 @Service
 public class AssertionHelper {
@@ -74,9 +76,9 @@ public class AssertionHelper {
                 adyenShopData.add(JsonPath.parse(ubo).read("ShareholderContact.address.country").toString());
                 adyenShopData.add(JsonPath.parse(ubo).read("ShareholderContact.address.postalCode").toString());
                 if (shop.getContactInformation().getCountry().equals("NLD")) {
-                    adyenShopData.add(
-                        JsonPath.parse(ubo).read("ShareholderContact.address.street").toString() + " " +
-                            JsonPath.parse(ubo).read("ShareholderContact.address.houseNumberOrName").toString());
+                    adyenShopData.add(JsonPath.parse(ubo).read("ShareholderContact.address.street").toString() + " " + JsonPath.parse(ubo)
+                                                                                                                               .read("ShareholderContact.address.houseNumberOrName")
+                                                                                                                               .toString());
                 } else {
                     adyenShopData.add(JsonPath.parse(ubo).read("ShareholderContact.address.street").toString());
                     adyenShopData.add(JsonPath.parse(ubo).read("ShareholderContact.address.houseNumberOrName").toString());
@@ -151,17 +153,17 @@ public class AssertionHelper {
         }
         for (String field : shopAdditionalFields) {
             String fieldValue = miraklShop.getAdditionalFieldValues()
-                .stream()
-                .filter(MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithSingleValue.class::isInstance)
-                .map(MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithSingleValue.class::cast)
-                .filter(x -> field.equals(x.getCode()))
-                .map(MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithSingleValue::getValue)
-                .findAny()
-                .orElse("");
+                                          .stream()
+                                          .filter(MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithSingleValue.class::isInstance)
+                                          .map(MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithSingleValue.class::cast)
+                                          .filter(x -> field.equals(x.getCode()))
+                                          .map(MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithSingleValue::getValue)
+                                          .findAny()
+                                          .orElse("");
             if (field.contains("civility")) {
                 miraklShopData.add(CIVILITY_TO_GENDER.get(fieldValue));
             } else {
-                if (!fieldValue.isEmpty()){
+                if (! fieldValue.isEmpty()) {
                     miraklShopData.add(fieldValue);
                 }
             }
@@ -194,13 +196,13 @@ public class AssertionHelper {
         miraklShopData.add(CIVILITY_TO_GENDER.get(miraklShop.getContactInformation().getCivility()));
         miraklShopData.add(email);
         String element = miraklShop.getAdditionalFieldValues()
-            .stream()
-            .filter(MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue.class::isInstance)
-            .map(MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue.class::cast)
-            .filter(x -> MiraklStartupValidator.CustomMiraklFields.ADYEN_LEGAL_ENTITY_TYPE.toString().equals(x.getCode()))
-            .map(MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue::getValue)
-            .findAny()
-            .orElse("");
+                                   .stream()
+                                   .filter(MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue.class::isInstance)
+                                   .map(MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue.class::cast)
+                                   .filter(x -> MiraklStartupValidator.CustomMiraklFields.ADYEN_LEGAL_ENTITY_TYPE.toString().equals(x.getCode()))
+                                   .map(MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue::getValue)
+                                   .findAny()
+                                   .orElse("");
         miraklShopData.add(element);
         miraklShopData.add(miraklShop.getContactInformation().getCity());
         miraklShopData.add(miraklShop.getContactInformation().getZipCode());
