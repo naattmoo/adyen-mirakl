@@ -246,7 +246,8 @@ public class ShopService {
                 houseNumberPatterns.get(IsoUtil.getIso2CountryCodeFromIso3(shop.getContactInformation().getCountry())));
             address.setStreet(streetDetails.getStreetName());
             address.setHouseNumberOrName(streetDetails.getHouseNumberOrName());
-            address.setStateOrProvince(contactInformation.getState());
+            if(shop.getContactInformation().getCountry().equals("USA"))
+                address.setStateOrProvince(contactInformation.getState());
 
             return address;
         }

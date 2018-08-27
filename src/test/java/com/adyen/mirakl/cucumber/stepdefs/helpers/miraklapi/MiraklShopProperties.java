@@ -281,7 +281,7 @@ class MiraklShopProperties extends AbstractMiraklShopSharedProperties {
             address.setLastname(row.get("lastName"));
             address.setStreet1(FAKER.address().streetAddress());
             address.setZipCode(FAKER.address().zipCode());
-            address.setState("AMS");
+            address.setState("Kent");
             createShop.setAddress(address);
         });
     }
@@ -295,7 +295,7 @@ class MiraklShopProperties extends AbstractMiraklShopSharedProperties {
         address.setLastname(FAKERNL.name().lastName());
         address.setStreet1(FAKERNL.address().streetAddress());
         address.setZipCode(FAKERNL.address().zipCode());
-        address.setState("AMS");
+        address.setState(FAKERNL.address().state());
         createShop.setAddress(address);
     }
 
