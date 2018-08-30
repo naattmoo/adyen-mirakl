@@ -74,8 +74,7 @@ public final class MiraklDataExtractionUtil {
      */
     public static DateTime formatCustomDateField(String customDateField, String timeZone) {
         org.joda.time.format.DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ssZ");
-        DateTimeZone datetime = DateTimeZone.forID(timeZone);
-        DateTime date = formatter.parseDateTime(customDateField).withZone(datetime);
+        DateTime date = formatter.parseDateTime(customDateField).withZone(DateTimeZone.forID(timeZone));
         return date;
     }
 }
