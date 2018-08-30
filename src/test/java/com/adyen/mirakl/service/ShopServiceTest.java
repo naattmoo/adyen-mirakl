@@ -209,7 +209,7 @@ public class ShopServiceTest {
         Assertions.assertThat(bankDetails.getIban()).isEqualTo("GB00IBAN");
         Assertions.assertThat(bankDetails.getCurrencyCode()).isEqualTo("EUR");
         Assertions.assertThat(bankDetails.getBankCity()).isEqualTo("bankCity");
-        Assertions.assertThat(individualDetails.getPersonalData().getDateOfBirth()).isEqualTo("1989-03-15");
+        Assertions.assertThat(individualDetails.getPersonalData().getDateOfBirth()).isEqualTo("1989-03-16");
 
         verify(adyenAccountServiceMock).createAccountHolder(USRequest);
 

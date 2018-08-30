@@ -18,7 +18,7 @@ We have a [Wiki](https://github.com/e2y/adyen-mirakl/wiki) for more detailed inf
 ## Development
 This application was generated using JHipster 4.14.0, you can find documentation and help at [http://www.jhipster.tech/documentation-archive/v4.14.0](http://www.jhipster.tech/documentation-archive/v4.14.0).
 
-Please add environment variables for `MIRAKL_SDK_USER`, `MIRAKL_SDK_PASSWORD`, `MIRAKL_ENV_URL`, `MIRAKL_API_OPERATOR_KEY` and `MIRAKL_OPERATOR_EMAIL` e.g.
+Please add environment variables for `MIRAKL_SDK_USER`, `MIRAKL_SDK_PASSWORD`, `MIRAKL_ENV_URL`, `MIRAKL_API_OPERATOR_KEY`, `MIRAKL_OPERATOR_EMAIL` and `MIRAKL_TIMEZONE` e.g.
 update `~/.bashrc` with:
 ```
 export MIRAKL_SDK_USER=<user>
@@ -26,6 +26,7 @@ export MIRAKL_SDK_PASSWORD=<pass>
 export MIRAKL_ENV_URL=<miraklEnvUrl>
 export MIRAKL_API_OPERATOR_KEY=<miraklApiOperatorKey>
 export MIRAKL_OPERATOR_EMAIL=<miraklOperatorEmail>
+export MIRAKL_TIMEZONE=<miraklTimezone>
 ```
 
 Same goes for Adyen: `ADYEN_USER_NAME`, `ADYEN_PASS`, `ADYEN_ENV`, `ADYEN_NOTIFY_URL` AND `ADYEN_LIABLE_ACCOUNT_CODE`. 
