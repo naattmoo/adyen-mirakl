@@ -26,7 +26,7 @@ export MIRAKL_SDK_PASSWORD=<pass>
 export MIRAKL_ENV_URL=<miraklEnvUrl>
 export MIRAKL_API_OPERATOR_KEY=<miraklApiOperatorKey>
 export MIRAKL_OPERATOR_EMAIL=<miraklOperatorEmail>
-export MIRAKL_TIMEZONE=<miraklTimezone>
+export MIRAKL_TIMEZONE=<e.g. Europe/Amsterdam>
 ```
 
 Same goes for Adyen: `ADYEN_USER_NAME`, `ADYEN_PASS`, `ADYEN_ENV`, `ADYEN_NOTIFY_URL` AND `ADYEN_LIABLE_ACCOUNT_CODE`. 
