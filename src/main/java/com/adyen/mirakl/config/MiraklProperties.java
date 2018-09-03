@@ -27,6 +27,7 @@ public abstract class MiraklProperties {
     private String miraklEnvUrl;
     private String miraklApiKey;
     private String miraklOperatorEmail;
+    private String miraklTimeZone;
 
     public String getMiraklEnvUrl() {
         return miraklEnvUrl;
@@ -50,5 +51,13 @@ public abstract class MiraklProperties {
 
     public void setMiraklOperatorEmail(String miraklOperatorEmail) {
         this.miraklOperatorEmail = miraklOperatorEmail;
+    }
+
+    public String getMiraklTimeZone() {
+        return miraklTimeZone;
+    }
+
+    public void setMiraklTimeZone(String miraklTimeZone) {
+        this.miraklTimeZone = miraklTimeZone;
     }
 }

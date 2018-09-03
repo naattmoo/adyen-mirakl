@@ -120,6 +120,7 @@ miraklOperator:
     miraklEnvUrl: ${MIRAKL_ENV_URL}
     miraklApiKey: ${MIRAKL_API_OPERATOR_KEY}
     miraklOperatorEmail: ${MIRAKL_OPERATOR_EMAIL}
+    miraklTimeZone: ${MIRAKL_TIMEZONE}
 miraklFront:
     miraklEnvUrl: ${MIRAKL_ENV_URL}
     miraklApiKey: ${MIRAKL_API_FRONT_KEY}
