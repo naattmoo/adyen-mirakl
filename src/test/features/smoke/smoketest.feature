@@ -16,3 +16,4 @@ Feature: Smoke test
             | amount | currency |
             | 10000  | EUR      |
             | 10000  | GBP      |
+            | 10000  | USD      |

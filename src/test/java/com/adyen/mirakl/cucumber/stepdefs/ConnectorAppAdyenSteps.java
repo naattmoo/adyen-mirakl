@@ -189,7 +189,7 @@ public class ConnectorAppAdyenSteps extends StepDefsHelper {
         paymentRequest.setMerchantAccount(adyenPalMerchantAccount);
         paymentRequest.setReference("top-up-mirakl-auth");
         paymentRequest.setAmountData(amount, currency);
-        paymentRequest.setCardData("5136333333333335", "John Doe", "08", "2018", "737");
+        paymentRequest.setCardData("5136333333333335", "John Doe", "10", "2020", "737");
 
         try {
             this.paymentAmount = paymentRequest.getAmount();
