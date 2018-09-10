@@ -105,6 +105,9 @@ public class UboService {
     @Resource
     private Map<String, Pattern> houseNumberPatterns;
 
+    @Value("${miraklOperator.miraklTimeZone}")
+    private String miraklTimeZone;
+
     /**
      * Extract shareholder contact data in a adyen format from a mirakl shop
      *
@@ -363,7 +366,7 @@ public class UboService {
             final PersonalData personalData = new PersonalData();
 
             if (dateOfBirth != null && ! dateOfBirth.isEmpty()) {
-                DateTime dateTime = MiraklDataExtractionUtil.formatCustomDateField(dateOfBirth);
+                DateTime dateTime = MiraklDataExtractionUtil.formatCustomDateField(dateOfBirth, miraklTimeZone);
                 org.joda.time.format.DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd");
                 personalData.setDateOfBirth(dateTime.toString(formatter));
             }

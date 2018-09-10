@@ -29,11 +29,15 @@ import com.mirakl.client.mmp.domain.common.MiraklAdditionalFieldValue;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.util.Arrays;
 import java.util.List;
 
 public final class MiraklDataExtractionUtil {
+
+    @Value("${miraklOperator.miraklTimeZone}")
+    private String miraklTimeZone;
 
     public MiraklDataExtractionUtil() {
         //empty constructor
@@ -68,9 +72,9 @@ public final class MiraklDataExtractionUtil {
     /**
      * The custom field dates in the API responses are returned in UTC time.
      */
-    public static DateTime formatCustomDateField(String customDateField) {
+    public static DateTime formatCustomDateField(String customDateField, String timeZone) {
         org.joda.time.format.DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ssZ");
-        DateTime date = formatter.parseDateTime(customDateField).withZone(DateTimeZone.UTC);
+        DateTime date = formatter.parseDateTime(customDateField).withZone(DateTimeZone.forID(timeZone));
         return date;
     }
 }

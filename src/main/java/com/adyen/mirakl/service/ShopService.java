@@ -114,6 +114,9 @@ public class ShopService {
     @Value("${payoutService.liableAccountCode}")
     private String liableAccountCode;
 
+    @Value("${miraklOperator.miraklTimeZone}")
+    private String miraklTimeZone;
+
     public void processUpdatedShops() {
         final ZonedDateTime beforeProcessing = ZonedDateTime.now();
 
@@ -319,7 +322,7 @@ public class ShopService {
             .findAny()
             .ifPresent(value -> {
                 PersonalData personalData = new PersonalData();
-                DateTime dateTime = MiraklDataExtractionUtil.formatCustomDateField(value.getValue());
+                DateTime dateTime = MiraklDataExtractionUtil.formatCustomDateField(value.getValue(), miraklTimeZone);
                 org.joda.time.format.DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd");
                 personalData.setDateOfBirth(dateTime.toString(formatter));
                 individualDetails.setPersonalData(personalData);
