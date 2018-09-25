@@ -384,6 +384,7 @@ public class StepDefsHelper {
         List<String> htmlPath = atomicReference.get();
         for (String path : htmlPath) {
             Document parsedHtmlBody = getHtmlBodyFromHtmlPath(path);
+            Assertions.assertThat(parsedHtmlBody).isNotNull();
             Assertions.assertThat(parsedHtmlBody.body().text()).contains(shop.getId());
             Assertions.assertThat(parsedHtmlBody.title()).isEqualTo(title);
         }
@@ -391,8 +392,11 @@ public class StepDefsHelper {
 
     protected Document getHtmlBodyFromHtmlPath(String htmlPath) {
         ResponseBody responseHtmlBody = RestAssured.get(mailTrapConfiguration.mailTrapHtmlBodyEndPoint(htmlPath)).thenReturn().body();
-        final String responseHtml = responseHtmlBody.asString();
-        return Jsoup.parse(responseHtml);
+        if (responseHtmlBody != null) {
+            final String responseHtml = responseHtmlBody.asString();
+            return Jsoup.parse(responseHtml);
+        }
+        return null;
     }
 
     protected ImmutableList<DocumentContext> assertOnMultipleVerificationNotifications(String eventType, String verificationType, String verificationStatus, MiraklShop shop) throws Exception {
