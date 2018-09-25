@@ -31,6 +31,7 @@ import org.springframework.context.annotation.Configuration;
 public class MailTrapConfiguration {
 
     public String baseMailTrapUrl;
+    public String mailTrapInboxApi;
     public String mailTrapInboxId;
     public String apiToken;
 
@@ -40,6 +41,14 @@ public class MailTrapConfiguration {
 
     public void setBaseMailTrapUrl(String baseMailTrapUrl) {
         this.baseMailTrapUrl = baseMailTrapUrl;
+    }
+
+    public String getMailTrapInboxApi() {
+        return mailTrapInboxApi;
+    }
+
+    public void setMailTrapInboxApi(String mailTrapInboxApi) {
+        this.mailTrapInboxApi = mailTrapInboxApi;
     }
 
     public String getMailTrapInboxId() {
@@ -59,7 +68,12 @@ public class MailTrapConfiguration {
     }
 
     @Bean
-    public String mailTrapEndPoint(){
-        return getBaseMailTrapUrl() + getMailTrapInboxId() + "/messages?api_token=" + getApiToken();
+    public String mailTrapEndPoint() {
+        return getBaseMailTrapUrl() + getMailTrapInboxApi() + getMailTrapInboxId() + "/messages?api_token=" + getApiToken();
     }
+
+    public String mailTrapHtmlBodyEndPoint(String htmlBodyEndpoint) {
+        return getBaseMailTrapUrl() + htmlBodyEndpoint + "?api_token=" + getApiToken();
+    }
+
 }
