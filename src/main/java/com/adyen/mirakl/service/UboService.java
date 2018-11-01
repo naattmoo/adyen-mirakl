@@ -190,7 +190,7 @@ public class UboService {
             if (documentTypeEnum != null) {
                 addUboDocumentDTO(builder, miraklShopDocument, uboNumber, documentTypeEnum);
             } else {
-                log.info("DocumentType [{}] is not supported for ubo: [{}], shop: [{}], skipping uboDocument", documentTypeEnum.values().iterator().next(), uboNumber, miraklShopDocument.getShopId());
+                log.info("DocumentType is not supported for ubo: [{}], shop: [{}], skipping uboDocument", uboNumber, miraklShopDocument.getShopId());
             }
         }
         if (miraklShopDocument.getTypeCode().equalsIgnoreCase(photoIdRear)) {
