@@ -326,18 +326,20 @@ public class StepDefsHelper {
 
             List<Map<String, Object>> emailLists = responseBody.jsonPath().get();
 
-            String htmlBody = null;
+            String htmlPath = null;
             Assertions.assertThat(emailLists.size()).isGreaterThan(0);
             for (Map list : emailLists) {
                 if (list.get("to_email").equals(email)) {
-                    htmlBody = list.get("html_body").toString();
+                    htmlPath = list.get("html_path").toString();
                     Assertions.assertThat(email).isEqualTo(list.get("to_email"));
                     break;
                 }
                 Assertions.fail("Email was not found in mailtrap. Email: [%s]", email);
             }
-            Assertions.assertThat(htmlBody).isNotNull();
-            Document parsedBody = Jsoup.parse(htmlBody);
+
+            Assertions.assertThat(htmlPath).isNotNull();
+            Document parsedBody = getHtmlBodyFromHtmlPath(htmlPath);
+            Assertions.assertThat(parsedBody).isNotNull();
             Assertions.assertThat(parsedBody.body().text())
                       .contains(shop.getId())
                       .contains(shop.getContactInformation().getCivility())
@@ -353,6 +355,8 @@ public class StepDefsHelper {
 
         List<String> uboEmails = accountHolder.getAccountHolderDetails().getBusinessDetails().getShareholders().stream().map(ShareholderContact::getEmail).collect(Collectors.toList());
 
+        AtomicReference<List<String>> atomicReference = new AtomicReference<>();
+
         await().with().pollInterval(fibonacci()).untilAsserted(() -> {
             ResponseBody responseBody = RestAssured.get(mailTrapConfiguration.mailTrapEndPoint()).thenReturn().body();
             final String response = responseBody.asString();
@@ -367,19 +371,32 @@ public class StepDefsHelper {
             boolean foundEmail = emails.stream().anyMatch(map -> map.get("to_email").equals(uboEmails.iterator().next()));
             Assertions.assertThat(foundEmail).isTrue();
 
-            List<String> htmlBody = new LinkedList<>();
+            List<String> htmlPath = new LinkedList<>();
             for (String uboEmail : uboEmails) {
-                emails.stream().filter(map -> map.get("to_email").equals(uboEmail)).findAny().ifPresent(map -> htmlBody.add(map.get("html_body").toString()));
+                emails.stream().filter(map -> map.get("to_email").equals(uboEmail)).findAny().ifPresent(map -> htmlPath.add(map.get("html_path").toString()));
             }
-            Assertions.assertThat(htmlBody).isNotEmpty();
-            Assertions.assertThat(htmlBody).hasSize(uboEmails.size());
 
-            for (String body : htmlBody) {
-                Document parsedBody = Jsoup.parse(body);
-                Assertions.assertThat(parsedBody.body().text()).contains(shop.getId());
-                Assertions.assertThat(parsedBody.title()).isEqualTo(title);
-            }
+            Assertions.assertThat(htmlPath).isNotEmpty();
+            Assertions.assertThat(htmlPath).hasSize(uboEmails.size());
+            atomicReference.set(htmlPath);
         });
+
+        List<String> htmlPath = atomicReference.get();
+        for (String path : htmlPath) {
+            Document parsedHtmlBody = getHtmlBodyFromHtmlPath(path);
+            Assertions.assertThat(parsedHtmlBody).isNotNull();
+            Assertions.assertThat(parsedHtmlBody.body().text()).contains(shop.getId());
+            Assertions.assertThat(parsedHtmlBody.title()).isEqualTo(title);
+        }
+    }
+
+    protected Document getHtmlBodyFromHtmlPath(String htmlPath) {
+        ResponseBody responseHtmlBody = RestAssured.get(mailTrapConfiguration.mailTrapHtmlBodyEndPoint(htmlPath)).thenReturn().body();
+        if (responseHtmlBody != null) {
+            final String responseHtml = responseHtmlBody.asString();
+            return Jsoup.parse(responseHtml);
+        }
+        return null;
     }
 
     protected ImmutableList<DocumentContext> assertOnMultipleVerificationNotifications(String eventType, String verificationType, String verificationStatus, MiraklShop shop) throws Exception {

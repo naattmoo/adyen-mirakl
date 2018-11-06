@@ -130,7 +130,7 @@ adyenConfig:
     password: ${ADYEN_PASS}
     environment: ${ADYEN_ENV}
     appName: adyen-mirakl-connector
-    appVersion: 1.0.2
+    appVersion: 1.0.3
 
 adyenNotificationsConfig:
     notificationConfigurationDetails:
@@ -180,7 +180,8 @@ shopService:
 mail.max.retries: 10
 
 mailtrapConfig:
-    baseMailTrapUrl: https://mailtrap.io/api/v1/inboxes/
+    baseMailTrapUrl: https://mailtrap.io
+    mailTrapInboxApi: /api/v1/inboxes/
     mailTrapInboxId: ${MAILTRAP_INBOX_ID}
     apiToken: ${MAILTRAP_API_TOKEN}
 

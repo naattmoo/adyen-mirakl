@@ -1,0 +1,838 @@
+{
+  "additional_fields": [
+    {
+      "accepted_values": [
+        "Individual",
+        "Business"
+      ],
+      "code": "adyen-legal-entity-type",
+      "entity": "SHOP",
+      "label": "Legal Entity Type",
+      "required": true,
+      "shop_permission": "READ_ONLY",
+      "type": "LIST"
+    },
+    {
+      "code": "adyen-individual-dob",
+      "entity": "SHOP",
+      "label": "Individual - Date of Birth",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "DATE"
+    },
+    {
+      "accepted_values": [
+        "DE",
+        "ES",
+        "FR",
+        "GB",
+        "IT",
+        "NL",
+        "US"
+      ],
+      "code": "adyen-individual-nationality",
+      "entity": "SHOP",
+      "label": "Individual - Nationality",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "LIST"
+    },
+    {
+      "code": "adyen-individual-housenumber",
+      "entity": "SHOP",
+      "label": "Individual - House Number",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "STRING"
+    },
+    {
+      "accepted_values": [
+        "PASSPORT",
+        "ID_CARD",
+        "DRIVING_LICENCE"
+      ],
+      "code": "adyen-individual-photoidtype",
+      "entity": "SHOP",
+      "label": "Individual - Photo ID Type",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "LIST"
+    },
+    {
+      "code": "adyen-individual-idnumber",
+      "entity": "SHOP",
+      "label": "Individual - ID Number",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "STRING"
+    },
+    {
+      "code": "adyen-business-registeredname",
+      "entity": "SHOP",
+      "label": "Business - Registered Name",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "STRING"
+    },
+    {
+      "code": "adyen-business-housenumber",
+      "entity": "SHOP",
+      "label": "Business - Building Number or Name",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "STRING"
+    },
+    {
+      "accepted_values": [
+        "Landline",
+        "Mobile",
+        "SIP",
+        "Fax"
+      ],
+      "code": "adyen-business-phonetype",
+      "entity": "SHOP",
+      "label": "Business - Phone Type",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "LIST"
+    },
+    {
+      "accepted_values": [
+        "DE",
+        "ES",
+        "FR",
+        "GB",
+        "IT",
+        "NL",
+        "US"
+      ],
+      "code": "adyen-business-phonecountry",
+      "entity": "SHOP",
+      "label": "Business - Phone Country",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "LIST"
+    },
+    {
+      "accepted_values": [
+        "Mr",
+        "Mrs",
+        "Miss"
+      ],
+      "code": "adyen-ubo1-civility",
+      "entity": "SHOP",
+      "label": "UBO 1 - Civility",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "LIST"
+    },
+    {
+      "code": "adyen-ubo1-firstname",
+      "entity": "SHOP",
+      "label": "UBO 1 - First Name",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "STRING"
+    },
+    {
+      "code": "adyen-ubo1-lastname",
+      "entity": "SHOP",
+      "label": "UBO 1 - Last Name",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "STRING"
+    },
+    {
+      "code": "adyen-ubo1-email",
+      "entity": "SHOP",
+      "label": "UBO 1 - Email",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "STRING"
+    },
+    {
+      "code": "adyen-ubo1-dob",
+      "entity": "SHOP",
+      "label": "UBO 1 - Date of Birth",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "DATE"
+    },
+    {
+      "accepted_values": [
+        "DE",
+        "ES",
+        "FR",
+        "GB",
+        "IT",
+        "NL",
+        "US"
+      ],
+      "code": "adyen-ubo1-nationality",
+      "entity": "SHOP",
+      "label": "UBO 1 - Nationality",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "LIST"
+    },
+    {
+      "code": "adyen-ubo1-idnumber",
+      "entity": "SHOP",
+      "label": "UBO 1 - ID Number",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "STRING"
+    },
+    {
+      "accepted_values": [
+        "PASSPORT",
+        "DRIVING_LICENCE",
+        "ID_CARD"
+      ],
+      "code": "adyen-ubo1-photoidtype",
+      "entity": "SHOP",
+      "label": "UBO 1 - Photo ID Type",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "LIST"
+    },
+    {
+      "code": "adyen-ubo1-housenumber",
+      "entity": "SHOP",
+      "label": "UBO 1 - House Name or Number",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "STRING"
+    },
+    {
+      "code": "adyen-ubo1-streetname",
+      "entity": "SHOP",
+      "label": "UBO 1 - Street Name",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "STRING"
+    },
+    {
+      "code": "adyen-ubo1-city",
+      "entity": "SHOP",
+      "label": "UBO 1 - City",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "STRING"
+    },
+    {
+      "code": "adyen-ubo1-zip",
+      "entity": "SHOP",
+      "label": "UBO 1 - Zip",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "STRING"
+    },
+    {
+      "accepted_values": [
+        "DE",
+        "ES",
+        "FR",
+        "GB",
+        "IT",
+        "NL",
+        "US"
+      ],
+      "code": "adyen-ubo1-country",
+      "entity": "SHOP",
+      "label": "UBO 1 - Country",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "LIST"
+    },
+    {
+      "accepted_values": [
+        "Landline",
+        "Mobile",
+        "SIP",
+        "Fax"
+      ],
+      "code": "adyen-ubo1-phonetype",
+      "entity": "SHOP",
+      "label": "UBO 1 - Phone Type",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "LIST"
+    },
+    {
+      "accepted_values": [
+        "DE",
+        "ES",
+        "FR",
+        "GB",
+        "IT",
+        "NL",
+        "US"
+      ],
+      "code": "adyen-ubo1-phonecountry",
+      "entity": "SHOP",
+      "label": "UBO 1 - Phone Number Country",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "LIST"
+    },
+    {
+      "code": "adyen-ubo1-phonenumber",
+      "entity": "SHOP",
+      "label": "UBO 1 - Home Country Contact Number",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "STRING"
+    },
+    {
+      "accepted_values": [
+        "Mr",
+        "Mrs",
+        "Miss"
+      ],
+      "code": "adyen-ubo2-civility",
+      "entity": "SHOP",
+      "label": "UBO 2 - Title",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "LIST"
+    },
+    {
+      "code": "adyen-ubo2-firstname",
+      "entity": "SHOP",
+      "label": "UBO 2 - First Name",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "STRING"
+    },
+    {
+      "code": "adyen-ubo2-lastname",
+      "entity": "SHOP",
+      "label": "UBO 2 - Last Name",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "STRING"
+    },
+    {
+      "code": "adyen-ubo2-email",
+      "entity": "SHOP",
+      "label": "UBO 2 - Email",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "STRING"
+    },
+    {
+      "code": "adyen-ubo2-dob",
+      "entity": "SHOP",
+      "label": "UBO 2 - Date of Birth",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "DATE"
+    },
+    {
+      "accepted_values": [
+        "DE",
+        "ES",
+        "FR",
+        "GB",
+        "IT",
+        "NL",
+        "US"
+      ],
+      "code": "adyen-ubo2-nationality",
+      "entity": "SHOP",
+      "label": "UBO 2 - Nationality",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "LIST"
+    },
+    {
+      "code": "adyen-ubo2-idnumber",
+      "entity": "SHOP",
+      "label": "UBO 2 - ID Number",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "STRING"
+    },
+    {
+      "accepted_values": [
+        "PASSPORT",
+        "ID_CARD",
+        "DRIVING_LICENCE"
+      ],
+      "code": "adyen-ubo2-photoidtype",
+      "entity": "SHOP",
+      "label": "UBO 2 - Photo ID Type",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "LIST"
+    },
+    {
+      "code": "adyen-ubo2-housenumber",
+      "entity": "SHOP",
+      "label": "UBO 2 - House Name or Number",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "STRING"
+    },
+    {
+      "code": "adyen-ubo2-streetname",
+      "entity": "SHOP",
+      "label": "UBO 2 - Street Name",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "STRING"
+    },
+    {
+      "code": "adyen-ubo2-city",
+      "entity": "SHOP",
+      "label": "UBO 2 - City",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "STRING"
+    },
+    {
+      "code": "adyen-ubo2-zip",
+      "entity": "SHOP",
+      "label": "UBO 2 - Zip",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "STRING"
+    },
+    {
+      "accepted_values": [
+        "DE",
+        "ES",
+        "FR",
+        "GB",
+        "IT",
+        "NL",
+        "US"
+      ],
+      "code": "adyen-ubo2-country",
+      "entity": "SHOP",
+      "label": "UBO 2 - Country",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "LIST"
+    },
+    {
+      "accepted_values": [
+        "Landline",
+        "Mobile",
+        "SIP",
+        "Fax"
+      ],
+      "code": "adyen-ubo2-phonetype",
+      "entity": "SHOP",
+      "label": "UBO 2 - Phone Type",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "LIST"
+    },
+    {
+      "accepted_values": [
+        "DE",
+        "ES",
+        "FR",
+        "GB",
+        "IT",
+        "NL",
+        "US"
+      ],
+      "code": "adyen-ubo2-phonecountry",
+      "entity": "SHOP",
+      "label": "UBO 2 - Phone Country",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "LIST"
+    },
+    {
+      "code": "adyen-ubo2-phonenumber",
+      "entity": "SHOP",
+      "label": "UBO 2 - Phone Number",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "STRING"
+    },
+    {
+      "accepted_values": [
+        "Mr",
+        "Mrs",
+        "Miss"
+      ],
+      "code": "adyen-ubo3-civility",
+      "entity": "SHOP",
+      "label": "UBO 3 - Title",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "LIST"
+    },
+    {
+      "code": "adyen-ubo3-firstname",
+      "entity": "SHOP",
+      "label": "UBO 3 - First Name",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "STRING"
+    },
+    {
+      "code": "adyen-ubo3-lastname",
+      "entity": "SHOP",
+      "label": "UBO 3 - Last Name",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "STRING"
+    },
+    {
+      "code": "adyen-ubo3-email",
+      "entity": "SHOP",
+      "label": "UBO 3 - Email",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "STRING"
+    },
+    {
+      "code": "adyen-ubo3-dob",
+      "entity": "SHOP",
+      "label": "UBO 3 - Date of Birth",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "DATE"
+    },
+    {
+      "accepted_values": [
+        "DE",
+        "ES",
+        "FR",
+        "GB",
+        "IT",
+        "NL",
+        "US"
+      ],
+      "code": "adyen-ubo3-nationality",
+      "entity": "SHOP",
+      "label": "UBO 3 - Nationality",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "LIST"
+    },
+    {
+      "code": "adyen-ubo3-idnumber",
+      "entity": "SHOP",
+      "label": "UBO 3 - ID Number",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "STRING"
+    },
+    {
+      "accepted_values": [
+        "PASSPORT",
+        "ID_CARD",
+        "DRIVING_LICENCE"
+      ],
+      "code": "adyen-ubo3-photoidtype",
+      "entity": "SHOP",
+      "label": "UBO 3 - Photo ID Type",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "LIST"
+    },
+    {
+      "code": "adyen-ubo3-housenumber",
+      "entity": "SHOP",
+      "label": "UBO 3 - House Name or Number",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "STRING"
+    },
+    {
+      "code": "adyen-ubo3-streetname",
+      "entity": "SHOP",
+      "label": "UBO 3 - Street Name",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "STRING"
+    },
+    {
+      "code": "adyen-ubo3-city",
+      "entity": "SHOP",
+      "label": "UBO 3 - City",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "STRING"
+    },
+    {
+      "code": "adyen-ubo3-zip",
+      "entity": "SHOP",
+      "label": "UBO 3 - Zip",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "STRING"
+    },
+    {
+      "accepted_values": [
+        "DE",
+        "ES",
+        "FR",
+        "GB",
+        "IT",
+        "NL",
+        "US"
+      ],
+      "code": "adyen-ubo3-country",
+      "entity": "SHOP",
+      "label": "UBO 3 - Country",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "LIST"
+    },
+    {
+      "accepted_values": [
+        "Landline",
+        "Mobile",
+        "SIP",
+        "Fax"
+      ],
+      "code": "adyen-ubo3-phonetype",
+      "entity": "SHOP",
+      "label": "UBO 3 - Phone Type",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "LIST"
+    },
+    {
+      "accepted_values": [
+        "DE",
+        "ES",
+        "FR",
+        "GB",
+        "IT",
+        "NL",
+        "US"
+      ],
+      "code": "adyen-ubo3-phonecountry",
+      "entity": "SHOP",
+      "label": "UBO 3 - Phone Country",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "LIST"
+    },
+    {
+      "code": "adyen-ubo3-phonenumber",
+      "entity": "SHOP",
+      "label": "UBO 3 - Phone Number",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "STRING"
+    },
+    {
+      "accepted_values": [
+        "Mr",
+        "Mrs",
+        "Miss"
+      ],
+      "code": "adyen-ubo4-civility",
+      "entity": "SHOP",
+      "label": "UBO 4 - Title",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "LIST"
+    },
+    {
+      "code": "adyen-ubo4-firstname",
+      "entity": "SHOP",
+      "label": "UBO 4 - First Name",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "STRING"
+    },
+    {
+      "code": "adyen-ubo4-lastname",
+      "entity": "SHOP",
+      "label": "UBO 4 - Last Name",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "STRING"
+    },
+    {
+      "code": "adyen-ubo4-email",
+      "entity": "SHOP",
+      "label": "UBO 4 - Email",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "STRING"
+    },
+    {
+      "code": "adyen-ubo4-dob",
+      "entity": "SHOP",
+      "label": "UBO 4 - Date of Birth",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "DATE"
+    },
+    {
+      "accepted_values": [
+        "DE",
+        "ES",
+        "FR",
+        "GB",
+        "IT",
+        "NL",
+        "US"
+      ],
+      "code": "adyen-ubo4-nationality",
+      "entity": "SHOP",
+      "label": "UBO 4 - Nationality",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "LIST"
+    },
+    {
+      "code": "adyen-ubo4-idnumber",
+      "entity": "SHOP",
+      "label": "UBO 4 - ID Number",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "STRING"
+    },
+    {
+      "accepted_values": [
+        "PASSPORT",
+        "ID_CARD",
+        "DRIVING_LICENCE"
+      ],
+      "code": "adyen-ubo4-photoidtype",
+      "entity": "SHOP",
+      "label": "UBO 4 - Photo ID Type",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "LIST"
+    },
+    {
+      "code": "adyen-ubo4-housenumber",
+      "entity": "SHOP",
+      "label": "UBO 4 - House Name or Number",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "STRING"
+    },
+    {
+      "code": "adyen-ubo4-streetname",
+      "entity": "SHOP",
+      "label": "UBO 4 - Street Name",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "STRING"
+    },
+    {
+      "code": "adyen-ubo4-city",
+      "entity": "SHOP",
+      "label": "UBO 4 - City",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "STRING"
+    },
+    {
+      "code": "adyen-ubo4-zip",
+      "entity": "SHOP",
+      "label": "UBO 4 - Zip",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "STRING"
+    },
+    {
+      "accepted_values": [
+        "DE",
+        "ES",
+        "FR",
+        "GB",
+        "IT",
+        "NL",
+        "US"
+      ],
+      "code": "adyen-ubo4-country",
+      "entity": "SHOP",
+      "label": "UBO 4 - Country",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "LIST"
+    },
+    {
+      "accepted_values": [
+        "Landline",
+        "Mobile",
+        "SIP",
+        "Fax"
+      ],
+      "code": "adyen-ubo4-phonetype",
+      "entity": "SHOP",
+      "label": "UBO 4 - Phone Type",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "LIST"
+    },
+    {
+      "accepted_values": [
+        "DE",
+        "ES",
+        "FR",
+        "GB",
+        "IT",
+        "NL",
+        "US"
+      ],
+      "code": "adyen-ubo4-phonecountry",
+      "entity": "SHOP",
+      "label": "UBO 4 - Phone Country",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "LIST"
+    },
+    {
+      "code": "adyen-ubo4-phonenumber",
+      "entity": "SHOP",
+      "label": "UBO 4 - Phone Number",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "STRING"
+    },
+    {
+      "code": "adyen-ubo1-stateorprovince",
+      "entity": "SHOP",
+      "label": "UBO1-State Or Province",
+      "regex": "([a-zA-Z]){0,3}",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "REGEX"
+    },
+    {
+      "code": "adyen-ubo2-stateorprovince",
+      "entity": "SHOP",
+      "label": "UBO2-State Or Province",
+      "regex": "([a-zA-Z]){0,3}",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "REGEX"
+    },
+    {
+      "code": "adyen-ubo3-stateorprovince",
+      "entity": "SHOP",
+      "label": "UBO3-State Or Province",
+      "regex": "([a-zA-Z]){0,3}",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "REGEX"
+    },
+    {
+      "code": "adyen-ubo4-stateorprovince",
+      "entity": "SHOP",
+      "label": "UBO4-State Or Province",
+      "regex": "([a-zA-Z]){0,3}",
+      "required": false,
+      "shop_permission": "READ_WRITE",
+      "type": "REGEX"
+    }
+  ],
+  "total_count": 78
+}
