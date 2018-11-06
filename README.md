@@ -10,13 +10,18 @@ The Adyen Mirakl Connector integrates a Mirakl Marketplace Platform Instance wit
 * The Connector manages the Payout of Sellers through MarketPay when Mirakl Posts the Payout Voucher to the Connector.
 
 
-
 ## Documentation
 We have a [Wiki](https://github.com/e2y/adyen-mirakl/wiki) for more detailed information.
 
 
-## Development
-This application was generated using JHipster 4.14.0, you can find documentation and help at [http://www.jhipster.tech/documentation-archive/v4.14.0](http://www.jhipster.tech/documentation-archive/v4.14.0).
+## Installation
+
+### Download the connector
+
+You can clone this repository or download a released version from here:
+https://github.com/Adyen/adyen-mirakl/releases
+
+### Configure your credentials and environment settings
 
 Please add environment variables for `MIRAKL_SDK_USER`, `MIRAKL_SDK_PASSWORD`, `MIRAKL_ENV_URL`, `MIRAKL_API_OPERATOR_KEY`, `MIRAKL_OPERATOR_EMAIL` and `MIRAKL_TIMEZONE` e.g.
 update `~/.bashrc` with:
@@ -44,7 +49,7 @@ export NOTIFY_USERNAME=<notifyUsername>
 export NOTIFY_PASSWORD=<notifyPassword>
 ```
 
-We use heroku mailtrap for development, please add the user and password in application.yml
+And settings for mail server (SMTP)
 ```
 export MAIL_HOST=<host>
 export MAIL_PORT=<port>
@@ -52,7 +57,25 @@ export MAIL_USER=<user>
 export MAIL_PASS=<pass>
 ```
 
-(Optional) For running integration tests:
+
+### Setup database connection
+
+This is optional when in development.
+
+It requires that you are running a database server eg. MySQL.
+By default the connector will attempt to connect to localhost MySql server and use database name called adyenmiraklconnector with root user
+
+You can set-up a database connection by exporting a jdbc query string e.g.:
+SPRING_DATASOURCE_URL=jdbc:mysql://adyenmiraklconnector-mysql:3306/adyenmiraklconnector?useUnicode=true&characterEncoding=utf8&useSSL=false
+or modifying the yml configuration file: https://github.com/Adyen/adyen-mirakl/blob/1.0.3/src/main/resources/config/application-prod.yml#L28
+
+
+
+## Run in Development
+
+This application was generated using JHipster 4.14.0, you can find documentation and help at [http://www.jhipster.tech/documentation-archive/v4.14.0](http://www.jhipster.tech/documentation-archive/v4.14.0).
+
+For running integration tests you will need to configure:
 ````
 export MIRAKL_API_FRONT_KEY=<miraklApiFrontKey>
 export ADYEN_PAL_USERNAME=<ws@company.merchantaccount>
@@ -73,7 +96,8 @@ For further instructions on how to develop with JHipster, have a look at [Using 
 
 
 
-## Building for production
+## Run in production
+
 
 To optimize the AdyenMiraklConnector application for production, run:
 
