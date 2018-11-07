@@ -118,6 +118,19 @@ To launch your application's tests, run:
 
 For more information, refer to the [Running tests page][].
 
+## Logging
+
+You can read more about default logging here: https://www.jhipster.tech/monitoring/
+
+You can configure a log file in application yml configuration file. The one for dev environment is located here:
+https://github.com/Adyen/adyen-mirakl/blob/1.0.3/src/main/resources/config/application-dev.yml#L16
+
+The yml format would be like the following:
+
+    logging:
+      file: “FILE_LOCATION_HERE”
+      level: ..
+
 ## Heroku 
 The connector can be deployed to Heroku for testing purposes. We only allow deployment to Heroku to connect to our test platform.
 

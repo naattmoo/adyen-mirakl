@@ -18,6 +18,7 @@ logging:
         ROOT: INFO
         com.adyen.mirakl: INFO
         io.github.jhipster: INFO
+#    file: "FILE_LOCATION_HERE.log"
 
 spring:
     devtools:
