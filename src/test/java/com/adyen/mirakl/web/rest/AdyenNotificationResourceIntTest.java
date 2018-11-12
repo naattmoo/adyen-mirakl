@@ -49,6 +49,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -100,7 +101,9 @@ public class AdyenNotificationResourceIntTest {
         // Create the AdyenNotification - use test:test/dGVzdDp0ZXN0 as credentials
         restAdyenNotificationMockMvc.perform(post("/api/adyen-notifications").header("Authorization", "Basic dGVzdDp0ZXN0")
                                                                              .contentType(TestUtil.APPLICATION_JSON_UTF8)
-                                                                             .content(TestUtil.convertObjectToJsonBytes(adyenRequestJson))).andExpect(status().isCreated());
+                                                                             .content(TestUtil.convertObjectToJsonBytes(adyenRequestJson)))
+                                    .andExpect(status().isCreated())
+                                    .andExpect(content().string("{\"notificationResponse\":\"[accepted]\"}"));
 
         // Validate the AdyenNotification in the database
         List<AdyenNotification> adyenNotificationList = adyenNotificationRepository.findAll();
