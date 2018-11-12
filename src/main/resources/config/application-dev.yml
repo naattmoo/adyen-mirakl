@@ -18,7 +18,7 @@ logging:
         ROOT: DEBUG
         com.adyen.mirakl: DEBUG
         io.github.jhipster: DEBUG
-#    file: "FILE_LOCATION_HERE.log"
+    file: "adyen-dev.log"
 
 spring:
     profiles:
