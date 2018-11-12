@@ -22,10 +22,8 @@
 
 package com.adyen.mirakl.web.rest;
 
-import com.adyen.mirakl.domain.AdyenNotification;
-import com.adyen.mirakl.events.AdyenNotifcationEvent;
-import com.adyen.mirakl.repository.AdyenNotificationRepository;
-import com.adyen.mirakl.web.rest.util.HeaderUtil;
+import java.net.URI;
+import java.net.URISyntaxException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
@@ -34,9 +32,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.net.URI;
-import java.net.URISyntaxException;
+import com.adyen.mirakl.domain.AdyenNotification;
+import com.adyen.mirakl.events.AdyenNotifcationEvent;
+import com.adyen.mirakl.repository.AdyenNotificationRepository;
+import com.adyen.mirakl.web.rest.util.HeaderUtil;
 
 /**
  * REST controller for managing AdyenNotification.
@@ -66,14 +65,15 @@ public class AdyenNotificationResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/adyen-notifications")
-    public ResponseEntity<AdyenNotification> createAdyenNotification(@RequestBody String adyenNotification) throws URISyntaxException {
+    public ResponseEntity<AdyenNotificationResponse> createAdyenNotification(@RequestBody String adyenNotification) throws URISyntaxException {
         final AdyenNotification entity = new AdyenNotification();
         entity.setRawAdyenNotification(adyenNotification);
         AdyenNotification result = adyenNotificationRepository.save(entity);
         publisher.publishEvent(new AdyenNotifcationEvent(result.getId()));
+
         return ResponseEntity.created(new URI("/api/adyen-notifications/" + result.getId()))
-            .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
-            .body(result);
+                             .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
+                             .body(new AdyenNotificationResponse());
     }
 
 }
