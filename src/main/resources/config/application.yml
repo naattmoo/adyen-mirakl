@@ -128,6 +128,7 @@ miraklOperator:
     miraklEnvUrl: ${MIRAKL_ENV_URL}
     miraklApiKey: ${MIRAKL_API_OPERATOR_KEY}
     miraklOperatorEmail: ${MIRAKL_OPERATOR_EMAIL}
+    miraklTimeZone: ${MIRAKL_TIMEZONE}
 
 adyenConfig:
     userName: ${ADYEN_USER_NAME}

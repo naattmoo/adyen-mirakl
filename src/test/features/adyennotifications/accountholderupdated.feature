@@ -24,3 +24,24 @@ Feature: Account Holder Updated notification upon Mirakl shop changes
             | Smith    |
         And the connector processes the data and pushes to Adyen
         Then a notification of ACCOUNT_HOLDER_UPDATED will not be sent
+
+    @PW-513
+    Scenario: ACCOUNT_HOLDER_VERIFICATION notification including a new BankAccountDetail is sent by Adyen upon providing Bank Account Details and editing Account Number.
+        Given a shop has been created in Mirakl for a Business with US Bank Information
+            | city   | bank name | bankAccountNumber    | routingNumber |bankOwnerName | lastName | maxUbos | currency  | street                | state | zip   |
+            | PASSED | testBank  | 123456789            | 121000358     |TestData      | TestData | 4       | USD       | 420 Montgomery Street |   CA  | 94104 |
+        When the connector processes the data and pushes to Adyen
+        Then the ACCOUNT_HOLDER_VERIFICATION notification is sent by Adyen comprising of BANK_ACCOUNT_VERIFICATION and PASSED
+        And a new US bankAccountDetail will be created for the existing Account Holder
+            | eventType              | bankAccountNumber| routingNumber |
+            | ACCOUNT_HOLDER_CREATED | 123456789        | 121000358     |
+        When the Bank Account Number has been modified in Mirakl
+            | bankAccountNumber |
+            | 987654321         |
+        And the connector processes the data and pushes to Adyen
+        And a new US bankAccountDetail will be created for the existing Account Holder
+            | eventType              | bankAccountNumber    |
+            | ACCOUNT_HOLDER_UPDATED | 987654321            |
+        And the previous BankAccountDetail will be removed
+
+

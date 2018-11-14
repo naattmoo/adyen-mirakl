@@ -22,6 +22,19 @@
 
 package com.adyen.mirakl.cucumber.stepdefs.helpers.miraklapi;
 
+import java.io.File;
+import java.net.URL;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import javax.annotation.Resource;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.assertj.core.api.Assertions;
 import com.adyen.mirakl.service.UboService;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
@@ -33,6 +46,7 @@ import com.mirakl.client.mmp.domain.shop.MiraklProfessionalInformation;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
 import com.mirakl.client.mmp.domain.shop.MiraklShopAddress;
 import com.mirakl.client.mmp.domain.shop.MiraklShopState;
+import com.mirakl.client.mmp.domain.shop.bank.MiraklAbaBankAccountInformation;
 import com.mirakl.client.mmp.domain.shop.bank.MiraklIbanBankAccountInformation;
 import com.mirakl.client.mmp.domain.shop.bank.MiraklPaymentInformation;
 import com.mirakl.client.mmp.operator.domain.shop.update.MiraklUpdateShop;
@@ -42,14 +56,6 @@ import com.mirakl.client.mmp.request.additionalfield.MiraklRequestAdditionalFiel
 import com.mirakl.client.mmp.request.additionalfield.MiraklRequestAdditionalFieldValue.MiraklSimpleRequestAdditionalFieldValue;
 import com.mirakl.client.mmp.request.common.document.MiraklUploadDocument;
 import com.mirakl.client.mmp.request.shop.document.MiraklUploadShopDocumentsRequest;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.assertj.core.api.Assertions;
-
-import javax.annotation.Resource;
-import java.io.File;
-import java.net.URL;
-import java.util.*;
-import java.util.stream.Collectors;
 
 class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperties {
 
@@ -204,6 +210,21 @@ class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperties {
         return paymentInformation;
     }
 
+    MiraklAbaBankAccountInformation updateMiraklBankAccountNumberOnly(MiraklShop miraklShop, List<Map<String, String>> rows) {
+        MiraklAbaBankAccountInformation paymentInformation = new MiraklAbaBankAccountInformation();
+        MiraklPaymentInformation miraklPaymentInformation = miraklShop.getPaymentInformation();
+        if (miraklPaymentInformation instanceof MiraklAbaBankAccountInformation) {
+            paymentInformation.setBankAccountNumber(rows.get(0).get("bankAccountNumber"));
+            paymentInformation.setOwner(miraklPaymentInformation.getOwner());
+            paymentInformation.setBankCity(((MiraklAbaBankAccountInformation) miraklPaymentInformation).getBankCity());
+            paymentInformation.setBankZip(((MiraklAbaBankAccountInformation) miraklPaymentInformation).getBankZip());
+            paymentInformation.setBankStreet(((MiraklAbaBankAccountInformation) miraklPaymentInformation).getBankStreet());
+            paymentInformation.setBankName(((MiraklAbaBankAccountInformation) miraklPaymentInformation).getBankName());
+            paymentInformation.setRoutingNumber(((MiraklAbaBankAccountInformation) miraklPaymentInformation).getRoutingNumber());
+        }
+        return paymentInformation;
+    }
+
     MiraklShopAddress updateMiraklShopAddress(MiraklShop miraklShop, Map<String, String> row) {
         MiraklShopAddress address = new MiraklShopAddress();
         if (row.get("firstName") != null) {
@@ -251,8 +272,7 @@ class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperties {
     }
 
     // Mandatory for shop update
-    void populateMiraklShopPremiumSuspendAndPaymentBlockedStatus(MiraklShop miraklShop,
-                                                                 MiraklUpdateShop miraklUpdateShop) {
+    void populateMiraklShopPremiumSuspendAndPaymentBlockedStatus(MiraklShop miraklShop, MiraklUpdateShop miraklUpdateShop) {
 
         // will keep setSuspend false unless returned enum = SUSPEND
         boolean setSuspend;
@@ -295,6 +315,21 @@ class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperties {
     }
 
     // Mandatory for shop update
+    MiraklShopAddress populateMiraklShopAddressForUS(MiraklShop miraklShop) {
+        MiraklShopAddress address = new MiraklShopAddress();
+        address.setCity("PASSED");
+        address.setCivility(civility());
+        address.setCountry("USA");
+        address.setState("CA");
+        address.setFirstname(FAKERUS.name().firstName());
+        address.setLastname(FAKERUS.name().lastName());
+        address.setStreet1(FAKERUS.address().streetAddress());
+        address.setZipCode(FAKERUS.address().zipCodeByState("CA"));
+
+        return address;
+    }
+
+    // Mandatory for shop update
     MiraklIbanBankAccountInformation populateMiraklIbanBankAccountInformation(MiraklShop miraklShop) {
         MiraklIbanBankAccountInformation paymentInformation = new MiraklIbanBankAccountInformation();
 
@@ -318,17 +353,39 @@ class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperties {
         return paymentInformation;
     }
 
-    void populateMiraklAdditionalFields(MiraklUpdateShop miraklUpdateShop, MiraklShop miraklShop,
-                                        ImmutableList<MiraklSimpleRequestAdditionalFieldValue> fieldsToUpdate) {
+    MiraklAbaBankAccountInformation populateMiraklBankAccountInformationForUS(MiraklShop miraklShop) {
+        MiraklAbaBankAccountInformation paymentInformation = new MiraklAbaBankAccountInformation();
+
+        if (miraklShop.getPaymentInformation() != null) {
+            if (miraklShop.getPaymentInformation() instanceof MiraklAbaBankAccountInformation) {
+                MiraklAbaBankAccountInformation abaBankAccountInformation = (MiraklAbaBankAccountInformation) miraklShop.getPaymentInformation();
+                paymentInformation.setBankAccountNumber(abaBankAccountInformation.getBankAccountNumber());
+                paymentInformation.setOwner(abaBankAccountInformation.getOwner());
+                paymentInformation.setBankName(abaBankAccountInformation.getBankName());
+                paymentInformation.setBankCity(abaBankAccountInformation.getBankCity());
+                paymentInformation.setRoutingNumber(abaBankAccountInformation.getRoutingNumber());
+            }
+        } else {
+            paymentInformation.setBankAccountNumber("123456789");
+            paymentInformation.setOwner(FAKER.name().firstName() + " " + FAKER.name().lastName());
+            paymentInformation.setBankName("RBS");
+            paymentInformation.setBankCity("PASSED");
+            paymentInformation.setRoutingNumber("121000358");
+        }
+        return paymentInformation;
+    }
+
+    void populateMiraklAdditionalFields(MiraklUpdateShop miraklUpdateShop, MiraklShop miraklShop, ImmutableList<MiraklSimpleRequestAdditionalFieldValue> fieldsToUpdate) {
 
         final List<MiraklAdditionalFieldValue> addFields = new LinkedList<>(miraklShop.getAdditionalFieldValues());
         final ImmutableList.Builder<MiraklRequestAdditionalFieldValue> updatedFields = new ImmutableList.Builder<>();
 
         for (MiraklSimpleRequestAdditionalFieldValue additionalFieldVal : fieldsToUpdate) {
             Optional<MiraklAdditionalFieldValue.MiraklStringAdditionalFieldValue> additionalField = addFields.stream()
-                .filter(x -> additionalFieldVal.getCode().equals(x.getCode()))
-                .filter(MiraklAdditionalFieldValue.MiraklStringAdditionalFieldValue.class::isInstance)
-                .map(MiraklAdditionalFieldValue.MiraklStringAdditionalFieldValue.class::cast).findAny();
+                                                                                                             .filter(x -> additionalFieldVal.getCode().equals(x.getCode()))
+                                                                                                             .filter(MiraklAdditionalFieldValue.MiraklStringAdditionalFieldValue.class::isInstance)
+                                                                                                             .map(MiraklAdditionalFieldValue.MiraklStringAdditionalFieldValue.class::cast)
+                                                                                                             .findAny();
 
             // if fields are present then update them
             // else create them
@@ -346,10 +403,11 @@ class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperties {
         for (MiraklAdditionalFieldValue field : addFields) {
             if (field instanceof MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithMultipleValues) {
                 patchedUpdatedFields.add(new MiraklRequestAdditionalFieldValue.MiraklMultipleRequestAdditionalFieldValue(field.getCode(),
-                    ((MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithMultipleValues) field).getValues()));
+                                                                                                                         ((MiraklAdditionalFieldValue
+                                                                                                                                 .MiraklAbstractAdditionalFieldWithMultipleValues) field)
+                                                                                                                                 .getValues()));
             } else if (field instanceof MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithSingleValue) {
-                patchedUpdatedFields.add(new MiraklSimpleRequestAdditionalFieldValue(field.getCode(),
-                    ((MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithSingleValue) field).getValue()));
+                patchedUpdatedFields.add(new MiraklSimpleRequestAdditionalFieldValue(field.getCode(), ((MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithSingleValue) field).getValue()));
             } else {
                 Assertions.fail("unexpected additional field type {0} ", field.getClass());
             }
@@ -359,19 +417,18 @@ class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperties {
     }
 
     void throwErrorIfShopFailedToUpdate(MiraklUpdatedShops miraklUpdatedShopsResponse) {
-        final List<Set<ErrorBean>> errors = miraklUpdatedShopsResponse.getShopReturns().stream()
-            .map(MiraklUpdatedShopReturn::getShopError)
-            .filter(Objects::nonNull)
-            .map(InputWithErrors::getErrors)
-            .collect(Collectors.toList());
+        final List<Set<ErrorBean>> errors = miraklUpdatedShopsResponse.getShopReturns()
+                                                                      .stream()
+                                                                      .map(MiraklUpdatedShopReturn::getShopError)
+                                                                      .filter(Objects::nonNull)
+                                                                      .map(InputWithErrors::getErrors)
+                                                                      .collect(Collectors.toList());
 
         Assertions.assertThat(errors.size()).withFailMessage("errors on update: " + GSON.toJson(errors)).isZero();
     }
 
     void throwDocumentUploadError(MiraklDocumentsUploadResult uploadResult) {
-        List<Set<ErrorBean>> errors = uploadResult.getDocuments().stream()
-            .map(InputWithErrors::getErrors)
-            .collect(Collectors.toList());
+        List<Set<ErrorBean>> errors = uploadResult.getDocuments().stream().map(InputWithErrors::getErrors).collect(Collectors.toList());
         Assertions.assertThat(errors.size()).withFailMessage("errors on update: " + GSON.toJson(errors)).isZero();
     }
 }

@@ -32,8 +32,9 @@ public final class MiraklDataExtractionUtilTest {
     @Test
     public void testConvertDateOfBirth() {
         String dob = "1989-03-15T23:00:00Z";
-        DateTime dateTime = MiraklDataExtractionUtil.formatCustomDateField(dob);
+        String timeZone = "Europe/Amsterdam";
+        DateTime dateTime = MiraklDataExtractionUtil.formatCustomDateField(dob, timeZone);
         org.joda.time.format.DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd");
-        Assertions.assertThat(dateTime.toString(formatter)).isEqualTo("1989-03-15");
+        Assertions.assertThat(dateTime.toString(formatter)).isEqualTo("1989-03-16");
     }
 }

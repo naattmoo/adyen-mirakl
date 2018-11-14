@@ -86,6 +86,13 @@ public class AccountCreatedAndUpdatedSteps extends StepDefsHelper {
         shop = retrieveCreatedShop(shops);
     }
 
+    @Given("^a US seller creates a (.*) shop in Mirakl with UBO data and a bankAccount$")
+    public void aUSSellerCreatedABusinessShopInMiraklWithUBODataAndABankAccount(String legalEntity, DataTable table) {
+        List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
+        MiraklCreatedShops shops = miraklShopApi.createBusinessShopForUSWithUBOs(miraklMarketplacePlatformOperatorApiClient, cucumberTable, legalEntity);
+        shop = retrieveCreatedShop(shops);
+    }
+
     @When("^we update the shop by adding more shareholder data$")
     public void weUpdateTheShopByAddingMoreShareholderData(DataTable table) {
         List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
