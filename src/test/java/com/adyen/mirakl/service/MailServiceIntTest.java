@@ -48,6 +48,7 @@ import org.springframework.retry.support.RetryTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.thymeleaf.spring4.SpringTemplateEngine;
 import com.adyen.mirakl.AdyenMiraklConnectorApp;
+import com.adyen.mirakl.config.MiraklOperatorConfiguration;
 import com.adyen.mirakl.exceptions.UnexpectedMailFailureException;
 import io.github.jhipster.config.JHipsterProperties;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -74,6 +75,9 @@ public class MailServiceIntTest {
     private RetryTemplate taskRetryTemplate;
     @Autowired
     private BackOffPolicy exponentialBackOffPolicy;
+
+    @Autowired
+    private MiraklOperatorConfiguration miraklOperatorConfiguration;
 
     @SpyBean
     private JavaMailSender javaMailSender;
@@ -109,7 +113,7 @@ public class MailServiceIntTest {
         MimeMessage message = (MimeMessage) messageCaptor.getValue();
         assertThat(message.getSubject()).isEqualTo("testSubject");
         assertThat(message.getAllRecipients()[0].toString()).isEqualTo("john.doe@example.com");
-        assertThat(message.getFrom()[0].toString()).isEqualTo("test@localhost");
+        assertThat(message.getFrom()[0].toString()).isEqualTo(miraklOperatorConfiguration.getMiraklOperatorEmail());
         assertThat(message.getContent()).isInstanceOf(String.class);
         assertThat(message.getContent().toString()).isEqualTo("testContent");
         assertThat(message.getDataHandler().getContentType()).isEqualTo("text/plain; charset=UTF-8");
@@ -122,7 +126,7 @@ public class MailServiceIntTest {
         MimeMessage message = (MimeMessage) messageCaptor.getValue();
         assertThat(message.getSubject()).isEqualTo("testSubject");
         assertThat(message.getAllRecipients()[0].toString()).isEqualTo("john.doe@example.com");
-        assertThat(message.getFrom()[0].toString()).isEqualTo("test@localhost");
+        assertThat(message.getFrom()[0].toString()).isEqualTo(miraklOperatorConfiguration.getMiraklOperatorEmail());
         assertThat(message.getContent()).isInstanceOf(String.class);
         assertThat(message.getContent().toString()).isEqualTo("testContent");
         assertThat(message.getDataHandler().getContentType()).isEqualTo("text/html;charset=UTF-8");
@@ -139,7 +143,7 @@ public class MailServiceIntTest {
         part.writeTo(aos);
         assertThat(message.getSubject()).isEqualTo("testSubject");
         assertThat(message.getAllRecipients()[0].toString()).isEqualTo("john.doe@example.com");
-        assertThat(message.getFrom()[0].toString()).isEqualTo("test@localhost");
+        assertThat(message.getFrom()[0].toString()).isEqualTo(miraklOperatorConfiguration.getMiraklOperatorEmail());
         assertThat(message.getContent()).isInstanceOf(Multipart.class);
         assertThat(aos.toString()).isEqualTo("\r\ntestContent");
         assertThat(part.getDataHandler().getContentType()).isEqualTo("text/plain; charset=UTF-8");
@@ -156,7 +160,7 @@ public class MailServiceIntTest {
         part.writeTo(aos);
         assertThat(message.getSubject()).isEqualTo("testSubject");
         assertThat(message.getAllRecipients()[0].toString()).isEqualTo("john.doe@example.com");
-        assertThat(message.getFrom()[0].toString()).isEqualTo("test@localhost");
+        assertThat(message.getFrom()[0].toString()).isEqualTo(miraklOperatorConfiguration.getMiraklOperatorEmail());
         assertThat(message.getContent()).isInstanceOf(Multipart.class);
         assertThat(aos.toString()).isEqualTo("\r\ntestContent");
         assertThat(part.getDataHandler().getContentType()).isEqualTo("text/html;charset=UTF-8");
