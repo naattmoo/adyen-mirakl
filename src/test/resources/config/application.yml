@@ -173,7 +173,7 @@ adyenNotificationsConfig:
               includeMode: INCLUDE
 
 requestbin:
-    baseRequestbinUrl: https://adyen-requestbin.herokuapp.com/
+    baseRequestbinUrl: https://requestbin-test.seamless-checkout.store/
 
 shopService:
     maxUbos: 4
