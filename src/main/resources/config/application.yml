@@ -84,7 +84,7 @@ jhipster:
         #allow-credentials: true
         #max-age: 1800
     mail:
-        from: adyenMiraklConnector@localhost
+        from: ${MIRAKL_OPERATOR_EMAIL}
     swagger:
         default-include-pattern: /api/.*
         title: adyenMiraklConnector API
