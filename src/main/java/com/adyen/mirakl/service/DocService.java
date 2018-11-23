@@ -33,7 +33,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import com.adyen.mirakl.config.ApplicationProperties;
 import com.adyen.mirakl.config.Constants;
 import com.adyen.mirakl.domain.DocError;
@@ -52,7 +51,6 @@ import com.adyen.model.marketpay.UploadDocumentResponse;
 import com.adyen.service.Account;
 import com.adyen.service.exception.ApiException;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import com.mirakl.client.mmp.domain.common.FileWrapper;
 import com.mirakl.client.mmp.domain.shop.document.MiraklShopDocument;
 import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
@@ -62,7 +60,6 @@ import com.mirakl.client.mmp.request.shop.document.MiraklGetShopDocumentsRequest
 import static com.google.common.io.Files.toByteArray;
 
 @Service
-@Transactional
 public class DocService {
 
     private final Logger log = LoggerFactory.getLogger(DocService.class);
