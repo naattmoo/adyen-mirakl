@@ -44,6 +44,7 @@ public class DocError implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Lob
     @Column(name = "error")
     private String error;
 
