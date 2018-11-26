@@ -14,7 +14,7 @@
             "fieldType": "String"
         }
     ],
-    "changelogDate": "20180308121927",
+    "changelogDate": "20181123140500",
     "dto": "no",
     "service": "no",
     "entityTableName": "doc_errors",
