@@ -85,7 +85,7 @@ jhipster:
             port: 5000
             queue-size: 512
     mail:
-        from: test@localhost
+        from: ${MIRAKL_OPERATOR_EMAIL}
         base-url: http://127.0.0.1:8080
 
 # ===================================================================
@@ -130,7 +130,7 @@ adyenConfig:
     password: ${ADYEN_PASS}
     environment: ${ADYEN_ENV}
     appName: adyen-mirakl-connector
-    appVersion: 1.1.0
+    appVersion: 1.1.1
 
 
 adyenNotificationsConfig:

@@ -84,7 +84,7 @@ jhipster:
         #allow-credentials: true
         #max-age: 1800
     mail:
-        from: adyenMiraklConnector@localhost
+        from: ${MIRAKL_OPERATOR_EMAIL}
     swagger:
         default-include-pattern: /api/.*
         title: adyenMiraklConnector API
@@ -135,7 +135,7 @@ adyenConfig:
     password: ${ADYEN_PASS}
     environment: ${ADYEN_ENV}
     appName: adyen-mirakl-connector
-    appVersion: 1.1.0
+    appVersion: 1.1.1
 
 adyenNotificationsConfig:
     notificationConfigurationDetails:
