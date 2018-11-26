@@ -41,4 +41,6 @@
     <include file="config/liquibase/changelog/20180308121927_added_entity_constraints_EmailErrors.xml" relativeToChangelogFile="false"/>
     <include file="config/liquibase/changelog/20180308121927_added_entity_constraints_DocError.xml" relativeToChangelogFile="false"/>
     <!-- jhipster-needle-liquibase-add-constraints-changelog - JHipster will add liquibase constraints changelogs here -->
+    <include file="config/liquibase/changelog/20181123140500_updated_entity_DocError_column_size.xml" relativeToChangelogFile="false"/>
 </databaseChangeLog>
+

@@ -99,7 +99,7 @@ jhipster:
         allow-credentials: true
         max-age: 1800
     mail: # specific JHipster mail property, for standard properties see MailProperties
-        from: adyenMiraklConnector@localhost
+        from: ${MIRAKL_OPERATOR_EMAIL}
         base-url: http://127.0.0.1:8080
     logging:
         logstash: # Forward logs to logstash over a socket, used by LoggingConfiguration
