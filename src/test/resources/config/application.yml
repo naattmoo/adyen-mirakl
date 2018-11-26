@@ -85,7 +85,7 @@ jhipster:
             port: 5000
             queue-size: 512
     mail:
-        from: test@localhost
+        from: ${MIRAKL_OPERATOR_EMAIL}
         base-url: http://127.0.0.1:8080
 
 # ===================================================================
