@@ -173,7 +173,7 @@ adyenNotificationsConfig:
               includeMode: INCLUDE
 
 requestbin:
-    baseRequestbinUrl: https://requestbin-test.seamless-checkout.store/
+    baseRequestbinUrl: ${REQUESTBIN_URL}
 
 shopService:
     maxUbos: 4
