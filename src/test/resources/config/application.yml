@@ -173,7 +173,7 @@ adyenNotificationsConfig:
               includeMode: INCLUDE
 
 requestbin:
-    baseRequestbinUrl: https://adyen-requestbin.herokuapp.com/
+    baseRequestbinUrl: ${REQUESTBIN_URL}
 
 shopService:
     maxUbos: 4

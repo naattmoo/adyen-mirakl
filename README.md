@@ -57,6 +57,10 @@ export MAIL_USER=<user>
 export MAIL_PASS=<pass>
 ```
 
+And setting only for DEV or TEST environment to receive notifications
+```
+export REQUESTBIN_URL=<URL of test service to receive notifications>
+```
 
 ### Setup database connection
 
@@ -85,15 +89,12 @@ export ADYEN_PAL_MERCHANT_ACCOUNT=<merchant account>
 
 And run `source ~/.bashrc`
 
-
-
 To start your application in the dev profile, simply run:
 
     ./gradlew
 
 
 For further instructions on how to develop with JHipster, have a look at [Using JHipster in development][].
-
 
 
 ## Run in production
