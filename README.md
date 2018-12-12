@@ -79,7 +79,7 @@ The connector will handle payment vouchers of Mirakl in order to facilitate sell
 For that you will need to configure the connector URL in Mirakl side Administration -> Technical Settings -> Shop Payments:
 
     Transmission type: HTTP
-    URL: https://CONNECTOR_HOSTNAME_HERE/api/mirakl-notifications/payout
+    URL: https://NOTIFY_USERNAME:NOTIFY_PASSWORD@CONNECTOR_HOSTNAME_HERE/api/mirakl-notifications/payout
     Method: POST
 
 
