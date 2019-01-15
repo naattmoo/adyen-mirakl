@@ -99,7 +99,7 @@ public class IdentityVerificationSteps extends StepDefsHelper {
     }
 
     @Then("^adyen will send multiple (.*) notifications with (.*) of status (.*)$")
-    public void adyenWillSendMultipleACCOUNT_HOLDER_VERIFICATIONNotificationWithIDENTITY_VERIFICATIONOfStatusDATA_PROVIDED(String eventType, String verificationType, String verificationStatus) throws Exception {
+    public void adyenWillSendMultipleACCOUNT_HOLDER_VERIFICATIONNotificationWithPASSPORT_VERIFICATIONOfStatusPASSED(String eventType, String verificationType, String verificationStatus) throws Exception {
         notifications = assertOnMultipleVerificationNotifications(eventType, verificationType, verificationStatus, shop);
     }
 
@@ -218,7 +218,7 @@ public class IdentityVerificationSteps extends StepDefsHelper {
         }
     }
 
-    @Then("^the documents will be removed for each of the UBOs$")
+    @Then("^the documents are removed for each of the UBOs$")
     public void theDocumentsWillBeRemovedForEachOfTheUBOs() {
         await().with().pollInterval(fibonacci()).untilAsserted(() -> {
             Assertions.assertThat(adyenNotificationRepository.findAll().size()).isEqualTo(0);
@@ -231,5 +231,15 @@ public class IdentityVerificationSteps extends StepDefsHelper {
     @Then("^each UBO will receive a remedial email$")
     public void eachUBOWillReceiveARemedialEmail(String title) throws Throwable {
         validationCheckOnReceivedEmails(title, shop);
+    }
+
+
+    @And("^the shop is updated to tier1$")
+    public void updateShopToTier3() throws Throwable {
+        UpdateAccountHolderRequest updateAccountHolderRequest = new UpdateAccountHolderRequest();
+        updateAccountHolderRequest.setAccountHolderCode(shop.getId());
+        updateAccountHolderRequest.setProcessingTier(1);
+        adyenAccountService.updateAccountHolder(updateAccountHolderRequest);
+        log.info("AccountHolder tier is upgraded to 1");
     }
 }

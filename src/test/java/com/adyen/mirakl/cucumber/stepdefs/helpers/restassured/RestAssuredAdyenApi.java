@@ -85,6 +85,10 @@ public class RestAssuredAdyenApi {
     }
 
     public ImmutableList<DocumentContext> getMultipleAdyenNotificationBodies(String endpoint, String miraklShopId, String eventType, String verificationType) {
+        return getMultipleAdyenNotificationBodies(endpoint, miraklShopId, eventType, verificationType, null);
+    }
+
+    public ImmutableList<DocumentContext> getMultipleAdyenNotificationBodies(String endpoint, String miraklShopId, String eventType, String verificationType, String status) {
         List<String> allNotifications = new ArrayList<>();
         try {
             ResponseBody body = getResponseBody(endpoint);
@@ -105,7 +109,14 @@ public class RestAssuredAdyenApi {
             if (verificationType != null) {
                 if (JsonPath.parse(notification).read("eventType").toString().equals(eventType) && content.read("accountHolderCode").equals(miraklShopId) && content.read("verificationType")
                                                                                                                                                                     .equals(verificationType)) {
-                    notifications.add(JsonPath.parse(notification));
+
+                    if(status != null) {
+                        if (content.read("verificationStatus").toString().equals(status)) {
+                            notifications.add(JsonPath.parse(notification));
+                        }
+                    } else {
+                        notifications.add(JsonPath.parse(notification));
+                    }
                 }
             } else {
                 if (JsonPath.parse(notification).read("eventType").toString().equals(eventType) && content.read("accountHolderCode").equals(miraklShopId)) {

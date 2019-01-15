@@ -73,6 +73,7 @@ Feature: Identity verification check
             | documentType | filename         |
             | PASSPORT     | passportBack.png |
             | PASSPORT     | anotherPassportBack.png |
-        When adyen will send multiple ACCOUNT_HOLDER_VERIFICATION notifications with IDENTITY_VERIFICATION of status DATA_PROVIDED
+        And the shop is updated to tier1
+        When adyen will send multiple ACCOUNT_HOLDER_VERIFICATION notifications with PASSPORT_VERIFICATION of status PASSED
         And the ACCOUNT_HOLDER_VERIFICATION notifications are sent to Connector App
-        Then the documents will be removed for each of the UBOs
+        Then the documents are removed for each of the UBOs
