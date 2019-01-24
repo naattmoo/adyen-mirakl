@@ -78,6 +78,10 @@ public class PayoutService {
     @Value("${payoutService.liableAccountCode}")
     private String liableAccountCode;
 
+
+    @Value("${payoutService.payoutToLiableAccountByVoucher}")
+    private Boolean payoutToLiableAccountByVoucher;
+
     protected final static Gson GSON = new Gson();
 
 
@@ -93,7 +97,8 @@ public class PayoutService {
             miraklVoucherEntry.setInvoiceNumber(record.get("invoice-number"));
             miraklVoucherEntry.setShopName(record.get("shop-name"));
             miraklVoucherEntry.setSubscriptionAmount(record.get("subscription-amount"));
-
+            miraklVoucherEntry.setTotalChargedAmount(record.get("total-charged-amount"));
+            miraklVoucherEntry.setTotalChargedAmoutVat(record.get("total-charged-amount-vat"));
             miraklVoucherEntryRepository.save(miraklVoucherEntry);
         }
 
@@ -103,10 +108,54 @@ public class PayoutService {
     @Async
     public synchronized void processMiraklVoucherEntries() {
         List<MiraklVoucherEntry> miraklVoucherEntries = miraklVoucherEntryRepository.findAll();
-        for (MiraklVoucherEntry miraklVoucherEntry : miraklVoucherEntries) {
-            processMiraklVoucherEntry(miraklVoucherEntry);
-            miraklVoucherEntryRepository.delete(miraklVoucherEntry);
-            miraklVoucherEntryRepository.flush();
+        if (! payoutToLiableAccountByVoucher) {
+            for (MiraklVoucherEntry miraklVoucherEntry : miraklVoucherEntries) {
+                processMiraklVoucherEntry(miraklVoucherEntry);
+                miraklVoucherEntryRepository.delete(miraklVoucherEntry);
+                miraklVoucherEntryRepository.flush();
+            }
+        } else {
+            Double totalCommissionAmount = null;
+            String commissionPayoutCurrency = null;
+            //get the commission currency from first voucher entry
+            if (miraklVoucherEntries != null && miraklVoucherEntries.size() > 0) {
+                commissionPayoutCurrency = miraklVoucherEntries.get(0).getCurrencyIsoCode();
+                totalCommissionAmount = new Double(0);
+
+                for (MiraklVoucherEntry miraklVoucherEntry : miraklVoucherEntries) {
+                    processMiraklVoucherEntry(miraklVoucherEntry);
+                    try {
+                        totalCommissionAmount = totalCommissionAmount
+                                + Double.parseDouble(miraklVoucherEntry.getTotalChargedAmount())
+                                + Double.parseDouble(miraklVoucherEntry.getTotalChargedAmoutVat());
+                    } catch (NumberFormatException e) {
+                        log.error("total_charged_amount ["
+                                          + miraklVoucherEntry.getTotalChargedAmount()
+                                          + "] or total_charged_amount_vat ["
+                                          + miraklVoucherEntry.getTotalChargedAmoutVat()
+                                          + "]  is not a valid number hence skipping addition of this voucher entry in commission payout"
+                                          + e.getMessage());
+                    }
+                    miraklVoucherEntryRepository.delete(miraklVoucherEntry);
+                    miraklVoucherEntryRepository.flush();
+                }
+                processCommissions(Util.createAmount(totalCommissionAmount.toString(), commissionPayoutCurrency));
+            }
+        }
+    }
+
+    public void processCommissions(Amount amount) {
+        PayoutAccountHolderRequest payoutAccountHolderRequest = null;
+        PayoutAccountHolderResponse payoutAccountHolderResponse = null;
+        try {
+            payoutAccountHolderResponse = adyenFundService.payoutAccountHolder(createPayoutAccountHolderRequestForLiableAccount(amount));
+            log.info("Payout submitted for commission for accountHolder: [{}] + Psp ref: [{}]", payoutAccountHolderResponse.toString(), payoutAccountHolderResponse.getPspReference());
+        } catch (ApiException e) {
+            log.error("MarketPay Api Exception for commission payout: {}, {}. For the LiableAccount: {} ", e.getError(),e, liableAccountCode);
+            storeAdyenPayoutError(payoutAccountHolderRequest, payoutAccountHolderResponse, null);
+        } catch (Exception e) {
+            log.error("Exception: {}, {}. For the LiableAccount: {} ", e.getMessage(), e, liableAccountCode);
+            storeAdyenPayoutError(payoutAccountHolderRequest, payoutAccountHolderResponse, null);
         }
     }
 
@@ -168,6 +217,23 @@ public class PayoutService {
             adyenPayoutError.setRetry(0);
             adyenPayoutErrorRepository.save(adyenPayoutError);
         }
+    }
+
+    protected PayoutAccountHolderRequest createPayoutAccountHolderRequestForLiableAccount(Amount amount) throws Exception {
+
+        //Call Adyen to retrieve the accountCode from the accountHolderCode
+        GetAccountHolderRequest getAccountHolderRequest = new GetAccountHolderRequest();
+        getAccountHolderRequest.setAccountCode(liableAccountCode);
+        GetAccountHolderResponse accountHolderResponse = adyenAccountService.getAccountHolder(getAccountHolderRequest);
+        PayoutAccountHolderRequest payoutAccountHolderRequest = new PayoutAccountHolderRequest();
+
+        if (accountHolderResponse != null) {
+            payoutAccountHolderRequest.setAccountHolderCode(accountHolderResponse.getAccountHolderCode());
+        }
+        payoutAccountHolderRequest.setAccountCode(liableAccountCode);
+        payoutAccountHolderRequest.setAmount(amount);
+
+        return payoutAccountHolderRequest;
     }
 
     protected PayoutAccountHolderRequest createPayoutAccountHolderRequest(GetAccountHolderResponse accountHolderResponse, MiraklVoucherEntry miraklVoucherEntry) throws Exception {

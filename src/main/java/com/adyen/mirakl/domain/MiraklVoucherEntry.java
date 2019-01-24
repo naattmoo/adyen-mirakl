@@ -81,6 +81,12 @@ public class MiraklVoucherEntry implements Serializable {
     @Column(name = "subscription_amount")
     private String subscriptionAmount;
 
+    @Column(name = "total_charged_amount")
+    private String totalChargedAmount;
+
+    @Column(name = "total_charged_amount_vat")
+    private String totalChargedAmoutVat;
+
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
         return id;
@@ -208,6 +214,23 @@ public class MiraklVoucherEntry implements Serializable {
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
+    public String getTotalChargedAmount() {
+        return totalChargedAmount;
+    }
+
+    public void setTotalChargedAmount(String totalChargedAmount) {
+        this.totalChargedAmount = totalChargedAmount;
+    }
+
+    public String getTotalChargedAmoutVat() {
+        return totalChargedAmoutVat;
+    }
+
+    public void setTotalChargedAmoutVat(String totalChargedAmoutVat) {
+        this.totalChargedAmoutVat = totalChargedAmoutVat;
+    }
+
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -259,6 +282,12 @@ public class MiraklVoucherEntry implements Serializable {
             + "'"
             + ", subscriptionAmount='"
             + getSubscriptionAmount()
+            + "'"
+            + ", totalChargedAmount='"
+            + getTotalChargedAmount()
+            + "'"
+            + ", totalChargedAmoutVat='"
+            + getTotalChargedAmoutVat()
             + "'"
             + "}";
     }
