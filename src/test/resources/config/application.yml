@@ -189,6 +189,7 @@ mailtrapConfig:
 payoutService:
     subscriptionTransferCode: SUBSCRIPTION
     liableAccountCode: ${ADYEN_LIABLE_ACCOUNT_CODE}
+    payoutToLiableAccountByVoucher : ${PAYOUT_TO_LIABLE_ACCOUNT_BY_VOUCHER_ENABLED:#{false}}
 
 accounts:
     accountCode:
