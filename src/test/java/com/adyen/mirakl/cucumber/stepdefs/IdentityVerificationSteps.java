@@ -206,7 +206,7 @@ public class IdentityVerificationSteps extends StepDefsHelper {
     }
 
     @Then("^the documents are removed for each of the UBOs$")
-    public void theDocumentsWillBeRemovedForEachOfTheUBOs() {
+    public void theDocumentsAreRemovedForEachOfTheUBOs() {
         await().with().pollInterval(fibonacci()).untilAsserted(() -> {
             Assertions.assertThat(adyenNotificationRepository.findAll().size()).isEqualTo(0);
         });
@@ -222,7 +222,7 @@ public class IdentityVerificationSteps extends StepDefsHelper {
 
 
     @And("^the shop is updated to tier1$")
-    public void updateShopToTier1() throws Exception {
+    public void theShopIsUpdatedToTier1() throws Exception {
         UpdateAccountHolderRequest updateAccountHolderRequest = new UpdateAccountHolderRequest();
         updateAccountHolderRequest.setAccountHolderCode(shop.getId());
         updateAccountHolderRequest.setProcessingTier(1);
