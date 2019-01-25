@@ -217,9 +217,9 @@ public class AdyenNotificationListener {
         } else if (invalidOrAwaitingCompanyVerificationData(verificationStatus, verificationType)) {
             final MiraklShop shop = getShop(shopId);
             mailTemplateService.sendMiraklShopEmailFromTemplate(shop, Locale.getDefault(), getTemplate(verificationType, verificationStatus), getSubject(verificationType, verificationStatus));
-        } else if (dataProvidedForPassportOrIdentity(verificationStatus, verificationType, CheckStatusEnum.DATA_PROVIDED, CheckTypeEnum.PASSPORT_VERIFICATION, CheckTypeEnum.IDENTITY_VERIFICATION)) {
+        } else if (dataProvidedForPassportOrIdentity(verificationStatus, verificationType, CheckStatusEnum.PASSED, CheckTypeEnum.PASSPORT_VERIFICATION, CheckTypeEnum.IDENTITY_VERIFICATION)) {
             docService.removeMiraklMediaForShareHolder(verificationNotification.getContent().getShareholderCode());
-        } else if (CheckStatusEnum.DATA_PROVIDED.equals(verificationStatus) && CheckTypeEnum.BANK_ACCOUNT_VERIFICATION.equals(verificationType)) {
+        } else if (CheckStatusEnum.PASSED.equals(verificationStatus) && CheckTypeEnum.BANK_ACCOUNT_VERIFICATION.equals(verificationType)) {
             docService.removeMiraklMediaForBankProof(verificationNotification.getContent().getAccountHolderCode());
         }
 

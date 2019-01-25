@@ -31,8 +31,10 @@ import java.util.stream.Collectors;
 import javax.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import com.adyen.enums.Environment;
 import com.adyen.mirakl.config.ApplicationProperties;
 import com.adyen.mirakl.config.Constants;
 import com.adyen.mirakl.domain.DocError;
@@ -87,6 +89,9 @@ public class DocService {
 
     @Resource
     private ApplicationProperties applicationProperties;
+
+    @Value("${adyenConfig.environment}")
+    private String environment;
 
     /**
      * Calling S30, S31, GetAccountHolder and UploadDocument to upload bankproof documents to Adyen
@@ -223,6 +228,12 @@ public class DocService {
         documentDetail.setDocumentType(documentType);
         documentDetail.setShareholderCode(shareholderCode);
         documentDetail.setAccountHolderCode(shopId);
+
+        // For test add PASSED to get document in payout mode
+        if(environment.equals(Environment.TEST.name())) {
+            documentDetail.setDescription("PASSED");
+        }
+
         request.setDocumentDetail(documentDetail);
         UploadDocumentResponse response = adyenAccountService.uploadDocument(request);
         log.debug("Account holder code: {}", shareholderCode);
