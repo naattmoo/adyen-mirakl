@@ -176,7 +176,7 @@ public class AccountPayoutSteps extends StepDefsHelper {
 
     @Then("^adyen will send the (.*) notification for commission for (.*)$")
     public void adyenWillSendTheACCOUNT_HOLDER_PAYOUTNotificationForCommissionForLiableAccountHolder(String notification, String accountHolderCode, DataTable table) {
-        if(payoutToLiableAccountByVoucher==true) {
+        if(payoutToLiableAccountByVoucher) {
             List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
             waitForNotification();
             await().with().pollInterval(fibonacci()).untilAsserted(() -> {
