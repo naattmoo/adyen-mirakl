@@ -78,7 +78,6 @@ public class PayoutService {
     @Value("${payoutService.liableAccountCode}")
     private String liableAccountCode;
 
-
     @Value("${payoutService.payoutToLiableAccountByVoucher}")
     private Boolean payoutToLiableAccountByVoucher;
 
@@ -148,7 +147,8 @@ public class PayoutService {
         PayoutAccountHolderRequest payoutAccountHolderRequest = null;
         PayoutAccountHolderResponse payoutAccountHolderResponse = null;
         try {
-            payoutAccountHolderResponse = adyenFundService.payoutAccountHolder(createPayoutAccountHolderRequestForLiableAccount(amount));
+            payoutAccountHolderRequest = createPayoutAccountHolderRequestForLiableAccount(amount);
+            payoutAccountHolderResponse = adyenFundService.payoutAccountHolder(payoutAccountHolderRequest);
             log.info("Payout submitted for commission for accountHolder: [{}] + Psp ref: [{}]", payoutAccountHolderResponse.toString(), payoutAccountHolderResponse.getPspReference());
         } catch (ApiException e) {
             log.error("MarketPay Api Exception for commission payout: {}, {}. For the LiableAccount: {} ", e.getError(),e, liableAccountCode);
