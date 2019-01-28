@@ -170,6 +170,22 @@ public class AccountPayoutSteps extends StepDefsHelper {
         });
     }
 
+    @Then("^adyen will send the (.*) notification for commission for (.*)$")
+    public void adyenWillSendTheACCOUNT_HOLDER_PAYOUTNotificationForCommissionForLiableAccountHolder(String notification, String accountHolderCode, DataTable table) {
+        List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
+        waitForNotification();
+        await().with().pollInterval(fibonacci()).untilAsserted(() -> {
+            Map<String, Object> adyenNotificationBody = retrieveAdyenNotificationBody(notification, accountHolderCode);
+            DocumentContext content = JsonPath.parse(adyenNotificationBody.get("content"));
+            cucumberTable.forEach(row -> {
+                Assertions.assertThat(row.get("statusCode")).isEqualTo(content.read("status.statusCode"));
+                Assertions.assertThat(row.get("currency")).isEqualTo(content.read("amounts[0].Amount.currency"));
+                Assertions.assertThat(accountHolderCode).isEqualTo(content.read("accountHolderCode"));
+                Assertions.assertThat(row.get("amount")).isEqualTo(Double.toString(content.read("amounts[0].Amount.value")));
+            });
+        });
+    }
+
     @Then("^adyen will send the (.*) notification with status$")
     public void adyenWillSendTheACCOUNT_HOLDER_PAYOUTNotificationWithStatusCode(String notification, DataTable table) {
         List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);

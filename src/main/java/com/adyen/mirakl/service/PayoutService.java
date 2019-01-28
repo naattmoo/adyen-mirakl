@@ -98,7 +98,7 @@ public class PayoutService {
             miraklVoucherEntry.setShopName(record.get("shop-name"));
             miraklVoucherEntry.setSubscriptionAmount(record.get("subscription-amount"));
             miraklVoucherEntry.setTotalChargedAmount(record.get("total-charged-amount"));
-            miraklVoucherEntry.setTotalChargedAmoutVat(record.get("total-charged-amount-vat"));
+            miraklVoucherEntry.setTotalChargedAmountVat(record.get("total-charged-amount-vat"));
             miraklVoucherEntryRepository.save(miraklVoucherEntry);
         }
 
@@ -127,12 +127,12 @@ public class PayoutService {
                     try {
                         totalCommissionAmount = totalCommissionAmount
                                 + Double.parseDouble(miraklVoucherEntry.getTotalChargedAmount())
-                                + Double.parseDouble(miraklVoucherEntry.getTotalChargedAmoutVat());
+                                + Double.parseDouble(miraklVoucherEntry.getTotalChargedAmountVat());
                     } catch (NumberFormatException e) {
                         log.error("total_charged_amount ["
                                           + miraklVoucherEntry.getTotalChargedAmount()
                                           + "] or total_charged_amount_vat ["
-                                          + miraklVoucherEntry.getTotalChargedAmoutVat()
+                                          + miraklVoucherEntry.getTotalChargedAmountVat()
                                           + "]  is not a valid number hence skipping addition of this voucher entry in commission payout"
                                           + e.getMessage());
                     }
