@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+        <!--
+          ~                       ######
+          ~                       ######
+          ~ ############    ####( ######  #####. ######  ############   ############
+          ~ #############  #####( ######  #####. ######  #############  #############
+          ~        ######  #####( ######  #####. ######  #####  ######  #####  ######
+          ~ ###### ######  #####( ######  #####. ######  #####  #####   #####  ######
+          ~ ###### ######  #####( ######  #####. ######  #####          #####  ######
+          ~ #############  #############  #############  #############  #####  ######
+          ~  ############   ############  #############   ############  #####  ######
+          ~                                      ######
+          ~                               #############
+          ~                               ############
+          ~
+          ~ Adyen Mirakl Connector
+          ~
+          ~ Copyright (c) 2018 Adyen B.V.
+          ~ This file is open source and available under the MIT license.
+          ~ See the LICENSE file for more info.
+          ~
+          -->
+
+<databaseChangeLog
+xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+<!--
+    Added new columns to store generate payout for liable account holder
+-->
+<changeSet id="201900117140500-1" author="adyen">
+    <addColumn tableName="mirakl_voucher_entry">
+        <column name="total_charged_amount" type="varchar(255)"/>
+    </addColumn>
+    <addColumn tableName="mirakl_voucher_entry">
+        <column name="total_charged_amount_vat" type="varchar(255)"/>
+    </addColumn>
+</changeSet>
+
+</databaseChangeLog>
