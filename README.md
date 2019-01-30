@@ -57,6 +57,11 @@ export MAIL_USER=<user>
 export MAIL_PASS=<pass>
 ```
 
+And set following to true if you want to pay commissions to liable account by payout vouchers instead of regular schedule.
+```
+export PAYOUT_TO_LIABLE_ACCOUNT_BY_VOUCHER_ENABLED=true
+```
+
 And setting only for DEV or TEST environment to receive notifications
 ```
 export REQUESTBIN_URL=<URL of test service to receive notifications>
