@@ -415,7 +415,7 @@ public class StepDefsHelper {
         // get all ACCOUNT_HOLDER_VERIFICATION notifications
         AtomicReference<ImmutableList<DocumentContext>> atomicReference = new AtomicReference<>();
         await().untilAsserted(() -> {
-            List<DocumentContext> notifications = restAssuredAdyenApi.getMultipleAdyenNotificationBodies(startUpTestingHook.getBaseRequestBinUrlPath(), shop.getId(), eventType, verificationType);
+            List<DocumentContext> notifications = restAssuredAdyenApi.getMultipleAdyenNotificationBodies(startUpTestingHook.getBaseRequestBinUrlPath(), shop.getId(), eventType, verificationType, verificationStatus);
             ImmutableList<DocumentContext> verificationNotifications = restAssuredAdyenApi.extractShareHolderNotifications(notifications, shareholderCodes);
             Assertions.assertThat(verificationNotifications).withFailMessage("Notification is empty.").isNotEmpty();
 
@@ -423,7 +423,6 @@ public class StepDefsHelper {
                       .withFailMessage("Correct number of notifications were not found. Found: <%s>", verificationNotifications.size())
                       .isEqualTo(shareholderCodes.size());
 
-            verificationNotifications.forEach(notification -> Assertions.assertThat(notification.read("content.verificationStatus").toString()).isEqualTo(verificationStatus));
             atomicReference.set(verificationNotifications);
         });
         return atomicReference.get();

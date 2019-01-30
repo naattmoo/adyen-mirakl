@@ -261,7 +261,7 @@ public class AdyenNotificationListenerTest {
 
     @Test
     public void shouldRemoveMiraklDocsWhenDataProvidedForShareholder() throws IOException {
-        URL url = Resources.getResource("adyenRequests/COMPANY_VERIFICATION_DATA_PROVIDED.json");
+        URL url = Resources.getResource("adyenRequests/COMPANY_VERIFICATION_PASSED.json");
         final String adyenRequestJson = Resources.toString(url, Charsets.UTF_8);
         when(adyenNotificationMock.getRawAdyenNotification()).thenReturn(adyenRequestJson);
 
