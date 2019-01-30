@@ -35,6 +35,7 @@ import org.awaitility.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -71,6 +72,9 @@ public class AccountPayoutSteps extends StepDefsHelper {
     private AdyenNotificationResource adyenNotificationResource;
     @Autowired
     private AdyenNotificationRepository adyenNotificationRepository;
+
+    @Value("${payoutService.payoutToLiableAccountByVoucher}")
+    private Boolean payoutToLiableAccountByVoucher;
     private MiraklShop shop;
     private String accountHolderCode;
     private MockMvc restUserMockMvc;
@@ -168,6 +172,24 @@ public class AccountPayoutSteps extends StepDefsHelper {
                 Assertions.assertThat(row.get("iban")).isEqualTo(content.read("bankAccountDetail.iban"));
             });
         });
+    }
+
+    @Then("^adyen will send the (.*) notification for commission for (.*)$")
+    public void adyenWillSendTheACCOUNT_HOLDER_PAYOUTNotificationForCommissionForLiableAccountHolder(String notification, String accountHolderCode, DataTable table) {
+        if(payoutToLiableAccountByVoucher) {
+            List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
+            waitForNotification();
+            await().with().pollInterval(fibonacci()).untilAsserted(() -> {
+                Map<String, Object> adyenNotificationBody = retrieveAdyenNotificationBody(notification, accountHolderCode);
+                DocumentContext content = JsonPath.parse(adyenNotificationBody.get("content"));
+                cucumberTable.forEach(row -> {
+                    Assertions.assertThat(row.get("statusCode")).isEqualTo(content.read("status.statusCode"));
+                    Assertions.assertThat(row.get("currency")).isEqualTo(content.read("amounts[0].Amount.currency"));
+                    Assertions.assertThat(accountHolderCode).isEqualTo(content.read("accountHolderCode"));
+                    Assertions.assertThat(row.get("amount")).isEqualTo(Double.toString(content.read("amounts[0].Amount.value")));
+                });
+            });
+        }
     }
 
     @Then("^adyen will send the (.*) notification with status$")

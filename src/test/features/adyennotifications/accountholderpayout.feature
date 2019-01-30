@@ -17,6 +17,9 @@ Feature: Payout notifications for seller payout
         Then adyen will send the ACCOUNT_HOLDER_PAYOUT notification
             | currency | amount | statusCode | iban                   |
             | EUR      | 2914.0 | Initiated  | GB26TEST40051512347366 |
+        And adyen will send the ACCOUNT_HOLDER_PAYOUT notification for commission for LiableAccountHolderPluginDemoMirakl
+            | currency | amount | statusCode |
+            | EUR      | 186.0  | Initiated  |
 
     @ADY-34 @ADY-111 @ADY-9 @ADY-86 @ADY-24
     Scenario: The connector forces payout-retry upon accountHolder payable state change
@@ -31,6 +34,9 @@ Feature: Payout notifications for seller payout
         Then adyen will send the ACCOUNT_HOLDER_PAYOUT notification with status
             | statusCode | message                                           |
             | Failed     | There is not enough balance available for account |
+        And adyen will send the ACCOUNT_HOLDER_PAYOUT notification for commission for LiableAccountHolderPluginDemoMirakl
+            | currency | amount | statusCode |
+            | EUR      | 186.0  | Initiated  |
         When the notification is sent to the Connector
         Then a payout email will be sent to the operator
         """

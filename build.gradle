@@ -38,7 +38,7 @@ buildscript {
 }
 
 plugins {
-    id "org.sonarqube" version "2.5"
+    id "org.sonarqube" version "2.6"
     id "net.ltgt.apt-eclipse" version "0.13"
     id "net.ltgt.apt-idea" version "0.13"
     id "net.ltgt.apt" version "0.13"
@@ -69,7 +69,7 @@ dependencyManagement {
 defaultTasks 'bootRun'
 
 group = 'com.adyen.mirakl'
-version = '1.1.1'
+version = '1.2.0'
 
 
 description = ''

@@ -94,22 +94,21 @@ public class IdentityVerificationSteps extends StepDefsHelper {
     @When("^the shareholder data has been updated in Mirakl$")
     public void theShareholderDataHasBeenUpdatedInMirakl(DataTable table) {
         List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
-        this.shop = miraklUpdateShopApi
-            .updateUboData(shop, shop.getId(), miraklMarketplacePlatformOperatorApiClient, cucumberTable);
+        this.shop = miraklUpdateShopApi.updateUboData(shop, shop.getId(), miraklMarketplacePlatformOperatorApiClient, cucumberTable);
     }
 
     @Then("^adyen will send multiple (.*) notifications with (.*) of status (.*)$")
-    public void adyenWillSendMultipleACCOUNT_HOLDER_VERIFICATIONNotificationWithIDENTITY_VERIFICATIONOfStatusDATA_PROVIDED(String eventType, String verificationType, String verificationStatus) throws Exception {
+    public void adyenWillSendMultipleACCOUNT_HOLDER_VERIFICATIONNotificationWithPASSPORT_VERIFICATIONOfStatusPASSED(String eventType,
+                                                                                                                    String verificationType,
+                                                                                                                    String verificationStatus) throws Exception {
         notifications = assertOnMultipleVerificationNotifications(eventType, verificationType, verificationStatus, shop);
     }
 
     @Then("^adyen will send the (.*) notification with multiple (.*) of status (.*)")
-    public void adyenWillSendTheACCOUNT_HOLDER_UPDATEDNotificationWithMultipleIDENTITY_VERIFICATIONOfStatusDATA_PROVIDED(
-        String eventType, String verificationType, String verificationStatus) {
+    public void adyenWillSendTheACCOUNT_HOLDER_UPDATEDNotificationWithMultipleIDENTITY_VERIFICATIONOfStatusDATA_PROVIDED(String eventType, String verificationType, String verificationStatus) {
         waitForNotification();
         await().untilAsserted(() -> {
-            Map<String, Object> adyenNotificationBody = restAssuredAdyenApi
-                .getAdyenNotificationBody(startUpCucumberHook.getBaseRequestBinUrlPath(), shop.getId(), eventType, verificationType);
+            Map<String, Object> adyenNotificationBody = restAssuredAdyenApi.getAdyenNotificationBody(startUpCucumberHook.getBaseRequestBinUrlPath(), shop.getId(), eventType, verificationType);
             Assertions.assertThat(adyenNotificationBody).isNotEmpty();
             JSONArray shareholderJsonArray = JsonPath.parse(adyenNotificationBody).read("content.verification.shareholders.*");
             for (Object shareholder : shareholderJsonArray) {
@@ -161,12 +160,8 @@ public class IdentityVerificationSteps extends StepDefsHelper {
                 String documentType = stringStringMap.get("documentType");
                 String filename = stringStringMap.get("filename");
                 boolean fileMatch = documentDetails.stream()
-                    .anyMatch(detail ->
-                        documentType.equals(DocumentDetail.DocumentTypeEnum.valueOf(documentType).toString())
-                            && detail.getFilename().equals(filename));
-                Assertions.assertThat(fileMatch)
-                    .withFailMessage("Found the following docs: <%s>", documentDetails.toString())
-                    .isTrue();
+                                                   .anyMatch(detail -> documentType.equals(DocumentDetail.DocumentTypeEnum.valueOf(documentType).toString()) && detail.getFilename().equals(filename));
+                Assertions.assertThat(fileMatch).withFailMessage("Found the following docs: <%s>", documentDetails.toString()).isTrue();
             }
         });
     }
@@ -177,25 +172,18 @@ public class IdentityVerificationSteps extends StepDefsHelper {
         cucumberTable.forEach(row -> {
             String documentType = row.get("documentType");
             String filename = row.get("filename");
-            boolean documentTypeAndFilenameMatch = uploadedDocuments.getDocumentDetails().stream()
-                .anyMatch(doc ->
-                    DocumentDetail.DocumentTypeEnum.valueOf(documentType).equals(doc.getDocumentType())
-                        && filename.equals(doc.getFilename())
-                );
-            Assertions
-                .assertThat(documentTypeAndFilenameMatch)
-                .withFailMessage(String.format("Document upload response:[%s]", JsonPath.parse(uploadedDocuments).toString()))
-                .isFalse();
+            boolean documentTypeAndFilenameMatch = uploadedDocuments.getDocumentDetails()
+                                                                    .stream()
+                                                                    .anyMatch(doc -> DocumentDetail.DocumentTypeEnum.valueOf(documentType).equals(doc.getDocumentType())
+                                                                        && filename.equals(doc.getFilename()));
+            Assertions.assertThat(documentTypeAndFilenameMatch).withFailMessage(String.format("Document upload response:[%s]", JsonPath.parse(uploadedDocuments).toString())).isFalse();
         });
     }
 
     @And("^the ACCOUNT_HOLDER_VERIFICATION notifications are sent to Connector App$")
     public void theACCOUNT_HOLDER_VERIFICATIONNotificationsAreSentToConnectorApp() throws Exception {
         for (DocumentContext notification : notifications) {
-            restAdyenNotificationMockMvc.perform(post("/api/adyen-notifications")
-                .contentType(TestUtil.APPLICATION_JSON_UTF8)
-                .content(notification.jsonString()))
-                .andExpect(status().is(201));
+            restAdyenNotificationMockMvc.perform(post("/api/adyen-notifications").contentType(TestUtil.APPLICATION_JSON_UTF8).content(notification.jsonString())).andExpect(status().is(201));
             log.info("Notification posted to Connector: [{}]", notification.jsonString());
         }
     }
@@ -209,17 +197,16 @@ public class IdentityVerificationSteps extends StepDefsHelper {
             GetUploadedDocumentsRequest getUploadedDocumentsRequest = new GetUploadedDocumentsRequest();
             getUploadedDocumentsRequest.setAccountHolderCode(shop.getId());
             uploadedDocuments = adyenAccountService.getUploadedDocuments(getUploadedDocumentsRequest);
-            List<DocumentDetail> documents = uploadedDocuments.getDocumentDetails().stream()
-                .filter(doc ->
-                    DocumentDetail.DocumentTypeEnum.valueOf(documentType).equals(doc.getDocumentType())
-                        && filename.equals(doc.getFilename()))
-                .collect(Collectors.toList());
+            List<DocumentDetail> documents = uploadedDocuments.getDocumentDetails()
+                                                              .stream()
+                                                              .filter(doc -> DocumentDetail.DocumentTypeEnum.valueOf(documentType).equals(doc.getDocumentType()) && filename.equals(doc.getFilename()))
+                                                              .collect(Collectors.toList());
             Assertions.assertThat(documents).hasSize(2);
         }
     }
 
-    @Then("^the documents will be removed for each of the UBOs$")
-    public void theDocumentsWillBeRemovedForEachOfTheUBOs() {
+    @Then("^the documents are removed for each of the UBOs$")
+    public void theDocumentsAreRemovedForEachOfTheUBOs() {
         await().with().pollInterval(fibonacci()).untilAsserted(() -> {
             Assertions.assertThat(adyenNotificationRepository.findAll().size()).isEqualTo(0);
         });
@@ -231,5 +218,15 @@ public class IdentityVerificationSteps extends StepDefsHelper {
     @Then("^each UBO will receive a remedial email$")
     public void eachUBOWillReceiveARemedialEmail(String title) throws Throwable {
         validationCheckOnReceivedEmails(title, shop);
+    }
+
+
+    @And("^the shop is updated to tier1$")
+    public void theShopIsUpdatedToTier1() throws Exception {
+        UpdateAccountHolderRequest updateAccountHolderRequest = new UpdateAccountHolderRequest();
+        updateAccountHolderRequest.setAccountHolderCode(shop.getId());
+        updateAccountHolderRequest.setProcessingTier(1);
+        adyenAccountService.updateAccountHolder(updateAccountHolderRequest);
+        log.info("AccountHolder tier is upgraded to 1");
     }
 }

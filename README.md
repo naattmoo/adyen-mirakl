@@ -57,6 +57,11 @@ export MAIL_USER=<user>
 export MAIL_PASS=<pass>
 ```
 
+And set following to true if you want to pay commissions to liable account by payout vouchers instead of regular schedule.
+```
+export PAYOUT_TO_LIABLE_ACCOUNT_BY_VOUCHER_ENABLED=true
+```
+
 And setting only for DEV or TEST environment to receive notifications
 ```
 export REQUESTBIN_URL=<URL of test service to receive notifications>
@@ -73,6 +78,14 @@ You can set-up a database connection by exporting a jdbc query string e.g.:
 SPRING_DATASOURCE_URL=jdbc:mysql://adyenmiraklconnector-mysql:3306/adyenmiraklconnector?useUnicode=true&characterEncoding=utf8&useSSL=false
 or modifying the yml configuration file: https://github.com/Adyen/adyen-mirakl/blob/1.0.3/src/main/resources/config/application-prod.yml#L28
 
+### Configure Mirakl payment voucher endpoint
+
+The connector will handle payment vouchers of Mirakl in order to facilitate seller payouts in Adyen MarketPay.
+For that you will need to configure the connector URL in Mirakl side Administration -> Technical Settings -> Shop Payments:
+
+    Transmission type: HTTP
+    URL: https://NOTIFY_USERNAME:NOTIFY_PASSWORD@CONNECTOR_HOSTNAME_HERE/api/mirakl-notifications/payout
+    Method: POST
 
 
 ## Run in Development
