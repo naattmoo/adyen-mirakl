@@ -30,6 +30,7 @@ import org.apache.commons.lang3.EnumUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import com.adyen.mirakl.service.dto.AbstractDocumentDTO;
 import com.adyen.model.marketpay.DocumentDetail;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -41,7 +42,7 @@ import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiC
 import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
 
 @Service
-public abstract class AbstractDocumentService<T> {
+public abstract class AbstractDocumentService<T extends AbstractDocumentDTO> {
 
     private final Logger log = LoggerFactory.getLogger(AbstractDocumentService.class);
 
