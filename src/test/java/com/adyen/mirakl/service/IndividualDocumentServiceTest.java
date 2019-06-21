@@ -12,7 +12,7 @@
  *                               #############
  *                               ############
  *
- * Adyen Java API Library
+ * Adyen Mirakl Connector
  *
  * Copyright (c) 2019 Adyen B.V.
  * This file is open source and available under the MIT license.

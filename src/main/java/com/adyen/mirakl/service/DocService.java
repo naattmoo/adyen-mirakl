@@ -97,9 +97,6 @@ public class DocService {
     @Value("${adyenConfig.environment}")
     private String environment;
 
-    @Value("${shopService.maxUbos}")
-    private Integer maxUbos = 4;
-
     /**
      * Calling S30, S31, GetAccountHolder and UploadDocument to upload bankproof documents to Adyen
      */

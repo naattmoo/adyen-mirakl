@@ -12,7 +12,7 @@
  *                               #############
  *                               ############
  *
- * Adyen Java API Library
+ * Adyen Mirakl Connector
  *
  * Copyright (c) 2019 Adyen B.V.
  * This file is open source and available under the MIT license.
@@ -29,7 +29,6 @@ import javax.annotation.Resource;
 import org.apache.commons.lang3.EnumUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import com.adyen.model.marketpay.DocumentDetail;
 import com.google.common.collect.ImmutableList;
@@ -42,9 +41,9 @@ import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiC
 import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
 
 @Service
-public abstract class EntityDocumentService<T> {
+public abstract class AbstractDocumentService<T> {
 
-    private final Logger log = LoggerFactory.getLogger(EntityDocumentService.class);
+    private final Logger log = LoggerFactory.getLogger(AbstractDocumentService.class);
 
     private static final String ADYEN_PREFIX = "adyen-";
     private static final String SUFFIX_MIRAKL_PHOTOID = "-photoid";
@@ -56,10 +55,12 @@ public abstract class EntityDocumentService<T> {
     @Resource
     private MiraklMarketplacePlatformOperatorApiClient miraklMarketplacePlatformOperatorApiClient;
 
-    @Value("${shopService.maxUbos}")
-    private Integer maxUbos = 4;
-
     public abstract List<T> extractDocuments(List<MiraklShopDocument> miraklShopDocuments);
+
+    abstract void addDocumentDTO(final ImmutableList.Builder<T> builder,
+                                 final MiraklShopDocument miraklShopDocument,
+                                 final Integer entitySequence,
+                                 final Map<Boolean, DocumentDetail.DocumentTypeEnum> documentTypeEnum);
 
     void addToBuilder(ImmutableList.Builder<T> builder, Map<String, String> internalMemoryForDocs, MiraklShopDocument miraklShopDocument, String entityType, Integer entitySequence) {
         String entityName = entityType + Objects.toString(entitySequence, "");
@@ -92,11 +93,6 @@ public abstract class EntityDocumentService<T> {
             }
         }
     }
-
-    abstract void addDocumentDTO(final ImmutableList.Builder<T> builder,
-                                final MiraklShopDocument miraklShopDocument,
-                                final Integer entitySequence,
-                                final Map<Boolean, DocumentDetail.DocumentTypeEnum> documentTypeEnum);
 
     private Map<Boolean, DocumentDetail.DocumentTypeEnum> findCorrectEnum(final Map<String, String> internalMemoryForDocs,
                                                                           final MiraklShopDocument miraklShopDocument,

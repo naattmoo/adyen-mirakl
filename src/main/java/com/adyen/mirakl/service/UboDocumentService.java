@@ -12,7 +12,7 @@
  *                               #############
  *                               ############
  *
- * Adyen Java API Library
+ * Adyen Mirakl Connector
  *
  * Copyright (c) 2019 Adyen B.V.
  * This file is open source and available under the MIT license.
@@ -38,7 +38,7 @@ import com.google.common.collect.ImmutableList;
 import com.mirakl.client.mmp.domain.shop.document.MiraklShopDocument;
 
 @Service
-public class UboDocumentService extends EntityDocumentService<UboDocumentDTO> {
+public class UboDocumentService extends AbstractDocumentService<UboDocumentDTO> {
 
     private final Logger log = LoggerFactory.getLogger(UboDocumentService.class);
 
