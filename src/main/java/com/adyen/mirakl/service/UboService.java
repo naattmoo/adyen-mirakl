@@ -62,22 +62,22 @@ public class UboService {
 
     private static final String ADYEN_UBO = "adyen-ubo";
 
-    private static final String CIVILITY = "civility";
-    private static final String FIRSTNAME = "firstname";
-    private static final String LASTNAME = "lastname";
-    private static final String EMAIL = "email";
-    private static final String DATE_OF_BIRTH = "dob";
-    private static final String NATIONALITY = "nationality";
-    private static final String ID_NUMBER = "idnumber";
-    private static final String HOUSE_NUMBER_OR_NAME = "housenumber";
-    private static final String STREET = "streetname";
-    private static final String CITY = "city";
-    private static final String POSTAL_CODE = "zip";
-    private static final String COUNTRY = "country";
-    private static final String PHONE_COUNTRY_CODE = "phonecountry";
-    private static final String PHONE_TYPE = "phonetype";
-    private static final String PHONE_NUMBER = "phonenumber";
-    private static final String STATE_OR_PROVINCE = "stateorprovince";
+    public static final String CIVILITY = "civility";
+    public static final String FIRSTNAME = "firstname";
+    public static final String LASTNAME = "lastname";
+    public static final String EMAIL = "email";
+    public static final String DATE_OF_BIRTH = "dob";
+    public static final String NATIONALITY = "nationality";
+    public static final String ID_NUMBER = "idnumber";
+    public static final String HOUSE_NUMBER_OR_NAME = "housenumber";
+    public static final String STREET = "streetname";
+    public static final String CITY = "city";
+    public static final String POSTAL_CODE = "zip";
+    public static final String COUNTRY = "country";
+    public static final String PHONE_COUNTRY_CODE = "phonecountry";
+    public static final String PHONE_TYPE = "phonetype";
+    public static final String PHONE_NUMBER = "phonenumber";
+    public static final String STATE_OR_PROVINCE = "stateorprovince";
 
     final static Map<String, Name.GenderEnum> CIVILITY_TO_GENDER = ImmutableMap.<String, Name.GenderEnum>builder().put("MR", Name.GenderEnum.MALE)
                                                                                                                          .put("MRS", Name.GenderEnum.FEMALE)

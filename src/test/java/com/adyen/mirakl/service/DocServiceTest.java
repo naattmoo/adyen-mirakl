@@ -30,6 +30,7 @@ import com.adyen.mirakl.domain.ShareholderMapping;
 import com.adyen.mirakl.repository.DocErrorRepository;
 import com.adyen.mirakl.repository.DocRetryRepository;
 import com.adyen.mirakl.repository.ShareholderMappingRepository;
+import com.adyen.mirakl.service.dto.IndividualDocumentDTO;
 import com.adyen.mirakl.service.dto.UboDocumentDTO;
 import com.adyen.model.marketpay.*;
 import com.adyen.service.Account;
@@ -53,6 +54,7 @@ import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -73,13 +75,17 @@ public class DocServiceTest {
     @Mock
     private DeltaService deltaServiceMock;
     @Mock
-    private UboService uboServiceMock;
+    private IndividualDocumentService individualDocumentServiceMock;
+    @Mock
+    private UboDocumentService uboDocumentServiceMock;
     @Mock
     private MiraklShopDocument miraklShopDocumentMock;
     @Mock
     private FileWrapper fileWrapperMock;
     @Mock
     private UploadDocumentResponse responseMock;
+    @Mock
+    private IndividualDocumentDTO individualDocumentDTOMock;
     @Mock
     private UboDocumentDTO uboDocumentDTOMock;
     @Mock
@@ -159,10 +165,12 @@ public class DocServiceTest {
         when(miraklShopDocumentMock.getTypeCode()).thenReturn("typeCode");
         when(miraklShopDocumentMock.getShopId()).thenReturn("shopId");
 
-        when(uboServiceMock.extractUboDocuments(ImmutableList.of(miraklShopDocumentMock))).thenReturn(ImmutableList.of(uboDocumentDTOMock));
+        when(uboDocumentServiceMock.extractDocuments(ImmutableList.of(miraklShopDocumentMock))).thenReturn(ImmutableList.of(uboDocumentDTOMock));
         when(uboDocumentDTOMock.getMiraklShopDocument()).thenReturn(miraklShopDocumentMock);
         when(uboDocumentDTOMock.getDocumentTypeEnum()).thenReturn(DocumentDetail.DocumentTypeEnum.ID_CARD);
         when(uboDocumentDTOMock.getShareholderCode()).thenReturn("shareholderCode");
+
+        when(individualDocumentServiceMock.extractDocuments(ImmutableList.of(miraklShopDocumentMock))).thenReturn(Collections.emptyList());
 
         when(miraklMarketplacePlatformOperatorApiClientMock.downloadShopsDocuments(any())).thenReturn(fileWrapperMock);
         when(fileWrapperMock.getFile()).thenReturn(file);
@@ -274,7 +282,8 @@ public class DocServiceTest {
         final MiraklGetShopDocumentsRequest requestToMirakl = miraklGetShopDocumentsRequestCaptor.getValue();
         Assertions.assertThat(requestToMirakl.getShopIds()).containsOnly("shopId1");
 
-        verify(uboServiceMock).extractUboDocuments(ImmutableList.of(miraklShopDocumentMock1));
+        verify(uboDocumentServiceMock).extractDocuments(ImmutableList.of(miraklShopDocumentMock1));
+        verify(individualDocumentServiceMock).extractDocuments(ImmutableList.of(miraklShopDocumentMock1));
     }
 
 
