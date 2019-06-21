@@ -25,10 +25,15 @@ package com.adyen.mirakl.service;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Resource;
+import org.apache.commons.lang3.EnumUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -43,8 +48,7 @@ import com.adyen.mirakl.domain.ShareholderMapping;
 import com.adyen.mirakl.repository.DocErrorRepository;
 import com.adyen.mirakl.repository.DocRetryRepository;
 import com.adyen.mirakl.repository.ShareholderMappingRepository;
-import com.adyen.mirakl.service.dto.IndividualDocumentDTO;
-import com.adyen.mirakl.service.dto.UboDocumentDTO;
+import com.adyen.mirakl.service.dto.DocumentDTO;
 import com.adyen.mirakl.service.util.GetShopDocumentsRequest;
 import com.adyen.model.marketpay.DocumentDetail;
 import com.adyen.model.marketpay.GetAccountHolderRequest;
@@ -54,9 +58,14 @@ import com.adyen.model.marketpay.UploadDocumentResponse;
 import com.adyen.service.Account;
 import com.adyen.service.exception.ApiException;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.mirakl.client.mmp.domain.common.FileWrapper;
+import com.mirakl.client.mmp.domain.common.MiraklAdditionalFieldValue;
+import com.mirakl.client.mmp.domain.shop.MiraklShop;
+import com.mirakl.client.mmp.domain.shop.MiraklShops;
 import com.mirakl.client.mmp.domain.shop.document.MiraklShopDocument;
 import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
+import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
 import com.mirakl.client.mmp.request.shop.document.MiraklDeleteShopDocumentRequest;
 import com.mirakl.client.mmp.request.shop.document.MiraklDownloadShopsDocumentsRequest;
 import com.mirakl.client.mmp.request.shop.document.MiraklGetShopDocumentsRequest;
@@ -67,6 +76,15 @@ public class DocService {
 
     private final Logger log = LoggerFactory.getLogger(DocService.class);
 
+    private static final String ADYEN_PREFIX = "adyen-";
+    private static final String INDIVIDUAL_ENTITY = "individual";
+    private static final String UBO_ENTITY = "ubo";
+    private static final String SUFFIX_MIRAKL_PHOTOID = "-photoid";
+    private static final String SUFFIX_MIRAKL_PHOTOID_REAR = "-photoid-rear";
+    private static final String SUFFIX_MIRAKL_PHOTOIDTYPE = "-photoidtype";
+    private static final String SUFFIX_FRONT = "_FRONT";
+    private static final String SUFFIX_BACK = "_BACK";
+
     @Resource
     private MiraklMarketplacePlatformOperatorApiClient miraklMarketplacePlatformOperatorApiClient;
 
@@ -75,12 +93,6 @@ public class DocService {
 
     @Resource
     private DeltaService deltaService;
-
-    @Resource
-    private IndividualService individualService;
-
-    @Resource
-    private UboService uboService;
 
     @Resource
     private ShareholderMappingRepository shareholderMappingRepository;
@@ -96,6 +108,9 @@ public class DocService {
 
     @Value("${adyenConfig.environment}")
     private String environment;
+
+    @Value("${shopService.maxUbos}")
+    private Integer maxUbos = 4;
 
     /**
      * Calling S30, S31, GetAccountHolder and UploadDocument to upload bankproof documents to Adyen
@@ -115,11 +130,8 @@ public class DocService {
             }
         }
 
-        final List<UboDocumentDTO> uboDocumentDTOS = uboService.extractUboDocuments(miraklShopDocumentList);
-        uboDocumentDTOS.forEach(uboDocumentDTO -> updateDocument(uboDocumentDTO.getMiraklShopDocument(), uboDocumentDTO.getDocumentTypeEnum(), uboDocumentDTO.getShareholderCode()));
-
-        final List<IndividualDocumentDTO> individualDocumentDTOS = individualService.extractIndividualDocuments(miraklShopDocumentList);
-        individualDocumentDTOS.forEach(individualDocumentDTO -> updateDocument(individualDocumentDTO.getMiraklShopDocument(), individualDocumentDTO.getDocumentTypeEnum(), null));
+        final List<DocumentDTO> documentDTOS = extractDocuments(miraklShopDocumentList);
+        documentDTOS.forEach(documentDTO -> updateDocument(documentDTO.getMiraklShopDocument(), documentDTO.getDocumentTypeEnum(), documentDTO.getShareholderCode()));
     }
 
     @Async
@@ -293,5 +305,120 @@ public class DocService {
 
     private List<String> extractBankProofDocumentsToDelete(final List<MiraklShopDocument> shopDocuments) {
         return shopDocuments.stream().filter(x -> x.getTypeCode().contentEquals(Constants.BANKPROOF)).map(MiraklShopDocument::getId).collect(Collectors.toList());
+    }
+
+    private List<DocumentDTO> extractDocuments(List<MiraklShopDocument> miraklShopDocuments) {
+        ImmutableList.Builder<DocumentDTO> builder = ImmutableList.builder();
+
+        Map<String, String> internalMemoryForDocs = new HashMap<>();
+        miraklShopDocuments.forEach(miraklShopDocument -> {
+            //Ubo docs
+            for (Integer uboNumber = 1; uboNumber <= maxUbos; uboNumber++) {
+                addToBuilder(builder, internalMemoryForDocs, miraklShopDocument, UBO_ENTITY, uboNumber);
+            }
+            //Individual docs
+            addToBuilder(builder, internalMemoryForDocs, miraklShopDocument, INDIVIDUAL_ENTITY, null);
+        });
+
+        return builder.build();
+    }
+
+    private void addToBuilder(ImmutableList.Builder<DocumentDTO> builder, Map<String, String> internalMemoryForDocs, MiraklShopDocument miraklShopDocument, String entityType, Integer entitySequence) {
+        String entityName = entityType + Objects.toString(entitySequence, "");
+        String photoIdFront = ADYEN_PREFIX + entityName + SUFFIX_MIRAKL_PHOTOID;
+        String photoIdRear = ADYEN_PREFIX + entityName + SUFFIX_MIRAKL_PHOTOID_REAR;
+
+        if (miraklShopDocument.getTypeCode().equalsIgnoreCase(photoIdFront)) {
+            final Map<Boolean, DocumentDetail.DocumentTypeEnum> documentTypeEnum = findCorrectEnum(internalMemoryForDocs, miraklShopDocument, entityName, SUFFIX_FRONT);
+            if (documentTypeEnum != null) {
+                addDocumentDTO(builder, miraklShopDocument, entityType, entitySequence, documentTypeEnum);
+            } else {
+                log.info("DocumentType is not supported for {}, shop: [{}], skipping uboDocument", entityName, miraklShopDocument.getShopId());
+            }
+        }
+
+        if (miraklShopDocument.getTypeCode().equalsIgnoreCase(photoIdRear)) {
+            final Map<Boolean, DocumentDetail.DocumentTypeEnum> documentTypeEnum = findCorrectEnum(internalMemoryForDocs, miraklShopDocument, entityName, SUFFIX_BACK);
+            // If the enum + BACK_SUFFIX is not found as an enum then do not send it across
+            if (documentTypeEnum != null && documentTypeEnum.keySet().iterator().next()) {
+                addDocumentDTO(builder, miraklShopDocument, entityType, entitySequence, documentTypeEnum);
+            } else if (documentTypeEnum != null) {
+                log.info("DocumentType [{}] is not supported for {}, shop: [{}], skipping uboDocument",
+                         documentTypeEnum.values().iterator().next() + SUFFIX_BACK,
+                         entityName,
+                         miraklShopDocument.getShopId());
+            } else {
+                log.warn("DocumentType is not supported for {}, shop: [{}], skipping uboDocument, please check your documentTypes in your customfields settings on Mirakl",
+                         entityName,
+                         miraklShopDocument.getShopId());
+            }
+        }
+    }
+
+    private void addDocumentDTO(final ImmutableList.Builder<DocumentDTO> builder,
+                                final MiraklShopDocument miraklShopDocument,
+                                final String entityType,
+                                final Integer entitySequence,
+                                final Map<Boolean, DocumentDetail.DocumentTypeEnum> documentTypeEnum) {
+        String shareholderCode = null;
+
+        if (UBO_ENTITY.equals(entityType)) {
+            final Optional<ShareholderMapping> shareholderMapping = shareholderMappingRepository.findOneByMiraklShopIdAndMiraklUboNumber(miraklShopDocument.getShopId(), entitySequence);
+            if (shareholderMapping.isPresent()) {
+                shareholderCode = shareholderMapping.get().getAdyenShareholderCode();
+            } else {
+                log.warn("No shareholder mapping found for ubo: [{}], shop: [{}], skipping uboDocument", entitySequence, miraklShopDocument.getShopId());
+                return;
+            }
+        }
+
+        final DocumentDTO documentDTO = new DocumentDTO();
+        documentDTO.setDocumentTypeEnum(documentTypeEnum.values().iterator().next());
+        documentDTO.setMiraklShopDocument(miraklShopDocument);
+        documentDTO.setShareholderCode(shareholderCode);
+        builder.add(documentDTO);
+
+    }
+
+    private Map<Boolean, DocumentDetail.DocumentTypeEnum> findCorrectEnum(final Map<String, String> internalMemoryForDocs,
+                                                                          final MiraklShopDocument miraklShopDocument,
+                                                                          final String entityName,
+                                                                          String suffix) {
+        String documentType = retrieveDocumentType(entityName, miraklShopDocument.getShopId(), internalMemoryForDocs);
+        if (documentType != null) {
+            if (EnumUtils.isValidEnum(DocumentDetail.DocumentTypeEnum.class, documentType + suffix)) {
+                return ImmutableMap.of(true, DocumentDetail.DocumentTypeEnum.valueOf(documentType + suffix));
+            } else {
+                return ImmutableMap.of(false, DocumentDetail.DocumentTypeEnum.valueOf(documentType));
+            }
+        }
+        return null;
+    }
+
+    private String retrieveDocumentType(final String entityName, final String shopId, Map<String, String> internalMemory) {
+        String documentTypeEnum = internalMemory.getOrDefault(shopId + "_" + entityName, null);
+        if (documentTypeEnum == null) {
+            String docTypeFromMirakl = getDocTypeFromMirakl(entityName, shopId);
+            if (docTypeFromMirakl != null) {
+                internalMemory.put(shopId + "_" + entityName, docTypeFromMirakl);
+                return docTypeFromMirakl;
+            }
+        }
+        return documentTypeEnum;
+    }
+
+    private String getDocTypeFromMirakl(String entityName, String shopId) {
+        MiraklGetShopsRequest request = new MiraklGetShopsRequest();
+        request.setShopIds(ImmutableList.of(shopId));
+        MiraklShops shops = miraklMarketplacePlatformOperatorApiClient.getShops(request);
+        MiraklShop shop = shops.getShops().iterator().next();
+        String code = ADYEN_PREFIX + entityName + SUFFIX_MIRAKL_PHOTOIDTYPE;
+        Optional<MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue> photoIdType = shop.getAdditionalFieldValues()
+                                                                                                   .stream()
+                                                                                                   .filter(MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue.class::isInstance)
+                                                                                                   .map(MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue.class::cast)
+                                                                                                   .filter(x -> code.equalsIgnoreCase(x.getCode()))
+                                                                                                   .findAny();
+        return photoIdType.map(MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithSingleValue::getValue).orElse(null);
     }
 }

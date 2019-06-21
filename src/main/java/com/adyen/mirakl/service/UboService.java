@@ -31,7 +31,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import javax.annotation.Resource;
-import org.apache.commons.lang3.EnumUtils;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.slf4j.Logger;
@@ -42,12 +41,10 @@ import org.springframework.util.CollectionUtils;
 import com.adyen.mirakl.domain.ShareholderMapping;
 import com.adyen.mirakl.domain.StreetDetails;
 import com.adyen.mirakl.repository.ShareholderMappingRepository;
-import com.adyen.mirakl.service.dto.UboDocumentDTO;
 import com.adyen.mirakl.service.util.IsoUtil;
 import com.adyen.mirakl.service.util.MiraklDataExtractionUtil;
 import com.adyen.model.Address;
 import com.adyen.model.Name;
-import com.adyen.model.marketpay.DocumentDetail;
 import com.adyen.model.marketpay.GetAccountHolderResponse;
 import com.adyen.model.marketpay.PersonalData;
 import com.adyen.model.marketpay.PhoneNumber;
@@ -57,10 +54,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.mirakl.client.mmp.domain.common.MiraklAdditionalFieldValue;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
-import com.mirakl.client.mmp.domain.shop.MiraklShops;
-import com.mirakl.client.mmp.domain.shop.document.MiraklShopDocument;
-import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
-import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
 
 @Service
 public class UboService {
@@ -69,26 +62,24 @@ public class UboService {
 
     private static final String ADYEN_UBO = "adyen-ubo";
 
-    public static final String CIVILITY = "civility";
-    public static final String FIRSTNAME = "firstname";
-    public static final String LASTNAME = "lastname";
-    public static final String EMAIL = "email";
-    public static final String DATE_OF_BIRTH = "dob";
-    public static final String NATIONALITY = "nationality";
-    public static final String ID_NUMBER = "idnumber";
-    public static final String HOUSE_NUMBER_OR_NAME = "housenumber";
-    public static final String STREET = "streetname";
-    public static final String CITY = "city";
-    public static final String POSTAL_CODE = "zip";
-    public static final String COUNTRY = "country";
-    public static final String PHONE_COUNTRY_CODE = "phonecountry";
-    public static final String PHONE_TYPE = "phonetype";
-    public static final String PHONE_NUMBER = "phonenumber";
-    public static final String SUFFIX_FRONT = "_FRONT";
-    public static final String SUFFIX_BACK = "_BACK";
-    public static final String STATE_OR_PROVINCE = "stateorprovince";
+    private static final String CIVILITY = "civility";
+    private static final String FIRSTNAME = "firstname";
+    private static final String LASTNAME = "lastname";
+    private static final String EMAIL = "email";
+    private static final String DATE_OF_BIRTH = "dob";
+    private static final String NATIONALITY = "nationality";
+    private static final String ID_NUMBER = "idnumber";
+    private static final String HOUSE_NUMBER_OR_NAME = "housenumber";
+    private static final String STREET = "streetname";
+    private static final String CITY = "city";
+    private static final String POSTAL_CODE = "zip";
+    private static final String COUNTRY = "country";
+    private static final String PHONE_COUNTRY_CODE = "phonecountry";
+    private static final String PHONE_TYPE = "phonetype";
+    private static final String PHONE_NUMBER = "phonenumber";
+    private static final String STATE_OR_PROVINCE = "stateorprovince";
 
-    public final static Map<String, Name.GenderEnum> CIVILITY_TO_GENDER = ImmutableMap.<String, Name.GenderEnum>builder().put("MR", Name.GenderEnum.MALE)
+    final static Map<String, Name.GenderEnum> CIVILITY_TO_GENDER = ImmutableMap.<String, Name.GenderEnum>builder().put("MR", Name.GenderEnum.MALE)
                                                                                                                          .put("MRS", Name.GenderEnum.FEMALE)
                                                                                                                          .put("MISS", Name.GenderEnum.FEMALE)
                                                                                                                          .build();
@@ -98,9 +89,6 @@ public class UboService {
 
     @Resource
     private ShareholderMappingRepository shareholderMappingRepository;
-
-    @Resource
-    private MiraklMarketplacePlatformOperatorApiClient miraklMarketplacePlatformOperatorApiClient;
 
     @Resource
     private Map<String, Pattern> houseNumberPatterns;
@@ -177,109 +165,6 @@ public class UboService {
             }
         });
         return builder.build();
-    }
-
-    public List<UboDocumentDTO> extractUboDocuments(List<MiraklShopDocument> miraklUbos) {
-
-        ImmutableList.Builder<UboDocumentDTO> builder = ImmutableList.builder();
-
-        Map<String, String> internalMemoryForDocs = new HashMap<>();
-        miraklUbos.forEach(miraklShopDocument -> {
-            for (int uboNumber = 1; uboNumber <= maxUbos; uboNumber++) {
-                addToBuilder(builder, internalMemoryForDocs, miraklShopDocument, uboNumber);
-            }
-        });
-
-        return builder.build();
-    }
-
-    private void addToBuilder(ImmutableList.Builder<UboDocumentDTO> builder, Map<String, String> internalMemoryForDocs, MiraklShopDocument miraklShopDocument, int uboNumber) {
-        String photoIdFront = ADYEN_UBO + uboNumber + "-photoid";
-        String photoIdRear = ADYEN_UBO + uboNumber + "-photoid-rear";
-        if (miraklShopDocument.getTypeCode().equalsIgnoreCase(photoIdFront)) {
-            final Map<Boolean, DocumentDetail.DocumentTypeEnum> documentTypeEnum = findCorrectEnum(internalMemoryForDocs, miraklShopDocument, uboNumber, SUFFIX_FRONT);
-            if (documentTypeEnum != null) {
-                addUboDocumentDTO(builder, miraklShopDocument, uboNumber, documentTypeEnum);
-            } else {
-                log.info("DocumentType is not supported for ubo: [{}], shop: [{}], skipping uboDocument", uboNumber, miraklShopDocument.getShopId());
-            }
-        }
-        if (miraklShopDocument.getTypeCode().equalsIgnoreCase(photoIdRear)) {
-            final Map<Boolean, DocumentDetail.DocumentTypeEnum> documentTypeEnum = findCorrectEnum(internalMemoryForDocs, miraklShopDocument, uboNumber, SUFFIX_BACK);
-            // If the enum + BACK_SUFFIX is not found as an enum then do not send it across
-            if (documentTypeEnum != null && documentTypeEnum.keySet().iterator().next()) {
-                addUboDocumentDTO(builder, miraklShopDocument, uboNumber, documentTypeEnum);
-            } else if (documentTypeEnum != null) {
-                log.info("DocumentType [{}] is not supported for ubo: [{}], shop: [{}], skipping uboDocument",
-                         documentTypeEnum.values().iterator().next() + SUFFIX_BACK,
-                         uboNumber,
-                         miraklShopDocument.getShopId());
-            } else {
-                log.warn("DocumentType is not supported for ubo: [{}], shop: [{}], skipping uboDocument, please check your documentTypes in your customfields settings on Mirakl",
-                         uboNumber,
-                         miraklShopDocument.getShopId());
-            }
-        }
-    }
-
-    private void addUboDocumentDTO(final ImmutableList.Builder<UboDocumentDTO> builder,
-                                   final MiraklShopDocument miraklShopDocument,
-                                   final int uboNumber,
-                                   final Map<Boolean, DocumentDetail.DocumentTypeEnum> documentTypeEnum) {
-
-        final Optional<ShareholderMapping> shareholderMapping = shareholderMappingRepository.findOneByMiraklShopIdAndMiraklUboNumber(miraklShopDocument.getShopId(), uboNumber);
-        if (shareholderMapping.isPresent()) {
-            final UboDocumentDTO uboDocumentDTO = new UboDocumentDTO();
-            uboDocumentDTO.setDocumentTypeEnum(documentTypeEnum.values().iterator().next());
-            uboDocumentDTO.setMiraklShopDocument(miraklShopDocument);
-            uboDocumentDTO.setShareholderCode(shareholderMapping.get().getAdyenShareholderCode());
-            builder.add(uboDocumentDTO);
-        } else {
-            log.warn("No shareholder mapping found for ubo: [{}], shop: [{}], skipping uboDocument", uboNumber, miraklShopDocument.getShopId());
-        }
-
-    }
-
-    private Map<Boolean, DocumentDetail.DocumentTypeEnum> findCorrectEnum(final Map<String, String> internalMemoryForDocs,
-                                                                          final MiraklShopDocument miraklShopDocument,
-                                                                          final int uboNumber,
-                                                                          String suffix) {
-        String documentType = retrieveUboPhotoIdType(uboNumber, miraklShopDocument.getShopId(), internalMemoryForDocs);
-        if (documentType != null) {
-            if (EnumUtils.isValidEnum(DocumentDetail.DocumentTypeEnum.class, documentType + suffix)) {
-                return ImmutableMap.of(true, DocumentDetail.DocumentTypeEnum.valueOf(documentType + suffix));
-            } else {
-                return ImmutableMap.of(false, DocumentDetail.DocumentTypeEnum.valueOf(documentType));
-            }
-        }
-        return null;
-    }
-
-    private String retrieveUboPhotoIdType(final Integer uboNumber, final String shopId, Map<String, String> internalMemory) {
-        String documentTypeEnum = internalMemory.getOrDefault(shopId + "_" + uboNumber, null);
-        if (documentTypeEnum == null) {
-            String docTypeFromMirakl = getDocTypeFromMirakl(uboNumber, shopId);
-            if (docTypeFromMirakl != null) {
-                internalMemory.put(shopId + "_" + uboNumber, docTypeFromMirakl);
-                return docTypeFromMirakl;
-            }
-        }
-        return documentTypeEnum;
-    }
-
-    private String getDocTypeFromMirakl(Integer uboNumber, String shopId) {
-        MiraklGetShopsRequest request = new MiraklGetShopsRequest();
-        request.setShopIds(ImmutableList.of(shopId));
-        MiraklShops shops = miraklMarketplacePlatformOperatorApiClient.getShops(request);
-        MiraklShop shop = shops.getShops().iterator().next();
-        String code = ADYEN_UBO + uboNumber + "-photoidtype";
-        Optional<MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue> photoIdType = shop.getAdditionalFieldValues()
-                                                                                                   .stream()
-                                                                                                   .filter(MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue.class::isInstance)
-                                                                                                   .map(MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue.class::cast)
-                                                                                                   .filter(x -> code.equalsIgnoreCase(x.getCode()))
-                                                                                                   .findAny();
-        return photoIdType.map(MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithSingleValue::getValue).orElse(null);
     }
 
     public List<ShareholderContact> extractUbos(final MiraklShop shop) {

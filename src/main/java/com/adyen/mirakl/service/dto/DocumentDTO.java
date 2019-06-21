@@ -25,7 +25,7 @@ package com.adyen.mirakl.service.dto;
 import com.adyen.model.marketpay.DocumentDetail;
 import com.mirakl.client.mmp.domain.shop.document.MiraklShopDocument;
 
-public class UboDocumentDTO {
+public class DocumentDTO {
 
     private String shareholderCode;
     private MiraklShopDocument miraklShopDocument;
