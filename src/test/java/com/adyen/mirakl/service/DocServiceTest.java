@@ -22,6 +22,22 @@
 
 package com.adyen.mirakl.service;
 
+import java.io.File;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import org.assertj.core.api.Assertions;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 import com.adyen.mirakl.config.ApplicationProperties;
 import com.adyen.mirakl.config.Constants;
 import com.adyen.mirakl.domain.DocError;
@@ -30,9 +46,13 @@ import com.adyen.mirakl.domain.ShareholderMapping;
 import com.adyen.mirakl.repository.DocErrorRepository;
 import com.adyen.mirakl.repository.DocRetryRepository;
 import com.adyen.mirakl.repository.ShareholderMappingRepository;
-import com.adyen.mirakl.service.dto.IndividualDocumentDTO;
 import com.adyen.mirakl.service.dto.UboDocumentDTO;
-import com.adyen.model.marketpay.*;
+import com.adyen.model.marketpay.AccountHolderDetails;
+import com.adyen.model.marketpay.BankAccountDetail;
+import com.adyen.model.marketpay.DocumentDetail;
+import com.adyen.model.marketpay.GetAccountHolderResponse;
+import com.adyen.model.marketpay.UploadDocumentRequest;
+import com.adyen.model.marketpay.UploadDocumentResponse;
 import com.adyen.service.Account;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
@@ -41,27 +61,15 @@ import com.mirakl.client.mmp.domain.shop.document.MiraklShopDocument;
 import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
 import com.mirakl.client.mmp.request.shop.document.MiraklDeleteShopDocumentRequest;
 import com.mirakl.client.mmp.request.shop.document.MiraklGetShopDocumentsRequest;
-import org.assertj.core.api.Assertions;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
-
-import java.io.File;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-
 import static com.google.common.io.Files.toByteArray;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.isA;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 @RunWith(MockitoJUnitRunner.class)
 public class DocServiceTest {
@@ -85,8 +93,6 @@ public class DocServiceTest {
     @Mock
     private UploadDocumentResponse responseMock;
     @Mock
-    private IndividualDocumentDTO individualDocumentDTOMock;
-    @Mock
     private UboDocumentDTO uboDocumentDTOMock;
     @Mock
     private ShareholderMappingRepository shareholderMappingRepositoryMock;
@@ -99,9 +105,10 @@ public class DocServiceTest {
     @Mock
     private DocErrorRepository docErrorRepositoryMock;
     @Mock
-    private DocRetry docRetryMock1, docRetryMock2;
+    private DocRetry docRetryMock1;
     @Mock
-    private ApplicationProperties applicationPropertiesMock;
+    private ApplicationProperties applicationProperties;
+
     @Captor
     private ArgumentCaptor<UploadDocumentRequest> uploadDocumentRequestCaptor;
     @Captor
@@ -113,6 +120,10 @@ public class DocServiceTest {
     @Captor
     private ArgumentCaptor<DocError> docErrorCaptor;
 
+    @Before
+    public void setUp() {
+        setField(docService, "environment", "TEST");
+    }
 
     @Test
     public void testRetrieveBankproofAndUpload() throws Exception {
@@ -192,12 +203,14 @@ public class DocServiceTest {
     }
 
     @Test
-    public void shouldRemoveShareHolderMedia(){
+    public void shouldRemoveShareHolderMedia() {
         when(shareholderMappingRepositoryMock.findOneByAdyenShareholderCode("shareHolderCode")).thenReturn(Optional.of(shareholderMappingMock));
         when(shareholderMappingMock.getMiraklShopId()).thenReturn("miraklShopID");
         when(shareholderMappingMock.getMiraklUboNumber()).thenReturn(2);
 
-        when(miraklMarketplacePlatformOperatorApiClientMock.getShopDocuments(miraklGetShopDocumentsRequestCaptor.capture())).thenReturn(ImmutableList.of(miraklShopDocumentMock1, miraklShopDocumentMock2, miraklShopDocumentMock3));
+        when(miraklMarketplacePlatformOperatorApiClientMock.getShopDocuments(miraklGetShopDocumentsRequestCaptor.capture())).thenReturn(ImmutableList.of(miraklShopDocumentMock1,
+                                                                                                                                                         miraklShopDocumentMock2,
+                                                                                                                                                         miraklShopDocumentMock3));
         //ignored as we're looking to delete only ubo 2 documents
         when(miraklShopDocumentMock1.getTypeCode()).thenReturn("adyen-ubo1-photoid");
 
@@ -220,7 +233,7 @@ public class DocServiceTest {
     }
 
     @Test
-    public void saveNewFailedDocWhenDoesNotAlreadyExist(){
+    public void saveNewFailedDocWhenDoesNotAlreadyExist() {
         when(miraklMarketplacePlatformOperatorApiClientMock.getShopDocuments(any())).thenReturn(ImmutableList.of(miraklShopDocumentMock));
         when(miraklShopDocumentMock.getTypeCode()).thenReturn(Constants.BANKPROOF);
         when(miraklShopDocumentMock.getId()).thenReturn("docId");
@@ -245,7 +258,7 @@ public class DocServiceTest {
     }
 
     @Test
-    public void addToExistingDocError(){
+    public void addToExistingDocError() {
         when(miraklMarketplacePlatformOperatorApiClientMock.getShopDocuments(any())).thenReturn(ImmutableList.of(miraklShopDocumentMock));
         when(miraklShopDocumentMock.getTypeCode()).thenReturn(Constants.BANKPROOF);
         when(miraklShopDocumentMock.getId()).thenReturn("docId");
@@ -262,13 +275,16 @@ public class DocServiceTest {
     }
 
     @Test
-    public void shouldFilterShopDocsById(){
+    public void shouldFilterShopDocsById() {
+
+        when(applicationProperties.getMaxDocRetries()).thenReturn(10);
 
         when(docRetryRepositoryMock.findByTimesFailedLessThanEqual(isA(Integer.class))).thenReturn(ImmutableList.of(docRetryMock1));
         when(docRetryMock1.getDocId()).thenReturn("docId1");
         when(docRetryMock1.getShopId()).thenReturn("shopId1");
 
-        when(miraklMarketplacePlatformOperatorApiClientMock.getShopDocuments(miraklGetShopDocumentsRequestCaptor.capture())).thenReturn(ImmutableList.of(miraklShopDocumentMock1, miraklShopDocumentMock2));
+        when(miraklMarketplacePlatformOperatorApiClientMock.getShopDocuments(miraklGetShopDocumentsRequestCaptor.capture())).thenReturn(ImmutableList.of(miraklShopDocumentMock1,
+                                                                                                                                                         miraklShopDocumentMock2));
 
         when(miraklShopDocumentMock1.getId()).thenReturn("docId1");
         when(miraklShopDocumentMock1.getShopId()).thenReturn("shopId1");
@@ -285,6 +301,4 @@ public class DocServiceTest {
         verify(uboDocumentServiceMock).extractDocuments(ImmutableList.of(miraklShopDocumentMock1));
         verify(individualDocumentServiceMock).extractDocuments(ImmutableList.of(miraklShopDocumentMock1));
     }
-
-
 }
