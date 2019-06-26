@@ -32,7 +32,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import com.adyen.mirakl.domain.ShareholderMapping;
 import com.adyen.mirakl.repository.ShareholderMappingRepository;
-import com.adyen.mirakl.service.dto.IndividualDocumentDTO;
+import com.adyen.mirakl.service.dto.DocumentDTO;
 import com.adyen.model.marketpay.DocumentDetail;
 import com.google.common.collect.ImmutableList;
 import com.mirakl.client.mmp.domain.common.MiraklAdditionalFieldValue;
@@ -103,7 +103,7 @@ public class IndividualDocumentServiceTest {
         when(miraklAddtionalField3.getCode()).thenReturn("adyen-individual-photoidtype");
         when(miraklAddtionalField3.getValue()).thenReturn("DRIVING_LICENCE");
 
-        final List<IndividualDocumentDTO> result = individualDocumentService.extractDocuments(ImmutableList.of(miraklShopDocument1,
+        final List<DocumentDTO> result = individualDocumentService.extractDocuments(ImmutableList.of(miraklShopDocument1,
                                                                                                                miraklShopDocument2,
                                                                                                                miraklShopDocument3,
                                                                                                                miraklShopDocument4,

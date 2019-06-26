@@ -22,7 +22,7 @@
 
 package com.adyen.mirakl.service.dto;
 
-public class UboDocumentDTO extends AbstractDocumentDTO {
+public class UboDocumentDTO extends DocumentDTO {
 
     private String shareholderCode;
 

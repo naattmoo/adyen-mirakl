@@ -21,5 +21,27 @@
 
 package com.adyen.mirakl.service.dto;
 
-public class IndividualDocumentDTO extends AbstractDocumentDTO {
+import com.adyen.model.marketpay.DocumentDetail;
+import com.mirakl.client.mmp.domain.shop.document.MiraklShopDocument;
+
+public class DocumentDTO {
+
+    private MiraklShopDocument miraklShopDocument;
+    private DocumentDetail.DocumentTypeEnum documentTypeEnum;
+
+    public MiraklShopDocument getMiraklShopDocument() {
+        return miraklShopDocument;
+    }
+
+    public void setMiraklShopDocument(final MiraklShopDocument miraklShopDocument) {
+        this.miraklShopDocument = miraklShopDocument;
+    }
+
+    public DocumentDetail.DocumentTypeEnum getDocumentTypeEnum() {
+        return documentTypeEnum;
+    }
+
+    public void setDocumentTypeEnum(final DocumentDetail.DocumentTypeEnum documentTypeEnum) {
+        this.documentTypeEnum = documentTypeEnum;
+    }
 }

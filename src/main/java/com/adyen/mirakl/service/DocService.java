@@ -43,7 +43,7 @@ import com.adyen.mirakl.domain.ShareholderMapping;
 import com.adyen.mirakl.repository.DocErrorRepository;
 import com.adyen.mirakl.repository.DocRetryRepository;
 import com.adyen.mirakl.repository.ShareholderMappingRepository;
-import com.adyen.mirakl.service.dto.IndividualDocumentDTO;
+import com.adyen.mirakl.service.dto.DocumentDTO;
 import com.adyen.mirakl.service.dto.UboDocumentDTO;
 import com.adyen.mirakl.service.util.GetShopDocumentsRequest;
 import com.adyen.model.marketpay.DocumentDetail;
@@ -118,7 +118,7 @@ public class DocService {
         final List<UboDocumentDTO> uboDocumentDTOS = uboDocumentService.extractDocuments(miraklShopDocumentList);
         uboDocumentDTOS.forEach(documentDTO -> updateDocument(documentDTO.getMiraklShopDocument(), documentDTO.getDocumentTypeEnum(), documentDTO.getShareholderCode()));
 
-        final List<IndividualDocumentDTO> individualDocumentDTOS = individualDocumentService.extractDocuments(miraklShopDocumentList);
+        final List<DocumentDTO> individualDocumentDTOS = individualDocumentService.extractDocuments(miraklShopDocumentList);
         individualDocumentDTOS.forEach(documentDTO -> updateDocument(documentDTO.getMiraklShopDocument(), documentDTO.getDocumentTypeEnum(), null));
     }
 
