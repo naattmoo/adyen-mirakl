@@ -78,3 +78,22 @@ Feature: Identity verification check
         When adyen will send multiple ACCOUNT_HOLDER_VERIFICATION notifications with PASSPORT_VERIFICATION of status PASSED
         And the ACCOUNT_HOLDER_VERIFICATION notifications are sent to Connector App
         Then the documents are removed for each of the UBOs
+
+    Scenario: Uploading a new photo Id/Updating photo Id for individual to complete Identity Checks
+        Given a shop has been created with full data for a Individual
+            | lastName |
+            | TestData |
+        And the connector processes the data and pushes to Adyen
+        When the seller uploads a document in Mirakl
+            | front                   | back                    | UBO           |
+            | passportFront.png       | passportBack.png        | individual    |
+        And sets the photoIdType in Mirakl
+            | photoIdType     | UBO         |
+            | PASSPORT        | individual  |
+        And the connector processes the document data and push to Adyen
+        Then the documents are successfully uploaded to Adyen
+            | documentType    | filename                |
+            | PASSPORT        | passportFront.png       |
+        And the following document will not be uploaded to Adyen
+            | documentType | filename         |
+            | PASSPORT     | passportBack.png |
