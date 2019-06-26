@@ -294,7 +294,7 @@ public class StepDefsHelper {
                 e.printStackTrace();
             }
             assert response != null;
-            Assertions.assertThat(response.getResultCode()).isEqualTo("Received");
+            Assertions.assertThat(response.getResultCode()).isEqualTo("Success");
         });
     }
 

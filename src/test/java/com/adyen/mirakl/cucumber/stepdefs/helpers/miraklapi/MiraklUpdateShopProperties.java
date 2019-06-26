@@ -34,6 +34,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.Resource;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.assertj.core.api.Assertions;
 import com.adyen.mirakl.service.UboService;
 import com.google.common.collect.ImmutableList;
@@ -65,11 +66,18 @@ class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperties {
     ImmutableList.Builder<MiraklSimpleRequestAdditionalFieldValue> updateShopPhotoTypeBuilder(List<Map<String, String>> rows) {
         ImmutableList.Builder<MiraklSimpleRequestAdditionalFieldValue> builder = ImmutableList.builder();
         rows.forEach(row -> {
-            maxUbos = row.get("UBO");
-            int ubo = Integer.valueOf(maxUbos);
-            Map<Integer, Map<String, String>> uboKeys = uboService.generateMiraklUboKeys(Integer.valueOf(maxUbos));
-            builder.add(createAdditionalField(uboKeys.get(ubo).get(UboService.ID_NUMBER), UUID.randomUUID().toString()));
-            builder.add(createAdditionalField("adyen-ubo" + maxUbos + "-photoidtype", row.get("photoIdType")));
+            String uboValue = row.get("UBO");
+            if (StringUtils.isNumeric(uboValue)) {
+                //business shareholder ubo
+                maxUbos = uboValue;
+                int ubo = Integer.valueOf(maxUbos);
+                Map<Integer, Map<String, String>> uboKeys = uboService.generateMiraklUboKeys(Integer.valueOf(maxUbos));
+                builder.add(createAdditionalField(uboKeys.get(ubo).get(UboService.ID_NUMBER), UUID.randomUUID().toString()));
+                builder.add(createAdditionalField("adyen-ubo" + maxUbos + "-photoidtype", row.get("photoIdType")));
+            } else {
+                builder.add(createAdditionalField("adyen-" + uboValue + "-idnumber", UUID.randomUUID().toString()));
+                builder.add(createAdditionalField("adyen-" + uboValue + "-photoidtype", row.get("photoIdType")));
+            }
         });
         return builder;
     }
@@ -162,7 +170,12 @@ class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperties {
     MiraklUploadShopDocumentsRequest uploadMiraklShopWithIdentityDoc(String shopId, List<Map<String, String>> rows) {
         ImmutableList.Builder<MiraklUploadDocument> docUploadRequestBuilder = new ImmutableList.Builder<>();
         rows.forEach(row -> {
-            Integer ubo = Integer.valueOf(row.get("UBO"));
+            String ubo = row.get("UBO");
+            if(StringUtils.isNumeric(ubo)) {
+                //business shareholder ubo
+                ubo = "ubo" + ubo;
+            }
+
             // upload back documents only
             if (row.get("front").isEmpty()) {
                 setFileUploadBackDocument(docUploadRequestBuilder, row, ubo);
@@ -176,25 +189,26 @@ class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperties {
                 setFileUploadFrontDocument(docUploadRequestBuilder, row, ubo);
                 setFileUploadBackDocument(docUploadRequestBuilder, row, ubo);
             }
+
         });
         return miraklUploadShopDocumentsRequest(shopId, docUploadRequestBuilder.build());
     }
 
-    private void setFileUploadBackDocument(ImmutableList.Builder<MiraklUploadDocument> builder, Map<String, String> row, Integer ubo) {
+    private void setFileUploadBackDocument(ImmutableList.Builder<MiraklUploadDocument> builder, Map<String, String> row, String ubo) {
         MiraklUploadDocument element = new MiraklUploadDocument();
         URL url = Resources.getResource("fileuploads/" + row.get("back"));
         element.setFile(new File(url.getPath()));
         element.setFileName(row.get("back"));
-        element.setTypeCode("adyen-ubo" + ubo + "-photoid-rear");
+        element.setTypeCode("adyen-" + ubo + "-photoid-rear");
         builder.add(element);
     }
 
-    private void setFileUploadFrontDocument(ImmutableList.Builder<MiraklUploadDocument> builder, Map<String, String> row, Integer ubo) {
+    private void setFileUploadFrontDocument(ImmutableList.Builder<MiraklUploadDocument> builder, Map<String, String> row, String ubo) {
         MiraklUploadDocument element = new MiraklUploadDocument();
         URL url = Resources.getResource("fileuploads/" + row.get("front"));
         element.setFile(new File(url.getPath()));
         element.setFileName(row.get("front"));
-        element.setTypeCode("adyen-ubo" + ubo + "-photoid");
+        element.setTypeCode("adyen-" + ubo + "-photoid");
         builder.add(element);
     }
 
