@@ -9,10 +9,17 @@ The Adyen Mirakl Connector integrates a Mirakl Marketplace Platform Instance wit
 * The Connector manages the transfer of Shop data from Mirakl to create and update Account Holders in the MarketPay for purpose of Financial Onboarding and KYC Checks.
 * The Connector manages the Payout of Sellers through MarketPay when Mirakl Posts the Payout Voucher to the Connector.
 
+## Integration
+The Mirakl connector consumes all MarketPay APIs
 
+## Requirements
+To use Adyen's Mirakl connector, you additionally need to have: 
+
+* A hosting service for deploying the connector.
+* An ecommerce system for processing payments on behalf of your sellers, and splitting these funds between multiple accounts. By splitting payments, you can send the funds belonging to your sellers to their accounts, and your commission fee to your Mirakl Marketplace operator account.
+  
 ## Documentation
-We have a [Wiki](https://github.com/e2y/adyen-mirakl/wiki) for more detailed information.
-
+https://docs.adyen.com/developers/plugins/mirakl
 
 ## Installation
 
@@ -174,6 +181,10 @@ export MAIL_PASS=any
 and run:
 
     src/test/resources/scripts/smtp_nc.sh
+    
+    
+## Support
+If you have any problems, questions or suggestions, create an issue here or send your inquiry to support@adyen.com.   
     
 ## License
 This repository is open source and available under the MIT license. See the LICENSE file for more info.

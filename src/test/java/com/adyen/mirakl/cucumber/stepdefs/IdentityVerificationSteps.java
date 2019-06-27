@@ -229,4 +229,11 @@ public class IdentityVerificationSteps extends StepDefsHelper {
         adyenAccountService.updateAccountHolder(updateAccountHolderRequest);
         log.info("AccountHolder tier is upgraded to 1");
     }
+
+    @Given("^a shop has been created with full data for a (.*)")
+    public void aNewShopHasBeenCreatedAsAIndividual(String legalEntity, DataTable table) {
+        List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
+        MiraklCreatedShops shops = miraklShopApi.createShopForIndividual(miraklMarketplacePlatformOperatorApiClient, cucumberTable, legalEntity);
+        shop = retrieveCreatedShop(shops);
+    }
 }
