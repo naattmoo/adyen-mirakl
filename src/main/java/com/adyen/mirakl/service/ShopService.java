@@ -26,6 +26,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -67,6 +68,7 @@ import com.adyen.model.marketpay.notification.CompensateNegativeBalanceNotificat
 import com.adyen.service.Account;
 import com.adyen.service.exception.ApiException;
 import com.mirakl.client.mmp.domain.common.MiraklAdditionalFieldValue;
+import com.mirakl.client.mmp.domain.common.country.IsoCountryCode;
 import com.mirakl.client.mmp.domain.shop.MiraklContactInformation;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
 import com.mirakl.client.mmp.domain.shop.MiraklShops;
@@ -472,12 +474,12 @@ public class ShopService {
                 return Optional.empty();
             }
 
-            // check if PaymentInformation is object MiraklIbanBankAccountInformation
             miraklIbanBankAccountInformation.getIban();
             bankAccountDetail.setIban(miraklIbanBankAccountInformation.getIban());
+            bankAccountDetail.setBankName(miraklIbanBankAccountInformation.getBankName());
             bankAccountDetail.setBankCity(miraklIbanBankAccountInformation.getBankCity());
             bankAccountDetail.setBankBicSwift(miraklIbanBankAccountInformation.getBic());
-            bankAccountDetail.setCountryCode(getBankCountryFromIban(miraklIbanBankAccountInformation.getIban())); // required field
+            bankAccountDetail.setCountryCode(getBankCountryFromIban(miraklIbanBankAccountInformation.getIban()));
             bankAccountDetail.setCurrencyCode(shop.getCurrencyIsoCode().toString());
 
         }
@@ -506,14 +508,11 @@ public class ShopService {
                                                                                           houseNumberPatterns.get(IsoUtil.getIso2CountryCodeFromIso3(shop.getContactInformation().getCountry())));
             bankAccountDetail.setOwnerStreet(streetDetails.getStreetName());
             bankAccountDetail.setOwnerHouseNumberOrName(streetDetails.getHouseNumberOrName());
-
             bankAccountDetail.setOwnerPostalCode(shop.getContactInformation().getZipCode());
             bankAccountDetail.setOwnerCity(shop.getContactInformation().getCity());
             bankAccountDetail.setOwnerName(shop.getPaymentInformation().getOwner());
-            if (isAccountTypeAba) {
-                bankAccountDetail.setOwnerState(shop.getContactInformation().getState());
-                bankAccountDetail.setOwnerCountryCode(IsoUtil.getIso2CountryCodeFromIso3(shop.getContactInformation().getCountry()));
-            }
+            bankAccountDetail.setOwnerState(shop.getContactInformation().getState());
+            bankAccountDetail.setOwnerCountryCode(IsoUtil.getIso2CountryCodeFromIso3(shop.getContactInformation().getCountry()));
         }
         bankAccountDetail.setPrimaryAccount(true);
         accountHolderDetails.addBankAccountDetail(bankAccountDetail);
