@@ -316,11 +316,13 @@ public class ShopServiceTest {
         assertEquals("GB", request.getAccountHolderDetails().getBankAccountDetails().get(0).getCountryCode());
         assertEquals("owner", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerName());
         assertEquals("GB00IBAN", request.getAccountHolderDetails().getBankAccountDetails().get(0).getIban());
-        assertEquals("BIC", request.getAccountHolderDetails().getBankAccountDetails().get(0).getBankBicSwift());
         assertEquals("1111AA", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerPostalCode());
         assertEquals("Amsterdam", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerCity());
         assertEquals("BIC", request.getAccountHolderDetails().getBankAccountDetails().get(0).getBankBicSwift());
+        assertEquals("bankCity", request.getAccountHolderDetails().getBankAccountDetails().get(0).getBankCity());
         assertEquals("610b", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerHouseNumberOrName());
+        assertEquals("state", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerState());
+        assertEquals("NL", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerCountryCode());
 
         // Update with the same BankAccountDetails
         GetAccountHolderResponse getAccountHolderResponse = createGetAccountHolderResponse();
