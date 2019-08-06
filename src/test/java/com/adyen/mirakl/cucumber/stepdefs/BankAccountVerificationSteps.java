@@ -90,6 +90,13 @@ public class BankAccountVerificationSteps extends StepDefsHelper {
         this.shop = retrieveCreatedShop(shops);
     }
 
+    @Given("^a shop has been created in Mirakl for an (.*) with Swedish Bank Information$")
+    public void aSEShopHasBeenCreatedInMiraklForABusinessWithBankInformation(String legalEntity, DataTable table) {
+        List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
+        MiraklCreatedShops shops = miraklShopApi.createBusinessShopForSEWithUBOs(miraklMarketplacePlatformOperatorApiClient, cucumberTable, legalEntity);
+        this.shop = retrieveCreatedShop(shops);
+    }
+
     @Given("^a seller creates a shop as a (.*) without entering a bank account$")
     public void aSellerCreatesAShopAsAIndividualWithoutEnteringaBankAccount(String legalEntity, DataTable table) {
         List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
