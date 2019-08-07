@@ -67,7 +67,7 @@ class MiraklShopProperties extends AbstractMiraklShopSharedProperties {
                 owner = row.get("bankOwnerName");
                 bankName = row.get("bank name");
                 iban = row.get("iban");
-                bic = FAKER.finance().bic();
+                bic = row.get("bic") != null ? row.get("bic") : FAKER.finance().bic();
                 city = row.get("city");
                 createShop.setPaymentInformation(miraklIbanBankAccountInformation(owner, bankName, iban, bic, city));
             }
