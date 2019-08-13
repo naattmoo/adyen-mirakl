@@ -45,7 +45,7 @@ Feature: Bank Account Verification
             | city   | bank name | iban                     | bic      | bankOwnerName | lastName | maxUbos | currency  |
             | PASSED | testBank  | SE4550000000058398257466 | NDEASESE | TestData      | TestData | 4       | SEK       |
         When the connector processes the data and pushes to Adyen
-        Then the ACCOUNT_HOLDER_VERIFICATION notification is sent by Adyen comprising of BANK_ACCOUNT_VERIFICATION and DATA_PROVIDED
+        Then the ACCOUNT_HOLDER_VERIFICATION notification is sent by Adyen comprising of BANK_ACCOUNT_VERIFICATION and AWAITING_DATA
         And a new bankAccountDetail will be created for the existing Account Holder
             | eventType              | iban                     |
             | ACCOUNT_HOLDER_CREATED | SE4550000000058398257466 |
@@ -62,6 +62,6 @@ Feature: Bank Account Verification
         And the document is successfully uploaded to Adyen
             | documentType   | filename          |
             | BANK_STATEMENT | BankStatement.png |
-        When the ACCOUNT_HOLDER_VERIFICATION notification is sent by Adyen comprising of BANK_ACCOUNT_VERIFICATION and DATA_PROVIDED
+        When the ACCOUNT_HOLDER_VERIFICATION notification is sent by Adyen comprising of BANK_ACCOUNT_VERIFICATION and PASSED
         And the ACCOUNT_HOLDER_VERIFICATION notification is sent to the Connector
 
