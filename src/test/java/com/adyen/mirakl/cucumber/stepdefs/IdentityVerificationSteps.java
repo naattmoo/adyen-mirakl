@@ -201,6 +201,7 @@ public class IdentityVerificationSteps extends StepDefsHelper {
         for (Map<String, String> row : cucumberTable) {
             String documentType = row.get("documentType");
             String filename = row.get("filename");
+            String timesUploaded = row.get("timesUploaded");
             GetUploadedDocumentsRequest getUploadedDocumentsRequest = new GetUploadedDocumentsRequest();
             getUploadedDocumentsRequest.setAccountHolderCode(shop.getId());
             uploadedDocuments = adyenAccountService.getUploadedDocuments(getUploadedDocumentsRequest);
@@ -208,7 +209,7 @@ public class IdentityVerificationSteps extends StepDefsHelper {
                                                               .stream()
                                                               .filter(doc -> DocumentDetail.DocumentTypeEnum.valueOf(documentType).equals(doc.getDocumentType()) && filename.equals(doc.getFilename()))
                                                               .collect(Collectors.toList());
-            Assertions.assertThat(documents).hasSize(2);
+            Assertions.assertThat(documents).hasSize(Integer.valueOf(timesUploaded));
         }
     }
 

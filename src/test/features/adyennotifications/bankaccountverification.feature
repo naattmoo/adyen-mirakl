@@ -43,7 +43,7 @@ Feature: Bank Account Verification
     Scenario: New BankAccountDetail is created for Account Holder upon new Swedish IBAN and SEK currency entry in Mirakl for an existing Adyen accountHolder
         Given a shop has been created in Mirakl for an Business with Swedish Bank Information
             | city   | bank name | iban                     | bic      | bankOwnerName | lastName | maxUbos | currency  |
-            | PASSED | testBank  | SE4550000000058398257466 | NDEASESE | TestData      | TestData | 4       | SEK       |
+            | PASSED | testBank  | SE4550000000058398257466 | NDEASESE | TestData      | TestData | 2       | SEK       |
         When the connector processes the data and pushes to Adyen
         Then the ACCOUNT_HOLDER_VERIFICATION notification is sent by Adyen comprising of BANK_ACCOUNT_VERIFICATION and AWAITING_DATA
         And a new bankAccountDetail will be created for the existing Account Holder
