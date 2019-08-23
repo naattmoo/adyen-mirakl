@@ -67,7 +67,7 @@ class MiraklShopProperties extends AbstractMiraklShopSharedProperties {
                 owner = row.get("bankOwnerName");
                 bankName = row.get("bank name");
                 iban = row.get("iban");
-                bic = FAKER.finance().bic();
+                bic = row.get("bic") != null ? row.get("bic") : FAKER.finance().bic();
                 city = row.get("city");
                 createShop.setPaymentInformation(miraklIbanBankAccountInformation(owner, bankName, iban, bic, city));
             }
@@ -197,6 +197,35 @@ class MiraklShopProperties extends AbstractMiraklShopSharedProperties {
         });
     }
 
+    void populateShareHolderDataForSE(String legalEntity, List<Map<String, String>> rows, MiraklCreateShop createShop) {
+        rows.forEach(row -> {
+            maxUbos = row.get("maxUbos");
+            if (maxUbos != null) {
+                ImmutableList.Builder<MiraklRequestAdditionalFieldValue> builder = ImmutableList.builder();
+                for (int i = 1; i <= Integer.valueOf(maxUbos); i++) {
+
+                    Map<Integer, Map<String, String>> uboKeys = uboService.generateMiraklUboKeys(Integer.valueOf(maxUbos));
+                    buildShareHolderMinimumData(builder, i, uboKeys, civility());
+                    builder.add(createAdditionalField(uboKeys.get(i).get(UboService.COUNTRY), "SE"));
+                    builder.add(createAdditionalField(uboKeys.get(i).get(UboService.STREET), FAKERSE.address().streetName() + " " + FAKERSE.address().streetAddressNumber()));
+                    builder.add(createAdditionalField(uboKeys.get(i).get(UboService.CITY), "PASSED"));
+                    builder.add(createAdditionalField(uboKeys.get(i).get(UboService.POSTAL_CODE), FAKERSE.address().zipCode()));
+                    builder.add(createAdditionalField(uboKeys.get(i).get(UboService.PHONE_COUNTRY_CODE), "SE"));
+                    builder.add(createAdditionalField(uboKeys.get(i).get(UboService.PHONE_NUMBER), FAKERSE.phoneNumber().phoneNumber()));
+                    builder.add(createAdditionalField(uboKeys.get(i).get(UboService.DATE_OF_BIRTH), dateOfBirth()));
+                    builder.add(createAdditionalField(uboKeys.get(i).get(UboService.NATIONALITY), "SE"));
+                    builder.add(createAdditionalField(uboKeys.get(i).get(UboService.STATE_OR_PROVINCE), FAKERSE.address().stateAbbr()));
+                    builder.add(createAdditionalField(uboKeys.get(i).get(UboService.ID_NUMBER), UUID.randomUUID().toString()));
+                    builder.add(createAdditionalField(uboKeys.get(i).get(UboService.HOUSE_NUMBER_OR_NAME), FAKERSE.address().streetAddressNumber()));
+
+                }
+                builder.add(createAdditionalField(MiraklStartupValidator.CustomMiraklFields.ADYEN_LEGAL_ENTITY_TYPE.toString(), legalEntity));
+                builder.add(createAdditionalField(MiraklStartupValidator.CustomMiraklFields.ADYEN_BUSINESS_HOUSENUMBER.toString(), FAKERSE.address().streetAddressNumber()));
+                createShop.setAdditionalFieldValues(builder.build());
+            }
+        });
+    }
+
     private String dateOfBirth() {
         return "1989-03-15T23:00:00Z";
     }
@@ -310,6 +339,18 @@ class MiraklShopProperties extends AbstractMiraklShopSharedProperties {
         createShop.setAddress(address);
     }
 
+    void populateMiraklAddressForSE(MiraklCreateShop createShop) {
+        MiraklCreateShopAddress address = new MiraklCreateShopAddress();
+        address.setCity("PASSED");
+        address.setCivility(civility());
+        address.setCountry("SWE");
+        address.setState(FAKERSE.address().stateAbbr());
+        address.setFirstname(FAKERSE.name().firstName());
+        address.setLastname(FAKERSE.name().lastName());
+        address.setStreet1(FAKERSE.address().streetAddress());
+        address.setZipCode(FAKERSE.address().zipCode());
+        createShop.setAddress(address);
+    }
 
     void throwErrorIfShopIsNotCreated(MiraklCreatedShops shops) {
         MiraklCreatedShopReturn miraklCreatedShopReturn = shops.getShopReturns().stream().findAny().orElseThrow(() -> new IllegalStateException("No Shop found"));
