@@ -23,7 +23,7 @@ Feature: Identity verification check
     Scenario: Share Holder mandatory information is not provided therefore Identity Check will return AWAITING_DATA
         Given a seller creates a shop as a Business without providing UBO mandatory data
             | maxUbos | lastName |
-            | 4       | testData |
+            | 2       | testData |
         And the connector processes the data and pushes to Adyen
         And the shop is updated to tier1
         Then adyen will send multiple ACCOUNT_HOLDER_VERIFICATION notifications with IDENTITY_VERIFICATION of status AWAITING_DATA
@@ -37,24 +37,25 @@ Feature: Identity verification check
     Scenario: Uploading a new photo Id/Updating photo Id for shareholder to complete Identity Checks
         Given a shop has been created with full UBO data for a Business
             | maxUbos | lastName |
-            | 4       | testData |
+            | 3       | testData |
         And the connector processes the data and pushes to Adyen
         When the seller uploads a document in Mirakl
             | front                   | back                    | UBO |
-            | passportFront.png       | passportBack.png        | 1   |
+            |                         | passportBack.png        | 1   |
             | idCardFront.png         | idCardBack.png          | 2   |
             | drivingLicenseFront.png | drivingLicenseBack.png  | 3   |
-            |                         | anotherPassportBack.png | 4   |
+#           | passportFront.png       | passportBack.png        | 1   |
+#           |                         | anotherPassportBack.png | 4   |
         And sets the photoIdType in Mirakl
             | photoIdType     | UBO |
             | PASSPORT        | 1   |
             | ID_CARD         | 2   |
             | DRIVING_LICENCE | 3   |
-            | PASSPORT        | 4   |
+#           | PASSPORT        | 4   |
         And the connector processes the document data and push to Adyen
         Then the documents are successfully uploaded to Adyen
             | documentType    | filename                |
-            | PASSPORT        | passportFront.png       |
+#           | PASSPORT        | passportFront.png       |
             | ID_CARD         | idCardFront.png         |
             | ID_CARD         | idCardBack.png         |
             | DRIVING_LICENCE | drivingLicenseFront.png |
@@ -62,14 +63,16 @@ Feature: Identity verification check
         And the following document will not be uploaded to Adyen
             | documentType | filename         |
             | PASSPORT     | passportBack.png |
-            | PASSPORT     | anotherPassportBack.png |
+#           | PASSPORT     | anotherPassportBack.png |
         When the seller uploads a document in Mirakl
             | front             | back | UBO |
-            | passportFront.png |      | 4   |
+            | passportFront.png |      | 1   |
+#           | passportFront.png |      | 4   |
         And the connector processes the document data and push to Adyen
         Then the updated documents are successfully uploaded to Adyen
-            | documentType | filename          |
-            | PASSPORT     | passportFront.png |
+            | documentType | filename          | timesUploaded |
+            | PASSPORT     | passportFront.png | 1             |
+#           | PASSPORT     | passportFront.png | 2             |
         And the following document will not be uploaded to Adyen
             | documentType | filename         |
             | PASSPORT     | passportBack.png |
@@ -79,6 +82,29 @@ Feature: Identity verification check
         And the ACCOUNT_HOLDER_VERIFICATION notifications are sent to Connector App
         Then the documents are removed for each of the UBOs
 
+    @PW-1406
+    Scenario: Individual data is passed to Adyen to perform KYC Identity Check
+        Given a shop has been created with full data for a Individual
+            | lastName |
+            | TestData |
+        And the connector processes the data and pushes to Adyen
+        Then adyen will send a ACCOUNT_HOLDER_VERIFICATION notification with IDENTITY_VERIFICATION of status DATA_PROVIDED
+
+    @PW-1406
+    Scenario: Individual mandatory information is not provided therefore Identity Check will return AWAITING_DATA
+        Given a shop has been created with full data for a Individual
+            | lastName |
+            | TestData |
+        And the connector processes the data and pushes to Adyen
+        And the shop is updated to tier1
+        Then adyen will send a ACCOUNT_HOLDER_VERIFICATION notification with IDENTITY_VERIFICATION of status AWAITING_DATA
+        When the ACCOUNT_HOLDER_VERIFICATION notifications are sent to Connector App
+        Then the individual will receive a remedial email
+        """
+        Account verification, awaiting data
+        """
+
+    @PW-1406
     Scenario: Uploading a new photo Id/Updating photo Id for individual to complete Identity Checks
         Given a shop has been created with full data for a Individual
             | lastName |
@@ -97,3 +123,7 @@ Feature: Identity verification check
         And the following document will not be uploaded to Adyen
             | documentType | filename         |
             | PASSPORT     | passportBack.png |
+        And the shop is updated to tier1
+        Then adyen will send a ACCOUNT_HOLDER_VERIFICATION notification with PASSPORT_VERIFICATION of status PASSED
+        And the ACCOUNT_HOLDER_VERIFICATION notifications are sent to Connector App
+        Then the documents are removed for Individual

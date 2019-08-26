@@ -220,6 +220,7 @@ class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperties {
             paymentInformation.setBic(((MiraklIbanBankAccountInformation) miraklPaymentInformation).getBic());
             paymentInformation.setOwner(miraklPaymentInformation.getOwner());
             paymentInformation.setBankName(((MiraklIbanBankAccountInformation) miraklPaymentInformation).getBankName());
+            paymentInformation.setBankCity(((MiraklIbanBankAccountInformation) miraklPaymentInformation).getBankCity());
         }
         return paymentInformation;
     }

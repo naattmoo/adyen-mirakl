@@ -109,6 +109,15 @@ public class MiraklShopApi extends MiraklShopProperties {
         return createMiraklShopRequest(client, miraklCreateShopBuilder);
     }
 
+    public MiraklCreatedShops createBusinessShopForSEWithUBOs(MiraklMarketplacePlatformOperatorApiClient client, List<Map<String, String>> rows, String legalEntity) {
+        MiraklCreateShop miraklCreateShop = new MiraklCreateShop();
+        miraklCreateShop = populateMiraklShopForSE(rows, legalEntity, miraklCreateShop);
+        populateShareHolderDataForSE(legalEntity, rows, miraklCreateShop);
+        populatePaymentInformation(rows, miraklCreateShop);
+        ImmutableList.Builder<MiraklCreateShop> miraklCreateShopBuilder = miraklShopCreateBuilder(miraklCreateShop);
+        return createMiraklShopRequest(client, miraklCreateShopBuilder);
+    }
+
     public MiraklCreatedShops createBusinessShopWithNoUBOs(MiraklMarketplacePlatformOperatorApiClient client, List<Map<String, String>> rows, String legalEntity) {
         MiraklCreateShop miraklCreateShop = new MiraklCreateShop();
         miraklCreateShop = populateMiraklShop(rows, legalEntity, miraklCreateShop);
@@ -136,6 +145,13 @@ public class MiraklShopApi extends MiraklShopProperties {
     // Mandatory for any type of shop creation for US business shop
     private MiraklCreateShop populateMiraklShopForUS(List<Map<String, String>> rows, String legalEntity, MiraklCreateShop miraklCreateShop) {
         populateMiraklAddressForUS(miraklCreateShop);
+        populateMiraklProfessionalInformation(miraklCreateShop);
+        populateUserEmailAndShopName(miraklCreateShop, rows);
+        return miraklCreateShop;
+    }
+
+    private MiraklCreateShop populateMiraklShopForSE(List<Map<String, String>> rows, String legalEntity, MiraklCreateShop miraklCreateShop) {
+        populateMiraklAddressForSE(miraklCreateShop);
         populateMiraklProfessionalInformation(miraklCreateShop);
         populateUserEmailAndShopName(miraklCreateShop, rows);
         return miraklCreateShop;
