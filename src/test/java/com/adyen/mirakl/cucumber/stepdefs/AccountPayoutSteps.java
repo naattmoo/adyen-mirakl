@@ -46,6 +46,7 @@ import com.adyen.mirakl.web.rest.AdyenNotificationResource;
 import com.adyen.mirakl.web.rest.MiraklNotificationsResource;
 import com.adyen.mirakl.web.rest.TestUtil;
 import com.adyen.model.marketpay.GetAccountHolderResponse;
+import com.adyen.model.marketpay.UpdateAccountHolderRequest;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import com.jayway.jsonpath.DocumentContext;
@@ -100,6 +101,15 @@ public class AccountPayoutSteps extends StepDefsHelper {
     @And("^a passport has been uploaded to Adyen$")
     public void aPassportHasBeenUploadedToAdyen() throws Throwable {
         uploadPassportToAdyen(shop);
+    }
+
+    @And("^the shop is updated to tier 1$")
+    public void theShopIsUpdatedToTier1() throws Exception {
+        UpdateAccountHolderRequest updateAccountHolderRequest = new UpdateAccountHolderRequest();
+        updateAccountHolderRequest.setAccountHolderCode(shop.getId());
+        updateAccountHolderRequest.setProcessingTier(1);
+        adyenAccountService.updateAccountHolder(updateAccountHolderRequest);
+        log.info("AccountHolder {} tier is upgraded to 1", shop.getId());
     }
 
     @When("^the accountHolders balance is increased$")

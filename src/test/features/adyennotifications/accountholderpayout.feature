@@ -7,6 +7,7 @@ Feature: Payout notifications for seller payout
             | PASSED | testBank  | GB26TEST40051512347366 | TestData      | TestData |
         And the connector processes the data and pushes to Adyen
         And a passport has been uploaded to Adyen
+        And the shop is updated to tier 1
         And the accountHolders balance is increased
             | transfer amount |
             | 9900            |
@@ -28,6 +29,7 @@ Feature: Payout notifications for seller payout
             | PASSED | testBank  | GB26TEST40051512347366 | TestData      | TestData |
         And the connector processes the data and pushes to Adyen
         And a passport has been uploaded to Adyen
+        And the shop is updated to tier 1
         When a payment voucher is sent to the Connector
             | paymentVoucher                  |
             | PaymentVoucher_PayoutShop04.csv |
@@ -58,6 +60,7 @@ Feature: Payout notifications for seller payout
             | city   | bank name | iban                   | bankOwnerName | lastName |
             | PASSED | testBank  | GB26TEST40051512347366 | TestData      | TestData |
         And the connector processes the data and pushes to Adyen
+        And the shop is updated to tier 1
         And the accountHolder receives balance
             | transfer amount   |
             | <transfer amount> |
@@ -93,6 +96,7 @@ Feature: Payout notifications for seller payout
             | PASSED | testBank  | GB26TEST40051512347366 | TestData      | TestData | GBP      |
         And the connector processes the data and pushes to Adyen
         And a passport has been uploaded to Adyen
+        And the shop is updated to tier 1
         And the accountHolders balance is increased
             | transfer amount | currency |
             | 9900            | GBP      |
