@@ -110,6 +110,7 @@ application:
         NL: "\\s([a-zA-Z]*\\d+[a-zA-Z]*)$"
     basicUsername: test
     basicPassword: test
+    defaultProcessingTier: null
 
 shops:
     shopIds:

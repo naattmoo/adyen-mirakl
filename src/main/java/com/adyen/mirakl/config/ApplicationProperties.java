@@ -48,6 +48,7 @@ public class ApplicationProperties {
     private Map<String, String> houseNumbersRegex;
     private String basicUsername;
     private String basicPassword;
+    private Integer defaultProcessingTier;
 
     @Bean
     public Map<String, Pattern> houseNumberPatterns() {
@@ -142,5 +143,13 @@ public class ApplicationProperties {
 
     public void setRetryDocsCron(final String retryDocsCron) {
         this.retryDocsCron = retryDocsCron;
+    }
+
+    public Integer getDefaultProcessingTier() {
+        return defaultProcessingTier;
+    }
+
+    public void setDefaultProcessingTier(final Integer defaultProcessingTier) {
+        this.defaultProcessingTier = defaultProcessingTier;
     }
 }

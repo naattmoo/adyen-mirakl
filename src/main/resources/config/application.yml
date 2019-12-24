@@ -123,6 +123,7 @@ application:
         NL: "\\s([a-zA-Z]*\\d+[a-zA-Z]*)$"
     basicUsername: ${NOTIFY_USERNAME}
     basicPassword: ${NOTIFY_PASSWORD}
+    defaultProcessingTier: null
 
 miraklOperator:
     miraklEnvUrl: ${MIRAKL_ENV_URL}
