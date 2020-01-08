@@ -23,6 +23,7 @@
 package com.adyen.mirakl.service;
 
 import com.adyen.mirakl.MiraklShopFactory;
+import com.adyen.mirakl.config.ApplicationProperties;
 import com.adyen.mirakl.startup.MiraklStartupValidator;
 import com.adyen.model.Address;
 import com.adyen.model.Amount;
@@ -76,6 +77,8 @@ public class ShopServiceTest {
     private ShopService shopService;
 
     @Mock
+    private ApplicationProperties applicationProperties;
+    @Mock
     private MiraklMarketplacePlatformOperatorApiClient miraklMarketplacePlatformOperatorApiClientMock;
     @Mock
     private Account adyenAccountServiceMock;
@@ -122,6 +125,7 @@ public class ShopServiceTest {
         miraklShopUS = new MiraklShop();
 
         when(adyenAccountServiceMock.deleteBankAccount(deleteBankAccountRequestCaptor.capture())).thenReturn(new DeleteBankAccountResponse());
+        when(applicationProperties.getDefaultProcessingTier()).thenReturn(null);
     }
 
     @Test
@@ -210,6 +214,34 @@ public class ShopServiceTest {
         verify(adyenAccountServiceMock).createAccountHolder(USRequest);
 
         Assertions.assertThat(USRequest.getAccountHolderDetails().getBankAccountDetails().get(0).getAccountNumber()).isEqualTo("1234567890");
+        Assertions.assertThat(genericRequest.getProcessingTier()).isNull(); // we should only populate the processing tier if explicitly configured
+        Assertions.assertThat(USRequest.getProcessingTier()).isNull(); // we should only populate the processing tier if explicitly configured
+    }
+
+    @Test
+    public void testRetrieveUpdatedShopsCreateWithDefaultTier() throws Exception {
+        when(applicationProperties.getDefaultProcessingTier()).thenReturn(3);
+
+        MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue additionalField = new MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue();
+        additionalField.setCode(String.valueOf(MiraklStartupValidator.CustomMiraklFields.ADYEN_LEGAL_ENTITY_TYPE));
+        additionalField.setValue(MiraklStartupValidator.AdyenLegalEntityType.INDIVIDUAL.toString());
+        setup(ImmutableList.of(additionalField));
+        when(adyenAccountServiceMock.createAccountHolder(createAccountHolderRequestCaptor.capture())).thenReturn(createAccountHolderResponseMock);
+        when(getAccountHolderResponseMock.getAccountHolderCode()).thenReturn("");
+
+        shopService.processUpdatedShops();
+        List<CreateAccountHolderRequest> requests = createAccountHolderRequestCaptor.getAllValues();
+
+        assertNotNull(requests);
+        assertEquals(2, requests.size());
+        CreateAccountHolderRequest genericRequest = requests.get(GENERIC_SHOP_INDEX);
+        CreateAccountHolderRequest USRequest = requests.get(US_SHOP_INDEX);
+
+        verify(adyenAccountServiceMock).createAccountHolder(genericRequest);
+        verify(adyenAccountServiceMock).createAccountHolder(USRequest);
+
+        Assertions.assertThat(genericRequest.getProcessingTier()).isEqualTo(3);
+        Assertions.assertThat(USRequest.getProcessingTier()).isEqualTo(3);
     }
 
     @Test

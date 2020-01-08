@@ -26,7 +26,6 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -41,6 +40,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import com.adyen.mirakl.config.ApplicationProperties;
 import com.adyen.mirakl.domain.StreetDetails;
 import com.adyen.mirakl.service.util.IsoUtil;
 import com.adyen.mirakl.service.util.MiraklDataExtractionUtil;
@@ -68,7 +68,6 @@ import com.adyen.model.marketpay.notification.CompensateNegativeBalanceNotificat
 import com.adyen.service.Account;
 import com.adyen.service.exception.ApiException;
 import com.mirakl.client.mmp.domain.common.MiraklAdditionalFieldValue;
-import com.mirakl.client.mmp.domain.common.country.IsoCountryCode;
 import com.mirakl.client.mmp.domain.shop.MiraklContactInformation;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
 import com.mirakl.client.mmp.domain.shop.MiraklShops;
@@ -88,6 +87,9 @@ import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
 public class ShopService {
 
     private final Logger log = LoggerFactory.getLogger(ShopService.class);
+
+    @Resource
+    private ApplicationProperties applicationProperties;
 
     @Resource
     private MiraklMarketplacePlatformOperatorApiClient miraklMarketplacePlatformOperatorApiClient;
@@ -246,6 +248,10 @@ public class ShopService {
         MiraklContactInformation contactInformation = getContactInformationFromShop(shop);
         accountHolderDetails.setEmail(contactInformation.getEmail());
         createAccountHolderRequest.setAccountHolderDetails(accountHolderDetails);
+
+        if (applicationProperties.getDefaultProcessingTier() != null) {
+            createAccountHolderRequest.setProcessingTier(applicationProperties.getDefaultProcessingTier());
+        }
 
         return createAccountHolderRequest;
     }
