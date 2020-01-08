@@ -131,7 +131,7 @@ adyenConfig:
     password: ${ADYEN_PASS}
     environment: ${ADYEN_ENV}
     appName: adyen-mirakl-connector
-    appVersion: 1.4.1
+    appVersion: 1.4.2
 
 
 adyenNotificationsConfig:
