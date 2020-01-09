@@ -110,6 +110,7 @@ application:
         NL: "\\s([a-zA-Z]*\\d+[a-zA-Z]*)$"
     basicUsername: test
     basicPassword: test
+    defaultProcessingTier: null
 
 shops:
     shopIds:
@@ -130,7 +131,7 @@ adyenConfig:
     password: ${ADYEN_PASS}
     environment: ${ADYEN_ENV}
     appName: adyen-mirakl-connector
-    appVersion: 1.4.1
+    appVersion: 1.4.2
 
 
 adyenNotificationsConfig:
