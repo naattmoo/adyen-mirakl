@@ -184,7 +184,7 @@ and run:
     
     
 ## Support
-If you have any problems, questions or suggestions, create an issue here or send your inquiry to support@adyen.com.   
+If you have a feature request, or spotted a bug or a technical problem, create a GitHub issue. For other questions, contact our [support team](https://support.adyen.com/hc/en-us/requests/new?ticket_form_id=360000705420).
     
 ## License
 This repository is open source and available under the MIT license. See the LICENSE file for more info.
