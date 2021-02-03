@@ -226,8 +226,6 @@ public class DocService {
         documentDetail.setAccountHolderCode(shopId);
         documentDetail.setShareholderCode(shareholderCode);
         documentDetail.setDocumentType(documentType);
-        documentDetail.setShareholderCode(shareholderCode);
-        documentDetail.setAccountHolderCode(shopId);
         documentDetail.setFilename(fileWrapper.getFilename());
 
         //Encode file Base64
