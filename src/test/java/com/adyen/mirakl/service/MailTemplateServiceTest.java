@@ -23,10 +23,11 @@
 package com.adyen.mirakl.service;
 
 import java.net.URL;
-import java.util.*;
-
-import com.adyen.mirakl.config.MiraklOperatorConfiguration;
-import com.mirakl.client.domain.common.error.ErrorBean;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,15 +41,16 @@ import org.springframework.context.MessageSource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.thymeleaf.spring4.SpringTemplateEngine;
 import com.adyen.mirakl.AdyenMiraklConnectorApp;
+import com.adyen.mirakl.config.MiraklOperatorConfiguration;
 import com.adyen.model.Amount;
 import com.adyen.model.marketpay.Message;
 import com.google.common.io.Resources;
 import com.mirakl.client.core.internal.mapper.CustomObjectMapper;
+import com.mirakl.client.domain.common.error.ErrorBean;
 import com.mirakl.client.mmp.domain.shop.MiraklContactInformation;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
 import com.mirakl.client.mmp.domain.shop.MiraklShops;
 import io.github.jhipster.config.JHipsterProperties;
-
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.doNothing;
@@ -139,7 +141,7 @@ public class MailTemplateServiceTest {
         final String code = "10_063";
         final String text = "Payout is not allowed because the account does not have the payout state.";
 
-        Message message = new Message();
+        com.adyen.model.marketpay.notification.Message message = new com.adyen.model.marketpay.notification.Message();
         message.setCode(code);
         message.setText(text);
         mailTemplateService.sendOperatorEmailPayoutFailure(miraklShop, message);

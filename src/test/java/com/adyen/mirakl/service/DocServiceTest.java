@@ -145,7 +145,7 @@ public class DocServiceTest {
         bankAccountDetail.setIban("ibansomething");
         bankAccountDetail.setBankAccountUUID("uuid");
         AccountHolderDetails accountHolderDetails = new AccountHolderDetails();
-        accountHolderDetails.addBankAccountDetail(bankAccountDetail);
+        accountHolderDetails.addBankAccountDetailsItem(bankAccountDetail);
         getAccountHolderResponse.setAccountHolderDetails(accountHolderDetails);
 
         when(miraklMarketplacePlatformOperatorApiClientMock.getShopDocuments(any())).thenReturn(miraklShopDocumentList);
@@ -159,8 +159,8 @@ public class DocServiceTest {
         docService.processUpdatedDocuments();
 
         UploadDocumentRequest uploadDocumentRequest = uploadDocumentRequestCaptor.getValue();
-        assertEquals("1234", uploadDocumentRequest.getAccountHolderCode());
-        assertEquals("uuid", uploadDocumentRequest.getBankAccountUUID());
+        assertEquals("1234", uploadDocumentRequest.getDocumentDetail().getAccountHolderCode());
+        assertEquals("uuid", uploadDocumentRequest.getDocumentDetail().getBankAccountUUID());
         assertEquals(file.getName(), uploadDocumentRequest.getDocumentDetail().getFilename());
         assertEquals(Base64.getEncoder().encodeToString(toByteArray(file)), uploadDocumentRequest.getDocumentContent());
         assertEquals(DocumentDetail.DocumentTypeEnum.BANK_STATEMENT, uploadDocumentRequest.getDocumentDetail().getDocumentType());
@@ -197,8 +197,8 @@ public class DocServiceTest {
         UploadDocumentRequest uploadDocumentRequest = uploadDocumentRequestCaptor.getValue();
         Assertions.assertThat(uploadDocumentRequest.getDocumentDetail().getShareholderCode()).isEqualTo("shareholderCode");
         Assertions.assertThat(uploadDocumentRequest.getDocumentDetail().getAccountHolderCode()).isEqualTo("shopId");
-        Assertions.assertThat(uploadDocumentRequest.getShareholderCode()).isEqualTo("shareholderCode");
-        Assertions.assertThat(uploadDocumentRequest.getAccountHolderCode()).isEqualTo("shopId");
+        Assertions.assertThat(uploadDocumentRequest.getDocumentDetail().getShareholderCode()).isEqualTo("shareholderCode");
+        Assertions.assertThat(uploadDocumentRequest.getDocumentDetail().getAccountHolderCode()).isEqualTo("shopId");
 
     }
 

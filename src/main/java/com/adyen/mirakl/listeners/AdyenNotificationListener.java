@@ -295,8 +295,8 @@ public class AdyenNotificationListener {
 
 
     private void processAccountHolderStatusChangeNotification(final AccountHolderStatusChangeNotification accountHolderStatusChangeNotification) {
-        final Boolean oldPayoutState = accountHolderStatusChangeNotification.getContent().getOldStatus().getPayoutState().getAllowPayout();
-        final Boolean newPayoutState = accountHolderStatusChangeNotification.getContent().getNewStatus().getPayoutState().getAllowPayout();
+        final Boolean oldPayoutState = accountHolderStatusChangeNotification.getContent().getOldStatus().getPayoutState().isAllowPayout();
+        final Boolean newPayoutState = accountHolderStatusChangeNotification.getContent().getNewStatus().getPayoutState().isAllowPayout();
 
         if (FALSE.equals(oldPayoutState) && TRUE.equals(newPayoutState)) {
             mailTemplateService.sendMiraklShopEmailFromTemplate(getShop(accountHolderStatusChangeNotification.getContent().getAccountHolderCode()),

@@ -38,6 +38,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 import com.adyen.mirakl.domain.ShareholderMapping;
 import com.adyen.mirakl.domain.StreetDetails;
 import com.adyen.mirakl.repository.ShareholderMappingRepository;
@@ -45,8 +46,10 @@ import com.adyen.mirakl.service.util.IsoUtil;
 import com.adyen.mirakl.service.util.MiraklDataExtractionUtil;
 import com.adyen.model.Address;
 import com.adyen.model.Name;
+import com.adyen.model.marketpay.DocumentDetail;
 import com.adyen.model.marketpay.GetAccountHolderResponse;
 import com.adyen.model.marketpay.PersonalData;
+import com.adyen.model.marketpay.PersonalDocumentData;
 import com.adyen.model.marketpay.PhoneNumber;
 import com.adyen.model.marketpay.ShareholderContact;
 import com.google.common.collect.ImmutableList;
@@ -69,6 +72,7 @@ public class UboService {
     public static final String DATE_OF_BIRTH = "dob";
     public static final String NATIONALITY = "nationality";
     public static final String ID_NUMBER = "idnumber";
+    public static final String ID_TYPE = "photoidtype";
     public static final String HOUSE_NUMBER_OR_NAME = "housenumber";
     public static final String STREET = "streetname";
     public static final String CITY = "city";
@@ -78,6 +82,10 @@ public class UboService {
     public static final String PHONE_TYPE = "phonetype";
     public static final String PHONE_NUMBER = "phonenumber";
     public static final String STATE_OR_PROVINCE = "stateorprovince";
+
+    public static final String DOCUMENT_TYPE_DRIVING_LICENCE = "DRIVING_LICENCE";
+    public static final String DOCUMENT_TYPE_ID = "ID_CARD";
+    public static final String DOCUMENT_TYPE_PASSPORT = "PASSPORT";
 
     final static Map<String, Name.GenderEnum> CIVILITY_TO_GENDER = ImmutableMap.<String, Name.GenderEnum>builder().put("MR", Name.GenderEnum.MALE)
                                                                                                                          .put("MRS", Name.GenderEnum.FEMALE)
@@ -114,6 +122,7 @@ public class UboService {
             String dateOfBirth = extractedKeysFromMirakl.getOrDefault(uboKeys.get(DATE_OF_BIRTH), null);
             String nationality = extractedKeysFromMirakl.getOrDefault(uboKeys.get(NATIONALITY), null);
             String idNumber = extractedKeysFromMirakl.getOrDefault(uboKeys.get(ID_NUMBER), null);
+            String idType = extractedKeysFromMirakl.getOrDefault(uboKeys.get(ID_TYPE), null);
             String houseNumberOrName = extractedKeysFromMirakl.getOrDefault(uboKeys.get(HOUSE_NUMBER_OR_NAME), null);
             String street = extractedKeysFromMirakl.getOrDefault(uboKeys.get(STREET), null);
             String city = extractedKeysFromMirakl.getOrDefault(uboKeys.get(CITY), null);
@@ -129,7 +138,7 @@ public class UboService {
                 ShareholderContact shareholderContact = new ShareholderContact();
                 addShareholderCode(shop, uboNumber, shareholderContact, existingAccountHolder);
                 addMandatoryData(civility, firstName, lastName, email, shareholderContact);
-                addPersonalData(uboNumber, dateOfBirth, nationality, idNumber, shareholderContact);
+                addPersonalData(uboNumber, dateOfBirth, nationality, idNumber, idType, shareholderContact);
                 String shopCountry = shop.getContactInformation().getCountry();
                 addAddressData(uboNumber, houseNumberOrName, street, city, postalCode, country, stateOrProvince, shareholderContact, shopCountry);
                 addPhoneData(uboNumber, phoneCountryCode, phoneType, phoneNumber, shareholderContact);
@@ -246,7 +255,7 @@ public class UboService {
         }
     }
 
-    private void addPersonalData(final Integer uboNumber, final String dateOfBirth, final String nationality, final String idNumber, final ShareholderContact shareholderContact) {
+    private void addPersonalData(final Integer uboNumber, final String dateOfBirth, final String nationality, final String idNumber, final String idType, final ShareholderContact shareholderContact) {
         if (dateOfBirth != null || nationality != null || idNumber != null) {
             final PersonalData personalData = new PersonalData();
 
@@ -257,10 +266,33 @@ public class UboService {
             }
 
             Optional.ofNullable(nationality).ifPresent(personalData::setNationality);
-            Optional.ofNullable(idNumber).ifPresent(personalData::setIdNumber);
+
+            PersonalDocumentData personalDocumentData = new PersonalDocumentData();
+            Optional.ofNullable(idNumber).ifPresent(personalDocumentData::setNumber);
+            personalDocumentData.setType(getIdTypeEnum(idType));
+            personalData.addDocumentDataItem(personalDocumentData);
+
             shareholderContact.setPersonalData(personalData);
         } else {
             log.warn("Unable to populate any personal data for share holder {}", uboNumber);
+        }
+    }
+
+    private PersonalDocumentData.TypeEnum getIdTypeEnum(final String idType) {
+        if(StringUtils.isEmpty(idType)) {
+            //field is required, so default to ID
+            return PersonalDocumentData.TypeEnum.ID;
+        }
+
+        //Mirakl supported types
+        switch (idType) {
+            case DOCUMENT_TYPE_PASSPORT:
+                return PersonalDocumentData.TypeEnum.PASSPORT;
+            case DOCUMENT_TYPE_DRIVING_LICENCE:
+                return PersonalDocumentData.TypeEnum.DRIVINGLICENSE;
+            case DOCUMENT_TYPE_ID:
+            default:
+                return PersonalDocumentData.TypeEnum.ID;
         }
     }
 
@@ -281,6 +313,7 @@ public class UboService {
                                                                   .put(DATE_OF_BIRTH, ADYEN_UBO + String.valueOf(i) + "-dob")
                                                                   .put(NATIONALITY, ADYEN_UBO + String.valueOf(i) + "-nationality")
                                                                   .put(ID_NUMBER, ADYEN_UBO + String.valueOf(i) + "-idnumber")
+                                                                  .put(ID_TYPE, ADYEN_UBO + String.valueOf(i) + "-photoidtype")
                                                                   .put(HOUSE_NUMBER_OR_NAME, ADYEN_UBO + String.valueOf(i) + "-housenumber")
                                                                   .put(STREET, ADYEN_UBO + String.valueOf(i) + "-streetname")
                                                                   .put(CITY, ADYEN_UBO + String.valueOf(i) + "-city")

@@ -115,15 +115,15 @@ public class PayoutServiceTest {
         bankAccountDetail1.setBankAccountUUID("2a421c72-ead7-4ad3-8741-80a0aebb8758");
         bankAccountDetail1.setIban("GB29NWBK60161331926819");
         AccountHolderDetails accountHolderDetails = new AccountHolderDetails();
-        accountHolderDetails.addBankAccountDetail(bankAccountDetail);
-        accountHolderDetails.addBankAccountDetail(bankAccountDetail1);
+        accountHolderDetails.addBankAccountDetailsItem(bankAccountDetail);
+        accountHolderDetails.addBankAccountDetailsItem(bankAccountDetail1);
         GetAccountHolderResponse getAccountHolderResponse = new GetAccountHolderResponse();
         getAccountHolderResponse.setAccountHolderDetails(accountHolderDetails);
         getAccountHolderResponse.setAccountHolderCode("2000");
 
         com.adyen.model.marketpay.Account marketpayAccount = new com.adyen.model.marketpay.Account();
         marketpayAccount.setAccountCode("123456");
-        getAccountHolderResponse.addAccount(marketpayAccount);
+        getAccountHolderResponse.addAccountsItem(marketpayAccount);
 
         return getAccountHolderResponse;
     }
