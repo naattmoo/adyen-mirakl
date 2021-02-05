@@ -274,7 +274,7 @@ public class UboServiceTest {
         final Set<String> nationalities = shareHolders.stream().map(ShareholderContact::getPersonalData).map(PersonalData::getNationality).collect(Collectors.toSet());
         Assertions.assertThat(nationalities).containsExactlyInAnyOrder("nationality1", "nationality2", "nationality3", "nationality4");
 
-        final Set<String> idNumbers = shareHolders.stream().map(ShareholderContact::getPersonalData).map(PersonalData::getIdNumber).collect(Collectors.toSet());
+        final Set<String> idNumbers = shareHolders.stream().map(ShareholderContact::getPersonalData).map(personalData -> personalData.getDocumentData().get(0).getNumber()).collect(Collectors.toSet());
         Assertions.assertThat(idNumbers).containsExactlyInAnyOrder("idnumber1", "idnumber2", "idnumber3", "idnumber4");
 
         final Set<String> houseNumberOrName = shareHolders.stream().map(ShareholderContact::getAddress).map(Address::getHouseNumberOrName).collect(Collectors.toSet());

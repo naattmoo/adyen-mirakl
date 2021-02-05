@@ -117,6 +117,9 @@ public class DocService {
             if (Constants.BANKPROOF.equals(document.getTypeCode())) {
                 updateDocument(document, DocumentDetail.DocumentTypeEnum.BANK_STATEMENT);
             }
+            else if (Constants.COMPANY_REGISTRATION.equals(document.getTypeCode())) {
+                updateDocument(document, DocumentDetail.DocumentTypeEnum.COMPANY_REGISTRATION_SCREENING);
+            }
         }
 
         final List<UboDocumentDTO> uboDocumentDTOS = uboDocumentService.extractDocuments(miraklShopDocumentList);
@@ -218,28 +221,28 @@ public class DocService {
      */
     private void uploadDocumentToAdyen(DocumentDetail.DocumentTypeEnum documentType, FileWrapper fileWrapper, String shopId, String shareholderCode) throws Exception {
         UploadDocumentRequest request = new UploadDocumentRequest();
-        request.setAccountHolderCode(shopId);
-        request.setShareholderCode(shareholderCode);
+
+        DocumentDetail documentDetail = new DocumentDetail();
+        documentDetail.setAccountHolderCode(shopId);
+        documentDetail.setShareholderCode(shareholderCode);
+        documentDetail.setDocumentType(documentType);
+        documentDetail.setFilename(fileWrapper.getFilename());
 
         //Encode file Base64
         byte[] bytes = toByteArray(fileWrapper.getFile());
         Base64.Encoder encoder = Base64.getEncoder();
         String encoded = encoder.encodeToString(bytes);
         request.setDocumentContent(encoded);
+
         //If document is a bank statement, the bankaccountUUID is required
         if (documentType.equals(DocumentDetail.DocumentTypeEnum.BANK_STATEMENT)) {
             String UUID = retrieveBankAccountUUID(shopId);
             if (UUID != null && ! UUID.isEmpty()) {
-                request.setBankAccountUUID(UUID);
+                documentDetail.setBankAccountUUID(UUID);
             } else {
                 throw new IllegalStateException("No bank accounts are associated with this shop, a bank account is needed to upload a bank statement");
             }
         }
-        DocumentDetail documentDetail = new DocumentDetail();
-        documentDetail.setFilename(fileWrapper.getFilename());
-        documentDetail.setDocumentType(documentType);
-        documentDetail.setShareholderCode(shareholderCode);
-        documentDetail.setAccountHolderCode(shopId);
 
         // For test add PASSED to get document in payout mode
         if(environment.equals(Environment.TEST.name())) {
