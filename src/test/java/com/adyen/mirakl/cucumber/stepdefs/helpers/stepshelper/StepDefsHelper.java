@@ -239,7 +239,7 @@ public class StepDefsHelper {
         await().untilAsserted(() -> {
             AccountHolderBalanceRequest accountHolderBalanceRequest = new AccountHolderBalanceRequest();
             accountHolderBalanceRequest.setAccountHolderCode(shop.getId());
-            AccountHolderBalanceResponse balance = adyenFundService.AccountHolderBalance(accountHolderBalanceRequest);
+            AccountHolderBalanceResponse balance = adyenFundService.accountHolderBalance(accountHolderBalanceRequest);
 
             Assertions.assertThat(balance.getTotalBalance().getBalance().stream().map(Amount::getValue).findAny().orElse(null)).isEqualTo(transferAmount);
         });
@@ -257,7 +257,7 @@ public class StepDefsHelper {
             transferAmountFromZeroBalanceAccount(transferAmount, currency, accountHolder);
             AccountHolderBalanceRequest accountHolderBalanceRequest = new AccountHolderBalanceRequest();
             accountHolderBalanceRequest.setAccountHolderCode(shop.getId());
-            adyenFundService.AccountHolderBalance(accountHolderBalanceRequest);
+            adyenFundService.accountHolderBalance(accountHolderBalanceRequest);
         } catch (Exception e) {
             log.info(e.getMessage());
         }
@@ -275,7 +275,7 @@ public class StepDefsHelper {
         await().untilAsserted(() -> {
             AccountHolderBalanceRequest accountHolderBalanceRequest = new AccountHolderBalanceRequest();
             accountHolderBalanceRequest.setAccountHolderCode(shop.getId());
-            AccountHolderBalanceResponse balance = adyenFundService.AccountHolderBalance(accountHolderBalanceRequest);
+            AccountHolderBalanceResponse balance = adyenFundService.accountHolderBalance(accountHolderBalanceRequest);
 
             Assertions.assertThat(balance.getTotalBalance().getBalance().stream().map(Amount::getValue).findAny().orElse(null)).isGreaterThan(transferAmount);
         });

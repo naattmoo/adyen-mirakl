@@ -142,7 +142,7 @@ public class MailTemplateService {
     }
 
     @Async
-    public void sendOperatorEmailPayoutFailure(MiraklShop miraklShop, Message message) {
+    public void sendOperatorEmailPayoutFailure(MiraklShop miraklShop, com.adyen.model.marketpay.notification.Message message) {
         Context context = new Context(Locale.getDefault());
         context.setVariable(MIRAKL_SHOP, miraklShop);
         context.setVariable(MIRAKL_CALL_BACK_SHOP_URL, getMiraklShopUrl(miraklShop.getId()));

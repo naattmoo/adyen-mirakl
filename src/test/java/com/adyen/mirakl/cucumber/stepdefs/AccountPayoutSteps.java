@@ -123,7 +123,7 @@ public class AccountPayoutSteps extends StepDefsHelper {
     public void thePayoutStateAllowPayoutChangesFromFalseToTrue() {
         await().with().pollInterval(fibonacci()).untilAsserted(() -> {
             GetAccountHolderResponse account = getGetAccountHolderResponse(shop);
-            Boolean allowPayout = account.getAccountHolderStatus().getPayoutState().getAllowPayout();
+            Boolean allowPayout = account.getAccountHolderStatus().getPayoutState().isAllowPayout();
             Assertions.assertThat(allowPayout).isTrue();
             log.info(String.format("Payout status is [%s]", allowPayout.toString()));
         });
@@ -263,7 +263,7 @@ public class AccountPayoutSteps extends StepDefsHelper {
     public void thePayoutStateAllowPayoutChangesFromTrueToFalse() {
         await().with().pollInterval(fibonacci()).untilAsserted(() -> {
             GetAccountHolderResponse account = getGetAccountHolderResponse(shop);
-            Boolean allowPayout = account.getAccountHolderStatus().getPayoutState().getAllowPayout();
+            Boolean allowPayout = account.getAccountHolderStatus().getPayoutState().isAllowPayout();
             Assertions.assertThat(allowPayout).isFalse();
             log.info(String.format("Payout status is [%s]", allowPayout.toString()));
         });

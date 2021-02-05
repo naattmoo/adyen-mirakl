@@ -63,7 +63,7 @@ import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
 import static com.adyen.model.PaymentResult.ResultCodeEnum.AUTHORISED;
-import static com.adyen.model.modification.ModificationResult.ResponseEnum.CAPTURE_RECEIVED_;
+import static com.adyen.model.modification.ModificationResult.ModificationResponse.CAPTURE_RECEIVED;
 import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -225,6 +225,6 @@ public class ConnectorAppAdyenSteps extends StepDefsHelper {
             log.error(e.getError().toString());
             throw e;
         }
-        Assertions.assertThat(modificationResult.getResponse()).isEqualTo(CAPTURE_RECEIVED_);
+        Assertions.assertThat(modificationResult.getResponse()).isEqualTo(CAPTURE_RECEIVED);
     }
 }

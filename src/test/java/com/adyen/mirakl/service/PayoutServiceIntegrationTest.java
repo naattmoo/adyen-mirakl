@@ -33,7 +33,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.annotation.Transactional;
-import com.adyen.Util.Util;
+import com.adyen.util.Util;
 import com.adyen.mirakl.AdyenMiraklConnectorApp;
 import com.adyen.mirakl.domain.AdyenPayoutError;
 import com.adyen.mirakl.domain.MiraklVoucherEntry;

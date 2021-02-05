@@ -240,7 +240,7 @@ public class ShopService {
         // Set AccountHolderDetails
         AccountHolderDetails accountHolderDetails = new AccountHolderDetails();
         Optional<BankAccountDetail> bankAccountDetailOptional = createBankAccountDetail(shop);
-        bankAccountDetailOptional.ifPresent(accountHolderDetails::addBankAccountDetail);
+        bankAccountDetailOptional.ifPresent(accountHolderDetails::addBankAccountDetailsItem);
 
         updateDetailsFromShop(accountHolderDetails, shop, null);
 
@@ -433,7 +433,7 @@ public class ShopService {
 
             // add BankAccountDetails in case of new or changed bank
             if (! existingBankAccountDetail.isPresent() || ! existingBankAccountDetail.get().equals(bankAccountDetail.get())) {
-                accountHolderDetails.addBankAccountDetail(bankAccountDetail.get());
+                accountHolderDetails.addBankAccountDetailsItem(bankAccountDetail.get());
             }
         }
 
@@ -521,7 +521,7 @@ public class ShopService {
             bankAccountDetail.setOwnerCountryCode(IsoUtil.getIso2CountryCodeFromIso3(shop.getContactInformation().getCountry()));
         }
         bankAccountDetail.setPrimaryAccount(true);
-        accountHolderDetails.addBankAccountDetail(bankAccountDetail);
+        accountHolderDetails.addBankAccountDetailsItem(bankAccountDetail);
 
         return Optional.of(bankAccountDetail);
     }

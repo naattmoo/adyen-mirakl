@@ -34,7 +34,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.adyen.Util.Util;
+import com.adyen.util.Util;
 import com.adyen.mirakl.domain.AdyenPayoutError;
 import com.adyen.mirakl.domain.MiraklVoucherEntry;
 import com.adyen.mirakl.repository.AdyenPayoutErrorRepository;
