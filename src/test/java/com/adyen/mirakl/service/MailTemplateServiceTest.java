@@ -88,7 +88,7 @@ public class MailTemplateServiceTest {
     @Test
     public void testSendEmailFromTemplateNoUser() throws Exception {
         final URL url = Resources.getResource("miraklRequests/miraklShopsMock.json");
-        final CustomObjectMapper objectMapper = new CustomObjectMapper();
+        final CustomObjectMapper objectMapper = CustomObjectMapper.getInstance();
         final MiraklShop miraklShop = objectMapper.readValue(url, MiraklShops.class).getShops().iterator().next();
 
         mailTemplateService.sendMiraklShopEmailFromTemplate(miraklShop, Locale.UK, "testMiraklShopEmail", "email.test.title");
