@@ -69,7 +69,7 @@ dependencyManagement {
 defaultTasks 'bootRun'
 
 group = 'com.adyen.mirakl'
-version = '1.5.0'
+version = '1.6.0'
 
 
 description = ''
