@@ -74,6 +74,7 @@ import com.mirakl.client.mmp.domain.shop.MiraklShops;
 import com.mirakl.client.mmp.domain.shop.bank.MiraklAbaBankAccountInformation;
 import com.mirakl.client.mmp.domain.shop.bank.MiraklIbanBankAccountInformation;
 import com.mirakl.client.mmp.domain.shop.bank.MiraklPaymentInformation;
+import com.mirakl.client.mmp.domain.shop.bank.MiraklUkBankAccountInformation;
 import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
 import com.mirakl.client.mmp.operator.domain.invoice.MiraklCreateManualAccountingDocument;
 import com.mirakl.client.mmp.operator.domain.invoice.MiraklCreatedManualAccountingDocuments;
@@ -368,29 +369,20 @@ public class ShopService {
         return null;
     }
 
-    private Optional<String> getIbanFromShop(MiraklShop shop) {
-        if (shop == null || ! (shop.getPaymentInformation() instanceof MiraklIbanBankAccountInformation)) {
-            return Optional.empty();
-        }
-
-        MiraklIbanBankAccountInformation miraklIbanBankAccountInformation = (MiraklIbanBankAccountInformation) shop.getPaymentInformation();
-        if (StringUtils.isEmpty(miraklIbanBankAccountInformation.getIban())) {
-            return Optional.empty();
-        }
-
-        return Optional.of(miraklIbanBankAccountInformation.getIban());
-    }
-
     private Optional<BankAccountDetail> getBankAccountDetailFromShop(AccountHolderDetails accountHolderDetails, MiraklShop shop) {
         MiraklPaymentInformation miraklPaymentInformation = shop.getPaymentInformation();
 
-        if (miraklPaymentInformation instanceof MiraklIbanBankAccountInformation) {
-            Optional<String> ibanOptional = getIbanFromShop(shop);
+        if(accountHolderDetails == null || accountHolderDetails.getBankAccountDetails() == null || accountHolderDetails.getBankAccountDetails().isEmpty()) {
+            return Optional.empty();
+        }
 
-            if (! ibanOptional.isPresent() || accountHolderDetails == null || accountHolderDetails.getBankAccountDetails() == null || accountHolderDetails.getBankAccountDetails().isEmpty()) {
+        if (miraklPaymentInformation instanceof MiraklIbanBankAccountInformation) {
+            MiraklIbanBankAccountInformation miraklIbanBankAccountInformation = (MiraklIbanBankAccountInformation) miraklPaymentInformation;
+
+            if (StringUtils.isEmpty(miraklIbanBankAccountInformation.getIban())) {
                 return Optional.empty();
             }
-            return accountHolderDetails.getBankAccountDetails().stream().filter(e -> StringUtils.equals(e.getIban(), ibanOptional.get())).findFirst();
+            return accountHolderDetails.getBankAccountDetails().stream().filter(e -> StringUtils.equals(e.getIban(), miraklIbanBankAccountInformation.getIban())).findFirst();
         }
 
         if (miraklPaymentInformation instanceof MiraklAbaBankAccountInformation) {
@@ -398,10 +390,7 @@ public class ShopService {
             String accountNumber = miraklAbaBankAccountInformation.getBankAccountNumber();
             String routingNumber = miraklAbaBankAccountInformation.getRoutingNumber();
 
-            if (StringUtils.isEmpty(accountNumber) || StringUtils.isEmpty(routingNumber) || accountHolderDetails == null || accountHolderDetails.getBankAccountDetails() == null || accountHolderDetails
-                    .getBankAccountDetails()
-                    .isEmpty()) {
-
+            if (StringUtils.isEmpty(accountNumber) || StringUtils.isEmpty(routingNumber)) {
                 return Optional.empty();
             }
             return accountHolderDetails.getBankAccountDetails()
@@ -409,6 +398,23 @@ public class ShopService {
                                        .filter(e -> (StringUtils.equals(e.getAccountNumber(), accountNumber)) && StringUtils.equals(e.getBranchCode(), routingNumber))
                                        .findFirst();
         }
+
+        if (miraklPaymentInformation instanceof MiraklUkBankAccountInformation) {
+            MiraklUkBankAccountInformation miraklUkBankAccountInformation = (MiraklUkBankAccountInformation) miraklPaymentInformation;
+            String accountNumber = miraklUkBankAccountInformation.getBankAccountNumber();
+            String bankSortCode = miraklUkBankAccountInformation.getBankSortCode();
+
+            if (StringUtils.isEmpty(accountNumber) || StringUtils.isEmpty(bankSortCode)) {
+                return Optional.empty();
+            }
+
+            return accountHolderDetails.getBankAccountDetails()
+                                       .stream()
+                                       .filter(e -> (StringUtils.equals(e.getAccountNumber(), accountNumber))
+                                           && StringUtils.equals(e.getBranchCode(), bankSortCode))
+                                       .findFirst();
+        }
+
         return Optional.empty();
     }
 
@@ -461,9 +467,12 @@ public class ShopService {
     }
 
     private Optional<BankAccountDetail> createBankAccountDetail(MiraklShop shop) {
-        boolean isAccountTypeAba = false;
         if (shop.getPaymentInformation() == null) {
             log.info("No Mirakl Bank Account Information found for shop: {}", shop.getId());
+            return Optional.empty();
+        }
+        if(shop.getCurrencyIsoCode() == null) {
+            log.info("Currency not defined for shop: {}", shop.getId());
             return Optional.empty();
         }
 
@@ -475,12 +484,11 @@ public class ShopService {
         if (shop.getPaymentInformation() instanceof MiraklIbanBankAccountInformation) {
             MiraklIbanBankAccountInformation miraklIbanBankAccountInformation = (MiraklIbanBankAccountInformation) shop.getPaymentInformation();
 
-            if (miraklIbanBankAccountInformation.getIban().isEmpty() || shop.getCurrencyIsoCode() == null) {
-                log.info("Empty IBAN or currency for shop: {}", shop.getId());
+            if (StringUtils.isEmpty(miraklIbanBankAccountInformation.getIban())) {
+                log.info("Empty IBAN for shop: {}", shop.getId());
                 return Optional.empty();
             }
 
-            miraklIbanBankAccountInformation.getIban();
             bankAccountDetail.setIban(miraklIbanBankAccountInformation.getIban());
             bankAccountDetail.setBankName(miraklIbanBankAccountInformation.getBankName());
             bankAccountDetail.setBankCity(miraklIbanBankAccountInformation.getBankCity());
@@ -490,14 +498,11 @@ public class ShopService {
 
         }
         if (shop.getPaymentInformation() instanceof MiraklAbaBankAccountInformation) {
-            isAccountTypeAba = true;
-
             MiraklAbaBankAccountInformation miraklAbaBankAccountInformation = (MiraklAbaBankAccountInformation) shop.getPaymentInformation();
 
             if (StringUtils.isEmpty(miraklAbaBankAccountInformation.getRoutingNumber())
-                    || StringUtils.isEmpty(miraklAbaBankAccountInformation.getBankAccountNumber())
-                    || shop.getCurrencyIsoCode() == null) {
-                log.info("Empty branch code or account number or currency for shop: {}", shop.getId());
+                    || StringUtils.isEmpty(miraklAbaBankAccountInformation.getBankAccountNumber())) {
+                log.info("Empty branch code or account number: {}", shop.getId());
                 return Optional.empty();
             }
             bankAccountDetail.setBranchCode(miraklAbaBankAccountInformation.getRoutingNumber());
@@ -506,6 +511,22 @@ public class ShopService {
             bankAccountDetail.setAccountNumber(miraklAbaBankAccountInformation.getBankAccountNumber());
             bankAccountDetail.setBankName(miraklAbaBankAccountInformation.getBankName());
             bankAccountDetail.setBankCity(miraklAbaBankAccountInformation.getBankCity());
+        }
+        if (shop.getPaymentInformation() instanceof MiraklUkBankAccountInformation) {
+            MiraklUkBankAccountInformation miraklUkBankAccountInformation = (MiraklUkBankAccountInformation) shop.getPaymentInformation();
+
+            if (StringUtils.isEmpty(miraklUkBankAccountInformation.getBankAccountNumber())
+                || StringUtils.isEmpty(miraklUkBankAccountInformation.getBankSortCode())) {
+                log.info("Empty account number or bank sort code for shop: {}", shop.getId());
+                return Optional.empty();
+            }
+            bankAccountDetail.setCountryCode("GB");
+            bankAccountDetail.setCurrencyCode(shop.getCurrencyIsoCode().toString());
+            bankAccountDetail.setAccountNumber(miraklUkBankAccountInformation.getBankAccountNumber());
+            bankAccountDetail.setBankBicSwift(miraklUkBankAccountInformation.getSwiftCode());
+            bankAccountDetail.setBranchCode(miraklUkBankAccountInformation.getBankSortCode());
+            bankAccountDetail.setBankName(miraklUkBankAccountInformation.getBankName());
+            bankAccountDetail.setBankCity(miraklUkBankAccountInformation.getBankCity());
         }
 
         if (shop.getContactInformation() != null) {
