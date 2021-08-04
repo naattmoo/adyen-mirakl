@@ -27,9 +27,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
 import javax.annotation.Resource;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
@@ -438,7 +440,7 @@ public class ShopService {
             existingBankAccountDetail.ifPresent(b -> bankAccountDetail.get().setBankAccountUUID(b.getBankAccountUUID()));
 
             // add BankAccountDetails in case of new or changed bank
-            if (! existingBankAccountDetail.isPresent() || ! existingBankAccountDetail.get().equals(bankAccountDetail.get())) {
+            if (! existingBankAccountDetail.isPresent() || isUpdatingExistingBankAccount(bankAccountDetail.get(), existingBankAccountDetail.get())) {
                 accountHolderDetails.addBankAccountDetailsItem(bankAccountDetail.get());
             }
         }
@@ -446,6 +448,24 @@ public class ShopService {
         updateDetailsFromShop(accountHolderDetails, shop, existingAccountHolder);
 
         return updateAccountHolderRequest;
+    }
+
+    private boolean isUpdatingExistingBankAccount(@Nonnull BankAccountDetail newBankAccountDetail, @Nonnull BankAccountDetail existingBankAccountDetail) {
+        return ! (Objects.equals(newBankAccountDetail.getIban(), existingBankAccountDetail.getIban())
+            && Objects.equals(newBankAccountDetail.getAccountNumber(), existingBankAccountDetail.getAccountNumber())
+            && Objects.equals(newBankAccountDetail.getBranchCode(), existingBankAccountDetail.getBranchCode())
+            && Objects.equals(newBankAccountDetail.getBankName(), existingBankAccountDetail.getBankName())
+            && Objects.equals(newBankAccountDetail.getBankCity(), existingBankAccountDetail.getBankCity())
+            && Objects.equals(newBankAccountDetail.getBankBicSwift(), existingBankAccountDetail.getBankBicSwift())
+            && Objects.equals(newBankAccountDetail.getCountryCode(), existingBankAccountDetail.getCountryCode())
+            && Objects.equals(newBankAccountDetail.getCurrencyCode(), existingBankAccountDetail.getCurrencyCode())
+            && Objects.equals(newBankAccountDetail.getOwnerName(), existingBankAccountDetail.getOwnerName())
+            && Objects.equals(newBankAccountDetail.getOwnerStreet(), existingBankAccountDetail.getOwnerStreet())
+            && Objects.equals(newBankAccountDetail.getOwnerHouseNumberOrName(), existingBankAccountDetail.getOwnerHouseNumberOrName())
+            && Objects.equals(newBankAccountDetail.getOwnerPostalCode(), existingBankAccountDetail.getOwnerPostalCode())
+            && Objects.equals(newBankAccountDetail.getOwnerCity(), existingBankAccountDetail.getOwnerCity())
+            && Objects.equals(newBankAccountDetail.getOwnerState(), existingBankAccountDetail.getOwnerState())
+            && Objects.equals(newBankAccountDetail.getOwnerCountryCode(), existingBankAccountDetail.getOwnerCountryCode()));
     }
 
     private AccountHolderDetails updateDetailsFromShop(AccountHolderDetails accountHolderDetails, MiraklShop shop, GetAccountHolderResponse existingAccountHolder) {
