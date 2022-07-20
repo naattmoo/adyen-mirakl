@@ -1,5 +1,7 @@
 # Adyen Mirakl Connector
 
+### Deprecated: This plugin is being deprecated, for an up-to-date integration with Mirakl please contact [Adyen Support](https://www.adyen.help/).
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Build Status](https://travis-ci.org/Adyen/adyen-mirakl.svg?branch=develop)](https://travis-ci.org/Adyen/adyen-mirakl)
 
